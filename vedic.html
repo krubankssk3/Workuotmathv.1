@@ -41,9 +41,9 @@
   #doc .cover-body{ flex:1; display:flex; flex-direction:column; justify-content:center; }
   #doc .cover-title{ text-align:center; font-weight:600; font-size:17px; text-decoration:underline; margin:24px 0 14px; }
   #doc .cover-meta{ text-align:center; font-size:15px; line-height:2; }
-  #doc .cover-name{ font-size:14px; line-height:2.4; margin-top:24px; }
-  #doc .cover-note{ font-size:13px; margin-top:16px; }
-  #doc .cover-box{ width:230px; margin-top:26px; border:1.4px solid #111; }
+  #doc .cover-name{ font-size:14px; line-height:2.4; margin-top:24px; text-align:center; }
+  #doc .cover-note{ font-size:13px; margin-top:16px; text-align:center; }
+  #doc .cover-box{ width:230px; margin:26px auto 0; border:1.4px solid #111; }
   #doc .cover-box div{ display:flex; }
   #doc .cover-box .l{ width:110px; padding:10px 8px; border-right:1.4px solid #111; }
   #doc .cover-box .r{ flex:1; }
@@ -78,8 +78,8 @@
   #doc .key-grid .ki{ display:flex; justify-content:space-between; max-width:240px; }
   #doc .key-grid .kn{ color:#444; }
   .pagebreak{ page-break-after:always; }
-  #doc .pagelast{ page-break-before:always; margin-top:40px; }
-  @media screen{ .pagebreak{ height:0; border-top:2px dashed #d0d0d0; margin:30px 0; } #doc .pagelast{ border-top:2px dashed #d0d0d0; padding-top:24px; } }
+  #doc .pagelast{ margin-top:30px; }
+  @media screen{ .pagebreak{ height:0; border-top:2px dashed #d0d0d0; margin:30px 0; } }
 
   .hidden{display:none!important;}
   @media print{
