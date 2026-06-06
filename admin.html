@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ผู้ดูแล · ซ้อมคิดเลขเร็ว</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#121838; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.09);
+    --digit:#41d3f0; --digit-glow:rgba(65,211,240,.45); --target:#ffc640;
+    --good:#34d399; --near:#ffc640; --miss:#fb7185; --text:#eaeefb; --muted:#8990b6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:radial-gradient(900px 500px at 15% -10%, rgba(65,211,240,.12), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(255,198,64,.08), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .screen{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:18px; }
+  .glass{ width:100%; background:var(--card); border:1px solid var(--line); border-radius:24px; backdrop-filter:blur(12px); padding:22px; }
+  .wrap{ max-width:1000px; margin:0 auto; padding:22px 18px 40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; }
+  .btn-primary{ background:linear-gradient(120deg,var(--digit),#7ce0f2); color:#04222b; font-weight:600; border:none; border-radius:14px;
+    padding:12px 20px; font-family:'Kanit'; font-size:15px; cursor:pointer; transition:transform .12s; }
+  .btn-primary:active{transform:scale(.96);} .btn-primary:disabled{opacity:.6;cursor:default;}
+  .ghost{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; color:var(--muted); font-family:'Kanit'; font-size:13px; transition:.15s; }
+  .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .fld{ width:100%; padding:11px 13px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); font-family:'Kanit'; font-size:14px; }
+  .fld:focus{ outline:none; border-color:var(--digit); box-shadow:0 0 0 2px var(--digit-glow); }
+  .tab{ background:none; border:none; color:var(--muted); font-family:'Kanit'; font-weight:500; font-size:14px; padding:9px 16px; border-radius:11px; cursor:pointer; }
+  .tab.active{ background:rgba(65,211,240,.16); color:var(--digit); }
+  table{ width:100%; border-collapse:collapse; font-size:14px; }
+  th{ text-align:left; font-weight:500; color:var(--muted); font-size:12px; padding:8px 6px; }
+  td{ padding:10px 6px; border-top:1px solid var(--line); }
+  .hidden{display:none!important;}
+  .fade-in{animation:fade .4s ease both;} @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+  <!-- ===== LOGIN ===== -->
+  <div id="loginView" class="screen fade-in">
+    <div class="glass" style="max-width:380px">
+      <div class="text-center mb-5">
+        <div style="width:46px;height:46px;border-radius:12px;margin:0 auto 10px;background:rgba(65,211,240,.16);color:var(--digit);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:24px;height:24px"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+        </div>
+        <h1 class="m-0" style="font-weight:700;font-size:24px">เข้าสู่ระบบครู</h1>
+        <p class="mt-1 mb-0" style="color:var(--muted);font-size:13px">สำหรับผู้ดูแลระบบ</p>
+      </div>
+      <input id="username" class="fld mb-3" placeholder="ชื่อผู้ใช้" autocomplete="username" />
+      <input id="password" class="fld mb-4" type="password" placeholder="รหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+      <button class="btn-primary w-full" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <p id="loginMsg" class="text-center m-0 mt-3" style="font-size:13px;color:var(--miss);min-height:18px"></p>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN ===== -->
+  <div id="adminView" class="wrap hidden">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(65,211,240,.16);color:var(--digit);display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        </div>
+        <span style="font-weight:600;font-size:18px">แดชบอร์ดผู้ดูแล</span>
+      </div>
+      <button class="ghost" onclick="logout()">ออกจากระบบ</button>
+    </div>
+
+    <div class="flex gap-2 mb-5">
+      <button class="tab active" id="tabBtnDash" onclick="switchTab('dash')">แดชบอร์ด</button>
+      <button class="tab" id="tabBtnStu" onclick="switchTab('stu')">นักเรียน</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="tabDash">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <span style="font-size:13px;color:var(--muted)">ภาพรวมการซ้อม</span>
+        <select id="modeFilter" class="fld" style="width:auto" onchange="loadDashboard()">
+          <option value="">ทุกโหมด</option>
+          <option value="คิดเลขเร็ว">คิดเลขเร็ว</option>
+          <option value="เวทคณิต">เวทคณิต</option>
+          <option value="สูตรคูณเร็ว">สูตรคูณเร็ว</option>
+        </select>
+      </div>
+
+      <div class="grid gap-3 mb-4" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="card"><p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">รอบที่ซ้อมทั้งหมด</p><p class="num-font m-0" style="font-size:26px;font-weight:700" id="sSessions">0</p></div>
+        <div class="card"><p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">จำนวนนักเรียน</p><p class="num-font m-0" style="font-size:26px;font-weight:700" id="sPlayers">0</p></div>
+        <div class="card"><p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">ความแม่นยำเฉลี่ย</p><p class="num-font m-0" style="font-size:26px;font-weight:700;color:var(--digit)" id="sAvg">0%</p></div>
+        <div class="card"><p class="m-0 mb-2" style="font-size:13px;color:var(--muted)">เหรียญ</p>
+          <div class="flex gap-2 flex-wrap" id="sMedals" style="font-size:13px"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center gap-2 mb-3"><svg viewBox="0 0 24 24" fill="none" stroke="var(--target)" stroke-width="2" style="width:17px;height:17px"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/></svg><span style="font-weight:500">อันดับคะแนนสูงสุด</span></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>#</th><th>ชื่อ</th><th>ระดับ</th><th>โหมด</th><th style="text-align:right">คะแนน</th><th style="text-align:right">แม่นยำ</th></tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table></div>
+        <p id="lbEmpty" class="hidden m-0 mt-2" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีข้อมูลการซ้อม</p>
+      </div>
+    </section>
+
+    <!-- STUDENTS -->
+    <section id="tabStu" class="hidden">
+      <div class="card mb-4">
+        <p class="m-0 mb-3" style="font-weight:500" id="formTitle">เพิ่มนักเรียน</p>
+        <div class="grid gap-3 mb-3" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+          <input id="fCode" class="fld" placeholder="รหัส/เลขประจำตัว" />
+          <input id="fName" class="fld" placeholder="ชื่อ-สกุล *" />
+          <select id="fLevel" class="fld">
+            <option value="">ระดับชั้น</option>
+            <option>ป.1</option><option>ป.2</option><option>ป.3</option>
+            <option>ป.4</option><option>ป.5</option><option>ป.6</option>
+            <option>ม.1</option><option>ม.2</option><option>ม.3</option>
+          </select>
+          <input id="fRoom" class="fld" placeholder="ห้อง" />
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-primary" id="saveStuBtn" onclick="saveStudent()">บันทึก</button>
+          <button class="ghost hidden" id="cancelEditBtn" onclick="resetForm()">ยกเลิกแก้ไข</button>
+          <span id="stuMsg" style="font-size:13px;min-height:18px"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between mb-3">
+          <span style="font-weight:500">รายชื่อนักเรียน</span>
+          <span id="stuCount" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ระดับ</th><th>ห้อง</th><th style="text-align:right">จัดการ</th></tr></thead>
+          <tbody id="stuBody"></tbody>
+        </table></div>
+        <p id="stuEmpty" class="hidden m-0 mt-2" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีนักเรียน</p>
+      </div>
+    </section>
+  </div>
+
+<script src="config.js"></script>
+<script>
+const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('วาง') === -1) ? API_URL : '';
+const MEDAL_LABEL = { gold:'ทอง', silver:'เงิน', bronze:'ทองแดง', cert:'เข้าร่วม' };
+const MEDAL_COLOR = { gold:'#ffc640', silver:'#cdd4e6', bronze:'#e08a4b', cert:'#7ce0f2' };
+let studentsCache = [], editingId = null;
+
+function el(id){ return document.getElementById(id); }
+function val(id){ return el(id).value; }
+
+async function api(action, data, post){
+  if(!API) return null;
+  try{
+    if(post){
+      const res = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, data||{})) });
+      return await res.json();
+    }
+    let url = API + '?action=' + encodeURIComponent(action);
+    if(data) Object.keys(data).forEach(function(k){ url += '&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
+    const res = await fetch(url);
+    return await res.json();
+  }catch(e){ console.warn('api error:', e); return null; }
+}
+
+/* ---------- login ---------- */
+async function doLogin(){
+  const msg = el('loginMsg');
+  if(!API){ msg.textContent='ยังไม่ได้ตั้งค่า API ใน config.js'; return; }
+  msg.style.color='var(--muted)'; msg.textContent='กำลังตรวจสอบ...';
+  const res = await api('login', { username:val('username'), password:val('password') }, true);
+  if(res && res.ok){
+    el('loginView').classList.add('hidden');
+    el('adminView').classList.remove('hidden');
+    el('adminView').classList.add('fade-in');
+    loadDashboard(); loadStudents();
+  } else {
+    msg.style.color='var(--miss)';
+    msg.textContent = (res && res.error) ? res.error : 'เข้าสู่ระบบไม่สำเร็จ';
+  }
+}
+function logout(){
+  el('adminView').classList.add('hidden');
+  el('loginView').classList.remove('hidden');
+  el('password').value=''; el('loginMsg').textContent='';
+}
+
+/* ---------- tabs ---------- */
+function switchTab(t){
+  el('tabDash').classList.toggle('hidden', t!=='dash');
+  el('tabStu').classList.toggle('hidden', t!=='stu');
+  el('tabBtnDash').classList.toggle('active', t==='dash');
+  el('tabBtnStu').classList.toggle('active', t==='stu');
+}
+
+/* ---------- dashboard ---------- */
+async function loadDashboard(){
+  const mode = val('modeFilter');
+  const stats = await api('getStats', mode ? { mode:mode } : null);
+  if(stats && stats.ok){
+    el('sSessions').textContent = stats.totalSessions;
+    el('sPlayers').textContent = stats.players;
+    el('sAvg').textContent = stats.avgPct + '%';
+    const m = stats.medals || {};
+    el('sMedals').innerHTML = ['gold','silver','bronze','cert'].map(function(k){
+      return '<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:50%;background:'+MEDAL_COLOR[k]+'"></span>'+MEDAL_LABEL[k]+' '+(m[k]||0)+'</span>';
+    }).join('');
+  }
+  const lb = await api('getLeaderboard', Object.assign({ limit:10 }, mode ? { mode:mode } : {}));
+  const body = el('lbBody');
+  if(lb && lb.ok && lb.leaderboard && lb.leaderboard.length){
+    body.innerHTML = lb.leaderboard.map(function(r,i){
+      return '<tr><td class="num-font">'+(i+1)+'</td><td>'+r.studentName+'</td><td style="color:var(--muted)">'+(r.level||'-')+'</td>'
+        + '<td style="color:var(--muted)">รอบ '+r.round+'</td>'
+        + '<td class="num-font" style="text-align:right;font-weight:600">'+r.score+'</td>'
+        + '<td style="text-align:right;color:'+MEDAL_COLOR[r.medal]+'">'+r.pct+'%</td></tr>';
+    }).join('');
+    el('lbEmpty').classList.add('hidden');
+  } else { body.innerHTML=''; el('lbEmpty').classList.remove('hidden'); }
+}
+
+/* ---------- students ---------- */
+async function loadStudents(){
+  const res = await api('listStudents');
+  const body = el('stuBody');
+  studentsCache = (res && res.ok && res.students) ? res.students : [];
+  el('stuCount').textContent = studentsCache.length ? (studentsCache.length + ' คน') : '';
+  if(studentsCache.length){
+    body.innerHTML = studentsCache.map(function(s){
+      return '<tr><td style="color:var(--muted)">'+(s.studentCode||'-')+'</td><td>'+s.fullName+'</td>'
+        + '<td style="color:var(--muted)">'+(s.classLevel||'-')+'</td><td style="color:var(--muted)">'+(s.room||'-')+'</td>'
+        + '<td style="text-align:right;white-space:nowrap">'
+        + '<button class="ghost" style="padding:5px 10px" onclick="editStudent(\''+s.id+'\')">แก้ไข</button> '
+        + '<button class="ghost" style="padding:5px 10px;color:var(--miss);border-color:rgba(251,113,133,.4)" onclick="delStudent(\''+s.id+'\')">ลบ</button>'
+        + '</td></tr>';
+    }).join('');
+    el('stuEmpty').classList.add('hidden');
+  } else { body.innerHTML=''; el('stuEmpty').classList.remove('hidden'); }
+}
+
+async function saveStudent(){
+  const name = val('fName').trim();
+  const msg = el('stuMsg');
+  if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อ-สกุล'; return; }
+  const data = { studentCode:val('fCode'), fullName:name, classLevel:val('fLevel'), room:val('fRoom') };
+  const btn = el('saveStuBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
+  let res;
+  if(editingId){ data.id=editingId; res = await api('updateStudent', data, true); }
+  else { res = await api('addStudent', data, true); }
+  btn.disabled=false;
+  if(res && res.ok){ msg.style.color='var(--good)'; msg.textContent='บันทึกแล้ว ✓'; resetForm(true); loadStudents(); }
+  else { msg.style.color='var(--miss)'; msg.textContent = (res && res.error) ? res.error : 'บันทึกไม่สำเร็จ'; }
+}
+
+function editStudent(id){
+  const s = studentsCache.filter(function(x){ return String(x.id)===String(id); })[0];
+  if(!s) return;
+  editingId = id;
+  el('fCode').value = s.studentCode||''; el('fName').value = s.fullName||'';
+  el('fLevel').value = s.classLevel||''; el('fRoom').value = s.room||'';
+  el('formTitle').textContent = 'แก้ไขข้อมูลนักเรียน';
+  el('saveStuBtn').textContent = 'บันทึกการแก้ไข';
+  el('cancelEditBtn').classList.remove('hidden');
+  el('stuMsg').textContent = '';
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function resetForm(keepMsg){
+  editingId = null;
+  ['fCode','fName','fLevel','fRoom'].forEach(function(i){ el(i).value=''; });
+  el('formTitle').textContent = 'เพิ่มนักเรียน';
+  el('saveStuBtn').textContent = 'บันทึก';
+  el('cancelEditBtn').classList.add('hidden');
+  if(!keepMsg) el('stuMsg').textContent = '';
+}
+
+async function delStudent(id){
+  const s = studentsCache.filter(function(x){ return String(x.id)===String(id); })[0];
+  if(!confirm('ลบนักเรียน "'+(s ? s.fullName : '')+'" ?')) return;
+  const res = await api('deleteStudent', { id:id }, true);
+  if(res && res.ok){ loadStudents(); }
+  else { alert('ลบไม่สำเร็จ'); }
+}
+
+if(!API){ el('loginMsg').textContent = 'ยังไม่ได้ตั้งค่า API ใน config.js'; }
+</script>
+</body>
+</html>
