@@ -68,6 +68,7 @@
   #doc .tech{ font-size:12px; color:#444; margin:3px 0 5px; }
   #doc .dotgrid{ height:215px; border:1px solid #999; border-radius:3px;
     background-image:linear-gradient(#dcdcdc 1px, transparent 1px), linear-gradient(90deg, #dcdcdc 1px, transparent 1px); background-size:22px 22px; }
+  #doc .blankbox{ height:300px; border:1px solid #999; border-radius:3px; }
   #doc .ans{ font-size:13px; margin-top:8px; }
   #doc .ansline{ display:inline-block; border-bottom:1px dotted #333; width:120px; }
   #doc .foot{ margin-top:16px; text-align:center; font-size:11px; color:#777; }
@@ -160,7 +161,7 @@ const BLUEPRINTS = {
     books: [
       { no:1, title:'การบวก การลบ และการบวกลบระคน', count:28, score:56, minutes:25, sections:[
         { no:1, title:'การบวกแบบทดจุด', score:24, items:[
-          { type:'add', addends:3, digits:[2,4], n:4 },
+          { type:'add', addends:3, digits:[3,5], n:4 },
           { type:'add', addends:4, digits:[3,5], n:4 },
           { type:'add', addends:5, digits:[4,6], n:4 }
         ]},
@@ -178,11 +179,80 @@ const BLUEPRINTS = {
         { no:1, title:'การคูณ', score:24, items:[
           { type:'mul', a:[3,3], b:[2,2], n:4, tech:'การคูณโดยการจัดตำแหน่งผลคูณ' },
           { type:'mul', a:[3,3], b:[3,3], n:4, tech:'การคูณแนวตั้งและแนวไขว้' },
-          { type:'mul', a:[2,2], b:[2,2], n:4, tech:'การคูณโดยวิธีเบี่ยงฐาน' }
+          { type:'mul', a:[2,2], b:[2,2], n:4, tech:'การคูณโดยวิธีเบี่ยงฐาน', blank:true }
         ]},
         { no:2, title:'การหาร', score:20, items:[
-          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีนิขิลัม' },
-          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีพาราวาวรท' }
+          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีนิขิลัม', blank:true },
+          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีพาราวาท', blank:true }
+        ]}
+      ]}
+    ]
+  },
+  'ป.ปลาย': {
+    label: 'ระดับชั้นประถมศึกษาปีที่ 4-6',
+    books: [
+      { no:1, title:'การบวก การลบ และการบวกลบระคน', count:28, score:56, minutes:25, sections:[
+        { no:1, title:'การบวกแบบทดจุด', score:24, items:[
+          { type:'add', addends:3, digits:[3,5], n:4 },
+          { type:'add', addends:4, digits:[5,7], n:4 },
+          { type:'add', addends:5, digits:[6,7], n:4 }
+        ]},
+        { no:2, title:'การลบ', score:24, items:[
+          { type:'sub', aDigits:[7,7], bDigits:[6,6], n:3, tech:'การลบโดยใช้หลักทบสิบ' },
+          { type:'sub', aDigits:[7,7], bDigits:[6,6], n:3, tech:'การลบโดยใช้หลักทบสิบทบเก้า' },
+          { type:'sub', aDigits:[7,7], bDigits:[6,6], n:3, tech:'การลบโดยใช้การลบตรงหลัก' },
+          { type:'sub', aDigits:[7,7], bDigits:[6,6], n:3, tech:'การลบโดยใช้วิธีนิขิลัม' }
+        ]},
+        { no:3, title:'การบวกลบระคน', score:8, items:[
+          { type:'mix', terms:4, digits:[3,4], n:4, tech:'การบวกลบระคน' }
+        ]}
+      ]},
+      { no:2, title:'การคูณและการหาร', count:22, score:44, minutes:35, sections:[
+        { no:1, title:'การคูณ', score:24, items:[
+          { type:'mul', a:[3,3], b:[2,2], n:4, tech:'การคูณโดยการจัดตำแหน่งผลคูณ' },
+          { type:'mul', a:[3,3], b:[3,3], n:4, tech:'การคูณแนวตั้งและแนวไขว้' },
+          { type:'mul', a:[3,3], b:[2,3], n:4, tech:'การคูณโดยวิธีเบี่ยงฐาน', blank:true }
+        ]},
+        { no:2, title:'การหาร', score:20, items:[
+          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีนิขิลัม', blank:true },
+          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีพาราวาท', blank:true }
+        ]}
+      ]}
+    ]
+  },
+  'ม.ต้น': {
+    label: 'ระดับชั้นมัธยมศึกษาปีที่ 1-3',
+    books: [
+      { no:1, title:'การบวก การลบ และการบวกลบระคน', count:27, score:54, minutes:30, sections:[
+        { no:1, title:'การบวกแบบทดจุด', score:24, items:[
+          { type:'add', addends:4, digits:[4,6], n:2 },
+          { type:'add', addends:4, digits:[4,6], decimals:2, n:2 },
+          { type:'add', addends:5, digits:[5,7], n:2 },
+          { type:'add', addends:5, digits:[5,7], decimals:3, n:2 },
+          { type:'add', addends:6, digits:[6,8], n:2 },
+          { type:'add', addends:6, digits:[6,8], decimals:3, n:2 }
+        ]},
+        { no:2, title:'การลบ', score:24, items:[
+          { type:'sub', aDigits:[8,8], bDigits:[7,7], count:[2,3], n:3, tech:'การลบโดยใช้หลักทบสิบ' },
+          { type:'sub', aDigits:[8,8], bDigits:[7,7], count:[2,3], n:3, tech:'การลบโดยใช้หลักทบสิบทบเก้า' },
+          { type:'sub', aDigits:[8,8], bDigits:[7,7], count:[2,3], n:3, tech:'การลบโดยใช้การลบตรงหลัก' },
+          { type:'sub', aDigits:[8,8], bDigits:[7,7], count:[2,3], n:3, tech:'การลบโดยใช้วิธีนิขิลัม' }
+        ]},
+        { no:3, title:'การบวกลบระคน', score:6, items:[
+          { type:'mix', terms:4, digits:[4,6], n:3, tech:'การบวกลบระคน' }
+        ]}
+      ]},
+      { no:2, title:'การคูณและการหาร', count:23, score:46, minutes:40, sections:[
+        { no:1, title:'การคูณ', score:24, items:[
+          { type:'mul', a:[4,4], b:[4,4], n:4, tech:'การคูณโดยการจัดตำแหน่งผลคูณ' },
+          { type:'mul', a:[3,5], b:[3,5], n:4, tech:'การคูณแนวตั้งและแนวไขว้' },
+          { type:'mul', a:[3,5], b:[3,5], n:4, tech:'การคูณโดยวิธีเบี่ยงฐาน', blank:true }
+        ]},
+        { no:2, title:'การหาร', score:22, items:[
+          { type:'div', dividendDigits:[4,6], divisorDigits:[2,4], divmode:'remainder', n:5, tech:'การหารโดยใช้วิธีนิขิลัม ตอบเป็นเศษเหลือ', blank:true },
+          { type:'div', dividendDigits:[4,6], divisorDigits:[2,4], divmode:'decimal', n:2, tech:'การหารโดยใช้วิธีนิขิลัม ตอบเป็นทศนิยม 2 ตำแหน่ง', blank:true },
+          { type:'div', dividendDigits:[4,6], divisorDigits:[2,4], divmode:'remainder', n:3, tech:'การหารโดยใช้วิธีพาราวาท ตอบเป็นเศษเหลือ', blank:true },
+          { type:'div', dividendDigits:[4,6], divisorDigits:[2,4], divmode:'decimal', n:1, tech:'การหารโดยใช้วิธีพาราวาท ตอบเป็นทศนิยม 2 ตำแหน่ง', blank:true }
         ]}
       ]}
     ]
@@ -196,46 +266,77 @@ function ri(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
 function numDigits(range){ const d = ri(range[0], range[1]); const lo = Math.pow(10,d-1), hi = Math.pow(10,d)-1; return ri(lo, hi); }
 function spaced(n){ return String(n).split('').join('\u2009'); }
 function fmt(n){ return Number(n).toLocaleString('en-US'); }
+function fmtNum(val, dec){ return Number(val).toLocaleString('en-US', { minimumFractionDigits:dec, maximumFractionDigits:dec }); }
+function fmtScaled(scaled, dec){ const sc = Math.pow(10,dec); const ip = Math.floor(scaled/sc), fr = scaled % sc; let s = ip.toLocaleString('en-US'); if(dec>0) s += '.' + String(fr).padStart(dec,'0'); return s; }
 
 /* ===== generators ===== */
 function genItem(it){
   if(it.type === 'add'){
-    const nums = []; let sum = 0;
-    for(let i=0;i<it.addends;i++){ const v = numDigits(it.digits); nums.push(v); sum += v; }
-    return { type:'add', nums:nums, answer:sum };
+    const dec = it.decimals || 0, sc = Math.pow(10, dec);
+    const nums = []; let sumScaled = 0;
+    for(let i=0;i<it.addends;i++){
+      const ip = numDigits(it.digits);
+      const fr = dec > 0 ? Math.floor(Math.random()*sc) : 0;
+      sumScaled += ip*sc + fr;
+      nums.push(dec > 0 ? (ip + '.' + String(fr).padStart(dec,'0')) : String(ip));
+    }
+    return { type:'add', nums:nums, answerText:fmtScaled(sumScaled, dec) };
   }
   if(it.type === 'sub'){
-    let a, b, g=0;
-    do{ a = numDigits(it.digits); b = numDigits(it.digits); g++; } while(a <= b && g < 50);
-    if(a < b){ const t=a; a=b; b=t; }
-    return { type:'sub', a:a, b:b, answer:a-b, tech:it.tech };
+    const ad = it.aDigits || it.digits, bd = it.bDigits || it.digits;
+    const cnt = it.count ? ri(it.count[0], it.count[1]) : 2;
+    let terms, result, g=0;
+    do{
+      terms = [numDigits(ad)];
+      for(let i=1;i<cnt;i++) terms.push(numDigits(bd));
+      result = terms[0]; let ok=true;
+      for(let i=1;i<cnt;i++){ result -= terms[i]; if(result < 0) ok=false; }
+      g++;
+      if(ok && result > 0) break;
+    } while(g < 80);
+    return { type:'sub', terms:terms, answer:result, answerText:fmtNum(result,0), tech:it.tech };
   }
   if(it.type === 'mix'){
     let terms, ans, g=0;
     do{
       terms = []; for(let i=0;i<it.terms;i++) terms.push(numDigits(it.digits));
-      // signs: + - + - ...
       let run = terms[0], okp = true;
       for(let i=1;i<terms.length;i++){ run += (i%2===1 ? -terms[i] : terms[i]); if(run < 0) okp = false; }
       ans = run; g++;
       if(okp && ans > 0) break;
     } while(g < 80);
-    return { type:'mix', terms:terms, answer:ans, tech:it.tech };
+    return { type:'mix', terms:terms, answer:ans, answerText:fmtNum(ans,0), tech:it.tech };
   }
   if(it.type === 'mul'){
     const a = numDigits(it.a), b = numDigits(it.b);
-    return { type:'mul', a:a, b:b, answer:a*b, tech:it.tech };
+    return { type:'mul', a:a, b:b, answer:a*b, answerText:fmtNum(a*b,0), tech:it.tech, blank:!!it.blank };
   }
   if(it.type === 'div'){
-    let divisor, quotient, dividend, g=0;
-    const dlo = Math.pow(10, it.dividendDigits[0]-1), dhi = Math.pow(10, it.dividendDigits[1])-1;
+    const mode = it.divmode || 'exact';
+    const ddLo = Math.pow(10, it.dividendDigits[0]-1), ddHi = Math.pow(10, it.dividendDigits[1])-1;
+    if(mode === 'exact'){
+      const qcap = it.maxQuotient || 11;
+      let divisor, quotient, dividend, g=0;
+      do{
+        divisor = numDigits(it.divisorDigits);
+        const qmin = Math.max(2, Math.ceil(ddLo/divisor)), qmax = Math.min(qcap, Math.floor(ddHi/divisor));
+        quotient = qmax >= qmin ? ri(qmin, qmax) : qmin;
+        dividend = divisor*quotient; g++;
+      } while((dividend < ddLo || dividend > ddHi || quotient > qcap) && g < 80);
+      return { type:'div', dividend:dividend, divisor:divisor, answer:quotient, answerText:String(quotient), tech:it.tech, blank:!!it.blank };
+    }
+    let dividend, divisor, g=0;
     do{
+      dividend = numDigits(it.dividendDigits);
       divisor = numDigits(it.divisorDigits);
-      const qmin = Math.max(2, Math.ceil(dlo/divisor)), qmax = Math.floor(dhi/divisor);
-      quotient = qmax >= qmin ? ri(qmin, qmax) : 2;
-      dividend = divisor*quotient; g++;
-    } while((dividend < dlo || dividend > dhi) && g < 80);
-    return { type:'div', dividend:dividend, divisor:divisor, answer:quotient, tech:it.tech };
+      g++;
+    } while((divisor >= dividend || (mode === 'decimal' && dividend % divisor === 0)) && g < 80);
+    if(mode === 'remainder'){
+      const q = Math.floor(dividend/divisor), r = dividend % divisor;
+      return { type:'div', dividend:dividend, divisor:divisor, answerText:(r > 0 ? (q + ' เศษ ' + r) : String(q)), tech:it.tech, blank:!!it.blank };
+    }
+    const v = Math.round(dividend/divisor*100)/100;
+    return { type:'div', dividend:dividend, divisor:divisor, answerText:fmtNum(v,2), tech:it.tech, blank:!!it.blank };
   }
 }
 
@@ -281,12 +382,12 @@ function renderProblem(p, num){
     return '<div class="qbox addbox"><span class="qn">' + num + ')</span><div class="vstack">' + rows + '<div class="vline"></div><div class="sumspace"></div><div class="vline2"></div></div><div class="ans">ตอบ <span class="ansline"></span></div></div>';
   }
   let expr = '';
-  if(p.type === 'sub') expr = p.a + ' − ' + p.b;
+  if(p.type === 'sub') expr = p.terms.join(' − ');
   else if(p.type === 'mix'){ expr = String(p.terms[0]); for(let i=1;i<p.terms.length;i++) expr += (i%2===1 ? ' − ' : ' + ') + p.terms[i]; }
   else if(p.type === 'mul') expr = p.a + ' × ' + p.b;
   else if(p.type === 'div') expr = p.dividend + ' ÷ ' + p.divisor;
   return '<div class="qbox"><div class="qhead"><span class="qn">' + num + ')</span> ' + expr + ' = <span class="box"></span></div>'
-    + '<div class="tech">(' + p.tech + ')</div><div class="dotgrid"></div>'
+    + '<div class="tech">(' + p.tech + ')</div>' + (p.blank ? '<div class="blankbox"></div>' : '<div class="dotgrid"></div>')
     + '<div class="ans">ตอบ <span class="ansline"></span></div></div>';
 }
 function renderBook(b){
@@ -306,7 +407,7 @@ function renderKey(){
     html += '<div class="key-sec" style="text-decoration:underline">เฉลย ฉบับที่ ' + b.no + '  ' + b.title + '</div>';
     b.sections.forEach(function(sec){
       html += '<div class="key-sec">ตอนที่ ' + sec.no + ' ' + sec.title + '</div><div class="key-grid">';
-      html += sec.problems.map(function(p,i){ return '<div class="ki"><span class="kn">' + (i+1) + ')</span><span>' + fmt(p.answer) + '</span></div>'; }).join('');
+      html += sec.problems.map(function(p,i){ return '<div class="ki"><span class="kn">' + (i+1) + ')</span><span>' + p.answerText + '</span></div>'; }).join('');
       html += '</div>';
     });
   });
