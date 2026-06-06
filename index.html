@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070b18; --bg2:#0f1530; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --text:#eaeefb; --muted:#8b93b8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif; overflow-x:hidden;
+    background:
+      radial-gradient(1000px 600px at 12% -5%, rgba(65,211,240,.16), transparent 55%),
+      radial-gradient(900px 600px at 95% 0%, rgba(167,139,250,.14), transparent 50%),
+      radial-gradient(900px 700px at 50% 115%, rgba(255,198,64,.10), transparent 55%),
+      linear-gradient(165deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  body::before{ content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.35;
+    background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);
+    background-size:48px 48px; mask-image:radial-gradient(circle at 50% 30%,#000,transparent 80%); }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .wrap{ position:relative; z-index:1; max-width:920px; margin:0 auto; padding:24px 20px 40px; }
+
+  /* floating math symbols */
+  .floaty{ position:fixed; z-index:0; color:rgba(255,255,255,.05); font-family:'Chakra Petch'; font-weight:700; pointer-events:none; animation:float 9s ease-in-out infinite; }
+  @keyframes float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-22px) rotate(4deg)}}
+
+  .kicker{ font-family:'Chakra Petch'; letter-spacing:5px; font-size:12px; color:var(--muted); }
+  .title{ font-weight:700; line-height:1.12; font-size:clamp(30px,6vw,48px);
+    background:linear-gradient(120deg,#eaeefb,#7fe3f5 40%,#a78bfa 75%,#ffc640);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 4px 30px rgba(127,227,245,.25)); }
+  .tagline{ color:var(--muted); font-size:clamp(14px,2.4vw,17px); }
+
+  .stat{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 14px; text-align:center; backdrop-filter:blur(10px); }
+  .stat .v{ font-size:clamp(26px,5vw,36px); font-weight:700; }
+
+  .grid-cards{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+  .mode-card{ position:relative; overflow:hidden; display:block; text-decoration:none; color:var(--text); cursor:pointer;
+    background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    border:1px solid var(--line); border-radius:22px; padding:22px;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  .mode-card::before{ content:""; position:absolute; inset:0; border-radius:22px; padding:1.3px;
+    background:linear-gradient(140deg, var(--acc), transparent 55%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude;
+    opacity:.45; transition:opacity .25s; }
+  .mode-card::after{ content:""; position:absolute; top:0; left:-70%; width:45%; height:100%; transform:skewX(-20deg);
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent); transition:left .65s ease; }
+  .mode-card:hover{ transform:translateY(-6px); box-shadow:0 22px 55px -18px var(--accGlow); border-color:transparent; }
+  .mode-card:hover::before{ opacity:1; }
+  .mode-card:hover::after{ left:130%; }
+  .mode-card .ic{ width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    background:var(--accSoft); color:var(--acc); margin-bottom:14px; box-shadow:0 0 26px -4px var(--accGlow); }
+  .mode-card .ic svg{ width:28px;height:28px; }
+  .mode-card h3{ margin:0 0 4px; font-size:20px; font-weight:600; }
+  .mode-card p{ margin:0; font-size:13px; color:var(--muted); min-height:36px; }
+  .mode-card .usage{ margin-top:12px; font-size:12px; color:var(--muted); }
+  .mode-card .usage b{ color:var(--acc); }
+  .badge-soon{ position:absolute; top:14px; right:14px; font-size:11px; color:var(--muted); background:rgba(255,255,255,.06); border:1px solid var(--line); padding:3px 9px; border-radius:99px; }
+  .card-soon{ opacity:.82; }
+
+  .adminlink{ font-size:13px; color:var(--muted); text-decoration:none; display:inline-flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; transition:.15s; }
+  .adminlink:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .adminlink svg{ width:15px; height:15px; }
+
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:18px 20px; backdrop-filter:blur(10px); }
+  .bar-track{ height:10px; border-radius:99px; background:rgba(255,255,255,.06); overflow:hidden; }
+  .bar-fill{ height:100%; border-radius:99px; width:0; transition:width 1s cubic-bezier(.2,.8,.2,1); }
+  .rankc{ width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Chakra Petch';font-weight:700;font-size:13px;flex-shrink:0; }
+  .mchip{ font-size:11px; padding:2px 9px; border-radius:99px; white-space:nowrap; }
+  .lb-row{ opacity:0; animation:lbIn .55s ease forwards; }
+  @keyframes lbIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:none;} }
+</style>
+</head>
+<body>
+
+  <div class="floaty" style="top:18%;left:6%;font-size:60px">×</div>
+  <div class="floaty" style="top:30%;right:8%;font-size:48px;animation-delay:1.5s">÷</div>
+  <div class="floaty" style="top:62%;left:10%;font-size:54px;animation-delay:3s">√</div>
+  <div class="floaty" style="top:74%;right:12%;font-size:44px;animation-delay:2s">+</div>
+  <div class="floaty" style="top:46%;left:50%;font-size:40px;animation-delay:4s">−</div>
+
+  <div class="wrap">
+
+    <!-- top -->
+    <div class="flex justify-end mb-6">
+      <a class="adminlink" href="admin.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+        เข้าระบบครู
+      </a>
+    </div>
+
+    <!-- hero -->
+    <div class="text-center mb-8">
+      <div class="kicker mb-3">MATH PRACTICE SYSTEM</div>
+      <h1 class="title m-0">ระบบจัดซ้อมรายวิชาคณิตศาสตร์</h1>
+      <div class="mt-2 mb-3" style="font-size:clamp(18px,3vw,24px);font-weight:600;color:#7fe3f5">By ครูแบงค์</div>
+      <p class="tagline m-0">จัดซ้อมมิติใหม่ ไม่เหมือนใครเพราะเบื่อ GSP</p>
+    </div>
+
+    <!-- stats -->
+    <div class="grid gap-3 mb-9" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><div class="num-font v" id="statSessions" style="color:#41d3f0">0</div><div style="font-size:12px;color:var(--muted)">รอบที่ซ้อม</div></div>
+      <div class="stat"><div class="num-font v" id="statPlayers" style="color:#a78bfa">0</div><div style="font-size:12px;color:var(--muted)">นักเรียนที่ร่วม</div></div>
+      <div class="stat"><div class="num-font v" id="statAcc" style="color:#ffc640">0%</div><div style="font-size:12px;color:var(--muted)">ความแม่นยำเฉลี่ย</div></div>
+    </div>
+
+    <!-- cards -->
+    <div class="grid-cards mb-10">
+
+      <a class="mode-card" href="quick-calc-practice.html" style="--acc:#41d3f0;--accGlow:rgba(65,211,240,.5);--accSoft:rgba(65,211,240,.14)">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
+        <h3>คิดเลขเร็ว</h3>
+        <p>สุ่มเลขโดด ทำให้ได้ผลลัพธ์ภายในเวลา</p>
+        <div class="usage">เล่นแล้ว <b id="uQuick">0</b> ครั้ง</div>
+      </a>
+
+      <div class="mode-card card-soon" onclick="soon('เวทคณิต')" style="--acc:#a78bfa;--accGlow:rgba(167,139,250,.5);--accSoft:rgba(167,139,250,.14)">
+        <span class="badge-soon">เร็ว ๆ นี้</span>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7M18 13l3 3M21 13l-3 3"/></svg></div>
+        <h3>เวทคณิต</h3>
+        <p>เทคนิคคิดเลขลัดแบบเวทคณิต</p>
+        <div class="usage">เล่นแล้ว <b id="uVedic">0</b> ครั้ง</div>
+      </div>
+
+      <div class="mode-card card-soon" onclick="soon('สูตรคูณเร็ว')" style="--acc:#34d399;--accGlow:rgba(52,211,153,.5);--accSoft:rgba(52,211,153,.14)">
+        <span class="badge-soon">เร็ว ๆ นี้</span>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+        <h3>สูตรคูณเร็ว</h3>
+        <p>ฝึกท่องสูตรคูณให้คล่องและแม่น</p>
+        <div class="usage">เล่นแล้ว <b id="uMul">0</b> ครั้ง</div>
+      </div>
+
+      <a class="mode-card" href="game24.html" style="--acc:#ffc640;--accGlow:rgba(255,198,64,.5);--accSoft:rgba(255,198,64,.14)">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg></div>
+        <h3>เกม 24</h3>
+        <p>สุ่มเลข 4 ตัว รวมให้ได้ 24 ใน 15 วินาที</p>
+        <div class="usage">เล่นแล้ว <b id="u24">0</b> ครั้ง</div>
+      </a>
+
+    </div>
+
+    <!-- popularity + leaderboard -->
+    <div class="grid gap-4 mb-10" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <span style="font-weight:600">ความนิยมแต่ละโหมด</span>
+          <span id="popTop" class="hidden" style="font-size:12px;font-weight:500"></span>
+        </div>
+        <div id="popBars" class="flex flex-col gap-3"></div>
+      </div>
+      <div class="card">
+        <div class="flex items-center gap-2 mb-4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ffc640" stroke-width="2" style="width:18px;height:18px"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/></svg>
+          <span style="font-weight:600">อันดับคะแนนรวม</span>
+        </div>
+        <div id="lbList" class="flex flex-col"></div>
+        <p id="lbEmpty" class="hidden m-0" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีข้อมูลการซ้อม</p>
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div class="text-center" style="border-top:1px solid var(--line);padding-top:18px">
+      <p class="m-0" style="font-size:13px;color:var(--muted)">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</p>
+    </div>
+
+  </div>
+
+<script src="config.js"></script>
+<script>
+const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('วาง') === -1) ? API_URL : '';
+function el(id){ return document.getElementById(id); }
+function soon(name){ alert('โหมด "' + name + '" กำลังพัฒนา เร็ว ๆ นี้'); }
+
+async function api(action, data){
+  if(!API) return null;
+  try{
+    let url = API + '?action=' + encodeURIComponent(action);
+    if(data) Object.keys(data).forEach(function(k){ url += '&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
+    const res = await fetch(url);
+    return await res.json();
+  }catch(e){ console.warn('api error:', e); return null; }
+}
+
+function countUp(elm, to, suffix, dur){
+  to = Number(to) || 0; dur = dur || 1100; const t0 = performance.now();
+  function step(now){
+    const p = Math.min(1, (now - t0) / dur);
+    const e = 1 - Math.pow(1 - p, 3);
+    elm.textContent = Math.round(e * to) + (suffix || '');
+    if(p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function setUsage(id, n){ const e = el(id); if(e) e.textContent = Number(n || 0); }
+
+const MODES = [
+  { key:'คิดเลขเร็ว',  label:'คิดเลขเร็ว',  c:'#41d3f0' },
+  { key:'เวทคณิต',     label:'เวทคณิต',     c:'#a78bfa' },
+  { key:'สูตรคูณเร็ว', label:'สูตรคูณเร็ว', c:'#34d399' },
+  { key:'เกม24',       label:'เกม 24',      c:'#ffc640' }
+];
+function modeMeta(k){ return MODES.filter(function(m){ return m.key===k; })[0] || { label:k||'-', c:'#8b93b8' }; }
+
+function renderPopularity(byMode){
+  byMode = byMode || {};
+  const counts = MODES.map(function(m){ return Number(byMode[m.key] || 0); });
+  const max = Math.max(1, Math.max.apply(null, counts));
+  const total = counts.reduce(function(a,b){ return a+b; }, 0);
+  const box = el('popBars');
+  box.innerHTML = MODES.map(function(m,i){
+    return '<div>'
+      + '<div class="flex justify-between mb-1" style="font-size:13px"><span>'+m.label+'</span><span class="pop-count num-font" data-to="'+counts[i]+'" style="color:'+m.c+'">0</span></div>'
+      + '<div class="bar-track"><div class="bar-fill" data-w="'+(counts[i]/max*100)+'" style="background:'+m.c+';box-shadow:0 0 12px '+m.c+'"></div></div>'
+      + '</div>';
+  }).join('');
+  const fills = box.querySelectorAll('.bar-fill');
+  const nums  = box.querySelectorAll('.pop-count');
+  fills.forEach(function(e,i){
+    setTimeout(function(){
+      e.style.width = e.dataset.w + '%';
+      countUp(nums[i], Number(nums[i].dataset.to), '', 950);
+    }, 120 + i*140);
+  });
+  if(total > 0){
+    let ti = 0; counts.forEach(function(c,i){ if(c > counts[ti]) ti = i; });
+    const t = el('popTop'); t.textContent = 'ยอดนิยม: ' + MODES[ti].label; t.style.color = MODES[ti].c; t.classList.remove('hidden');
+  }
+}
+
+async function loadLeaderboard(){
+  const empty = el('lbEmpty');
+  if(!API){ empty.classList.remove('hidden'); return; }
+  const lb = await api('getLeaderboard', { limit:8 });
+  const list = el('lbList');
+  if(lb && lb.ok && lb.leaderboard && lb.leaderboard.length){
+    const rc = ['#ffc640','#cdd4e6','#e08a4b'];
+    list.innerHTML = lb.leaderboard.map(function(r,i){
+      const mm = modeMeta(r.mode);
+      const bg = i<3 ? rc[i] : 'rgba(255,255,255,.08)';
+      const col = i<3 ? '#1a1205' : 'var(--muted)';
+      return '<div class="lb-row flex items-center gap-3" style="padding:7px 0;border-bottom:1px solid var(--line);animation-delay:'+(i*0.13)+'s">'
+        + '<span class="rankc" style="background:'+bg+';color:'+col+'">'+(i+1)+'</span>'
+        + '<span style="flex:1;font-size:14px">'+r.studentName+'</span>'
+        + '<span class="mchip" style="background:'+mm.c+'22;color:'+mm.c+'">'+mm.label+'</span>'
+        + '<span class="lb-score num-font" data-to="'+r.score+'" style="font-weight:600;min-width:44px;text-align:right">0</span>'
+        + '</div>';
+    }).join('');
+    list.querySelectorAll('.lb-score').forEach(function(e,i){
+      setTimeout(function(){ countUp(e, Number(e.dataset.to), '', 700); }, 260 + i*130);
+    });
+    empty.classList.add('hidden');
+  } else { list.innerHTML=''; empty.classList.remove('hidden'); }
+}
+
+async function loadStats(){
+  if(!API) return;
+  const s = await api('getStats');
+  if(s && s.ok){
+    countUp(el('statSessions'), s.totalSessions);
+    countUp(el('statPlayers'), s.players);
+    countUp(el('statAcc'), s.avgPct, '%');
+    const bm = s.byMode || {};
+    setUsage('uQuick', bm['คิดเลขเร็ว']);
+    setUsage('uVedic', bm['เวทคณิต']);
+    setUsage('uMul',   bm['สูตรคูณเร็ว']);
+    setUsage('u24',    bm['เกม24']);
+    renderPopularity(bm);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function(){ renderPopularity({}); loadStats(); loadLeaderboard(); });
+</script>
+</body>
+</html>
