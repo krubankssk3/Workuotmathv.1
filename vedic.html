@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ซ้อมเวทคณิต</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#121838; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --acc:#a78bfa; --acc-glow:rgba(167,139,250,.45); --text:#eaeefb; --muted:#8b93b8; --miss:#fb7185; --good:#34d399;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:radial-gradient(900px 500px at 15% -10%, rgba(167,139,250,.12), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(65,211,240,.08), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .wrap{ position:relative; z-index:1; max-width:900px; margin:0 auto; padding:20px 18px 40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 18px; backdrop-filter:blur(10px); }
+  .btn{ background:linear-gradient(120deg,var(--acc),#c4b5fd); color:#1e1240; font-weight:600; border:none; border-radius:13px; padding:11px 18px; font-family:'Kanit'; font-size:15px; cursor:pointer; transition:transform .12s; }
+  .btn:active{transform:scale(.96);} .btn:disabled{opacity:.6;cursor:default;}
+  .ghost{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 14px; cursor:pointer; color:var(--muted); font-family:'Kanit'; font-size:14px; transition:.15s; }
+  .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .fld{ width:100%; padding:10px 12px; border-radius:11px; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); font-family:'Kanit'; font-size:14px; }
+  .fld:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 2px var(--acc-glow); }
+  .seg{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:13px; padding:4px; display:inline-flex; gap:4px; flex-wrap:wrap; }
+  .seg button{ border:none; background:transparent; color:var(--muted); font-family:'Kanit'; font-weight:500; padding:8px 14px; border-radius:9px; cursor:pointer; font-size:13px; }
+  .seg button.active{ background:rgba(167,139,250,.20); color:var(--acc); }
+  .backbtn{ display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; }
+  .backbtn:hover{ color:var(--text); } .backbtn svg{width:16px;height:16px;}
+  a{text-decoration:none;}
+
+  /* ===== กระดาษ ===== */
+  #doc{ background:#fff; color:#111; border-radius:10px; padding:22px 26px; max-width:800px; margin:0 auto; font-family:'Sarabun',sans-serif; box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
+  #doc .hdr{ border:1.5px solid #111; padding:6px 8px; text-align:center; font-size:14px; line-height:1.5; font-weight:600; margin-bottom:14px; }
+  #doc .cover-body{ min-height:215mm; display:flex; flex-direction:column; justify-content:center; }
+  #doc .cover-title{ text-align:center; font-weight:600; font-size:17px; text-decoration:underline; margin:24px 0 14px; }
+  #doc .cover-meta{ text-align:center; font-size:15px; line-height:2; }
+  #doc .cover-name{ font-size:14px; line-height:2.4; margin-top:24px; }
+  #doc .cover-note{ font-size:13px; margin-top:16px; }
+  #doc .cover-box{ width:230px; margin-top:26px; border:1.4px solid #111; }
+  #doc .cover-box div{ display:flex; }
+  #doc .cover-box .l{ width:110px; padding:10px 8px; border-right:1.4px solid #111; }
+  #doc .cover-box .r{ flex:1; }
+  #doc .cover-box .row1{ border-bottom:1.4px solid #111; }
+  #doc .secttitle{ font-weight:600; font-size:14px; margin:18px 0 10px; border-bottom:1px solid #333; padding-bottom:3px; }
+  #doc .qgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
+  #doc .qbox{ border:1px solid #111; border-radius:4px; padding:10px 12px; page-break-inside:avoid; }
+  #doc .qn{ color:#222; font-weight:600; margin-right:4px; }
+  /* vertical addition */
+  #doc .qbox.addbox{ display:flex; flex-direction:column; min-height:230px; }
+  #doc .addbox .vstack{ font-family:'Courier New',monospace; font-size:17px; letter-spacing:2px; margin:6px auto 0 auto; width:max-content; min-width:150px; }
+  #doc .addbox .ans{ margin-top:auto; }
+  #doc .sumspace{ height:32px; }
+  #doc .vline2{ border-top:4px double #111; }
+  #doc .vrow{ display:flex; justify-content:flex-end; align-items:center; gap:10px; line-height:1.6; }
+  #doc .vrow.opr{ justify-content:space-between; }
+  #doc .vop{ font-weight:700; }
+  #doc .vline{ border-top:1.4px solid #111; margin-top:4px; }
+  /* horizontal + dotgrid */
+  #doc .qhead{ font-size:15px; }
+  #doc .box{ display:inline-block; border:1px solid #333; width:34px; height:20px; vertical-align:middle; }
+  #doc .tech{ font-size:12px; color:#444; margin:3px 0 5px; }
+  #doc .dotgrid{ height:215px; border:1px solid #999; border-radius:3px;
+    background-image:linear-gradient(#dcdcdc 1px, transparent 1px), linear-gradient(90deg, #dcdcdc 1px, transparent 1px); background-size:22px 22px; }
+  #doc .ans{ font-size:13px; margin-top:8px; }
+  #doc .ansline{ display:inline-block; border-bottom:1px dotted #333; width:120px; }
+  #doc .foot{ margin-top:16px; text-align:center; font-size:11px; color:#777; }
+  /* key */
+  #doc .key-title{ text-align:center; color:#c00; font-weight:600; font-size:18px; margin:6px 0 14px; }
+  #doc .key-sec{ font-weight:600; font-size:14px; margin:14px 0 6px; }
+  #doc .key-grid{ display:grid; grid-template-columns:1fr 1fr; gap:4px 30px; font-size:14px; }
+  #doc .key-grid .ki{ display:flex; justify-content:space-between; max-width:240px; }
+  #doc .key-grid .kn{ color:#444; }
+  .pagebreak{ page-break-after:always; }
+  #doc .pagelast{ page-break-before:always; margin-top:40px; }
+  @media screen{ .pagebreak{ height:0; border-top:2px dashed #d0d0d0; margin:30px 0; } #doc .pagelast{ border-top:2px dashed #d0d0d0; padding-top:24px; } }
+
+  .hidden{display:none!important;}
+  @media print{
+    body{ background:#fff !important; }
+    .noprint{ display:none !important; }
+    .wrap{ padding:0; max-width:none; }
+    #doc{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:0; }
+    @page{ size:A4 portrait; margin:12mm; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="noprint">
+    <div class="flex items-center justify-between mb-4">
+      <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
+      <span style="font-weight:600">ซ้อมเวทคณิต</span>
+    </div>
+
+    <div class="card mb-4">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="seg" id="levelSeg">
+          <button data-level="ป.ต้น" class="active">ป.ต้น</button>
+          <button data-level="ป.ปลาย">ป.ปลาย</button>
+          <button data-level="ม.ต้น">ม.ต้น</button>
+        </div>
+        <div class="seg" id="tabSeg">
+          <button data-tab="0" class="active">ฉบับที่ 1</button>
+          <button data-tab="1">ฉบับที่ 2</button>
+          <button data-tab="2">เฉลย</button>
+        </div>
+        <button class="ghost" onclick="generate()">↻ สุ่มชุดใหม่</button>
+        <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
+      </div>
+    </div>
+
+    <div class="grid gap-4 mb-5" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+      <div class="card text-center">
+        <p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">ตัวจับเวลา (<span id="tLabel">ฉบับที่ 1 · 25 นาที</span>)</p>
+        <div class="num-font" id="timerDisp" style="font-size:46px;font-weight:700;color:var(--acc);line-height:1.1">25:00</div>
+        <p class="m-0 mb-3" style="font-size:12px;color:var(--muted)">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
+        <div class="flex gap-2 justify-center">
+          <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:90px">เริ่ม</button>
+          <button class="ghost" onclick="tReset()">รีเซ็ต</button>
+        </div>
+      </div>
+      <div class="card">
+        <p class="m-0 mb-3" style="font-size:13px;color:var(--muted)">บันทึกคะแนน (กรอกเองหลังตรวจ · เต็ม 100)</p>
+        <input list="studentList" id="rName" class="fld mb-2" placeholder="ชื่อนักเรียน" autocomplete="off" />
+        <datalist id="studentList"></datalist>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <input id="rScore" class="fld" type="number" min="0" max="100" placeholder="คะแนน (0-100)" />
+          <div class="flex gap-1">
+            <input id="rMin" class="fld" type="number" min="0" placeholder="นาที" />
+            <input id="rSec" class="fld" type="number" min="0" max="59" placeholder="วิ" />
+          </div>
+        </div>
+        <button class="btn w-full" id="saveBtn" onclick="saveScore()">บันทึกผล</button>
+        <p id="saveMsg" class="text-center m-0 mt-2" style="font-size:13px;min-height:18px"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="doc"></div>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('วาง') === -1) ? API_URL : '';
+const HEADER_BY = 'โดย ครูแบงค์สอนคณิต';
+
+/* ===== Blueprint (ป.ต้น) — ขยายระดับอื่นได้โดยเพิ่มข้อมูล ===== */
+const BLUEPRINTS = {
+  'ป.ต้น': {
+    label: 'ระดับชั้นประถมศึกษาปีที่ 1-3',
+    books: [
+      { no:1, title:'การบวก การลบ และการบวกลบระคน', count:28, score:56, minutes:25, sections:[
+        { no:1, title:'การบวกแบบทดจุด', score:24, items:[
+          { type:'add', addends:3, digits:[2,4], n:4 },
+          { type:'add', addends:4, digits:[3,5], n:4 },
+          { type:'add', addends:5, digits:[4,6], n:4 }
+        ]},
+        { no:2, title:'การลบ', score:24, items:[
+          { type:'sub', digits:[3,3], n:3, tech:'การลบโดยใช้หลักทบสิบ' },
+          { type:'sub', digits:[3,3], n:3, tech:'การลบโดยใช้หลักทบสิบทบเก้า' },
+          { type:'sub', digits:[3,3], n:3, tech:'การลบโดยใช้การลบตรงหลัก' },
+          { type:'sub', digits:[3,3], n:3, tech:'การลบโดยใช้วิธีนิขิลัม' }
+        ]},
+        { no:3, title:'การบวกลบระคน', score:8, items:[
+          { type:'mix', terms:4, digits:[2,3], n:4, tech:'การบวกลบระคน' }
+        ]}
+      ]},
+      { no:2, title:'การคูณและการหาร', count:22, score:44, minutes:35, sections:[
+        { no:1, title:'การคูณ', score:24, items:[
+          { type:'mul', a:[3,3], b:[2,2], n:4, tech:'การคูณโดยการจัดตำแหน่งผลคูณ' },
+          { type:'mul', a:[3,3], b:[3,3], n:4, tech:'การคูณแนวตั้งและแนวไขว้' },
+          { type:'mul', a:[2,2], b:[2,2], n:4, tech:'การคูณโดยวิธีเบี่ยงฐาน' }
+        ]},
+        { no:2, title:'การหาร', score:20, items:[
+          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีนิขิลัม' },
+          { type:'div', dividendDigits:[3,3], divisorDigits:[2,2], n:5, tech:'การหารโดยใช้วิธีพาราวาวรท' }
+        ]}
+      ]}
+    ]
+  }
+};
+
+let curLevel = 'ป.ต้น', activeTab = 0, current = null;
+
+function el(id){ return document.getElementById(id); }
+function ri(a,b){ return a + Math.floor(Math.random()*(b-a+1)); }
+function numDigits(range){ const d = ri(range[0], range[1]); const lo = Math.pow(10,d-1), hi = Math.pow(10,d)-1; return ri(lo, hi); }
+function spaced(n){ return String(n).split('').join('\u2009'); }
+function fmt(n){ return Number(n).toLocaleString('en-US'); }
+
+/* ===== generators ===== */
+function genItem(it){
+  if(it.type === 'add'){
+    const nums = []; let sum = 0;
+    for(let i=0;i<it.addends;i++){ const v = numDigits(it.digits); nums.push(v); sum += v; }
+    return { type:'add', nums:nums, answer:sum };
+  }
+  if(it.type === 'sub'){
+    let a, b, g=0;
+    do{ a = numDigits(it.digits); b = numDigits(it.digits); g++; } while(a <= b && g < 50);
+    if(a < b){ const t=a; a=b; b=t; }
+    return { type:'sub', a:a, b:b, answer:a-b, tech:it.tech };
+  }
+  if(it.type === 'mix'){
+    let terms, ans, g=0;
+    do{
+      terms = []; for(let i=0;i<it.terms;i++) terms.push(numDigits(it.digits));
+      // signs: + - + - ...
+      let run = terms[0], okp = true;
+      for(let i=1;i<terms.length;i++){ run += (i%2===1 ? -terms[i] : terms[i]); if(run < 0) okp = false; }
+      ans = run; g++;
+      if(okp && ans > 0) break;
+    } while(g < 80);
+    return { type:'mix', terms:terms, answer:ans, tech:it.tech };
+  }
+  if(it.type === 'mul'){
+    const a = numDigits(it.a), b = numDigits(it.b);
+    return { type:'mul', a:a, b:b, answer:a*b, tech:it.tech };
+  }
+  if(it.type === 'div'){
+    let divisor, quotient, dividend, g=0;
+    const dlo = Math.pow(10, it.dividendDigits[0]-1), dhi = Math.pow(10, it.dividendDigits[1])-1;
+    do{
+      divisor = numDigits(it.divisorDigits);
+      const qmin = Math.max(2, Math.ceil(dlo/divisor)), qmax = Math.floor(dhi/divisor);
+      quotient = qmax >= qmin ? ri(qmin, qmax) : 2;
+      dividend = divisor*quotient; g++;
+    } while((dividend < dlo || dividend > dhi) && g < 80);
+    return { type:'div', dividend:dividend, divisor:divisor, answer:quotient, tech:it.tech };
+  }
+}
+
+function generate(){
+  const bp = BLUEPRINTS[curLevel];
+  if(!bp){ alert('ระดับ "'+curLevel+'" กำลังพัฒนา'); document.querySelector('#levelSeg button[data-level="ป.ต้น"]').click(); return; }
+  current = {
+    level: curLevel, label: bp.label,
+    books: bp.books.map(function(bk){
+      return { no:bk.no, title:bk.title, minutes:bk.minutes, score:bk.score, count:bk.count,
+        sections: bk.sections.map(function(sec){
+          const probs = [];
+          sec.items.forEach(function(it){ for(let k=0;k<it.n;k++) probs.push(genItem(it)); });
+          return { no:sec.no, title:sec.title, score:sec.score, problems:probs };
+        }) };
+    })
+  };
+  renderActive();
+}
+
+/* ===== render ===== */
+function headerHTML(){
+  return '<div class="hdr">ข้อสอบจำลองเวทคณิต ' + current.label + '<br>' + HEADER_BY + '</div>';
+}
+function coverHTML(b){
+  return headerHTML()
+    + '<div class="cover-body">'
+    + '<div class="cover-title">ฉบับที่ ' + b.no + '  ' + b.title + '</div>'
+    + '<div class="cover-meta">จำนวน ' + b.count + ' ข้อ  รวม ' + b.score + ' คะแนน<br>กำหนดเวลา ' + b.minutes + ' นาที</div>'
+    + '<div class="cover-name">ชื่อ-สกุล ....................................................... ชั้น ..............<br>โรงเรียน ...........................................................</div>'
+    + '<div class="cover-note">(โปรดกรอกรายละเอียดข้างบน แล้วรอกรรมการให้สัญญาณเริ่มทำข้อสอบ)</div>'
+    + '<div class="cover-box"><div class="row1"><div class="l">ส่งลำดับที่</div><div class="r"></div></div><div><div class="l">คะแนนที่ได้</div><div class="r"></div></div></div>'
+    + '</div>';
+}
+const CREDIT = '<div class="foot pagelast">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>';
+function renderProblem(p, num){
+  if(p.type === 'add'){
+    const rows = p.nums.map(function(v,idx){
+      const last = idx === p.nums.length-1;
+      const op = last ? '<span class="vop">+</span>' : '';
+      return '<div class="vrow' + (last ? ' opr' : '') + '">' + op + '<span>' + spaced(v) + '</span></div>';
+    }).join('');
+    return '<div class="qbox addbox"><span class="qn">' + num + ')</span><div class="vstack">' + rows + '<div class="vline"></div><div class="sumspace"></div><div class="vline2"></div></div><div class="ans">ตอบ <span class="ansline"></span></div></div>';
+  }
+  let expr = '';
+  if(p.type === 'sub') expr = p.a + ' − ' + p.b;
+  else if(p.type === 'mix'){ expr = String(p.terms[0]); for(let i=1;i<p.terms.length;i++) expr += (i%2===1 ? ' − ' : ' + ') + p.terms[i]; }
+  else if(p.type === 'mul') expr = p.a + ' × ' + p.b;
+  else if(p.type === 'div') expr = p.dividend + ' ÷ ' + p.divisor;
+  return '<div class="qbox"><div class="qhead"><span class="qn">' + num + ')</span> ' + expr + ' = <span class="box"></span></div>'
+    + '<div class="tech">(' + p.tech + ')</div><div class="dotgrid"></div>'
+    + '<div class="ans">ตอบ <span class="ansline"></span></div></div>';
+}
+function renderBook(b){
+  let html = coverHTML(b) + '<div class="pagebreak"></div>' + headerHTML();
+  b.sections.forEach(function(sec){
+    html += '<div class="secttitle">ตอนที่ ' + sec.no + ' ' + sec.title + ' จำนวน ' + sec.problems.length + ' ข้อ ' + sec.score + ' คะแนน</div>';
+    html += '<div class="qgrid">';
+    sec.problems.forEach(function(p,i){ html += renderProblem(p, i+1); });
+    html += '</div>';
+  });
+  html += CREDIT;
+  return html;
+}
+function renderKey(){
+  let html = headerHTML() + '<div class="key-title">เฉลย</div>';
+  current.books.forEach(function(b){
+    html += '<div class="key-sec" style="text-decoration:underline">เฉลย ฉบับที่ ' + b.no + '  ' + b.title + '</div>';
+    b.sections.forEach(function(sec){
+      html += '<div class="key-sec">ตอนที่ ' + sec.no + ' ' + sec.title + '</div><div class="key-grid">';
+      html += sec.problems.map(function(p,i){ return '<div class="ki"><span class="kn">' + (i+1) + ')</span><span>' + fmt(p.answer) + '</span></div>'; }).join('');
+      html += '</div>';
+    });
+  });
+  html += CREDIT;
+  return html;
+}
+function renderActive(){
+  if(!current) return;
+  if(activeTab === 2){ el('doc').innerHTML = renderKey(); }
+  else { el('doc').innerHTML = renderBook(current.books[activeTab]); setTimer(current.books[activeTab].minutes, activeTab); }
+}
+
+/* ===== tabs / level ===== */
+document.querySelectorAll('#levelSeg button').forEach(function(b){ b.onclick = function(){
+  document.querySelectorAll('#levelSeg button').forEach(function(x){ x.classList.remove('active'); });
+  b.classList.add('active'); curLevel = b.dataset.level; generate();
+}; });
+document.querySelectorAll('#tabSeg button').forEach(function(b){ b.onclick = function(){
+  document.querySelectorAll('#tabSeg button').forEach(function(x){ x.classList.remove('active'); });
+  b.classList.add('active'); activeTab = +b.dataset.tab; renderActive();
+}; });
+
+/* ===== timer ===== */
+let tTotal = 1500, tLeft = 1500, tRun = false, tInt = null;
+function pad(n){ return (n<10?'0':'') + n; }
+function mmss(s){ s=Math.max(0,Math.floor(s)); return pad(Math.floor(s/60)) + ':' + pad(s%60); }
+function setTimer(minutes, tab){ tStop(); tTotal = minutes*60; tLeft = tTotal; el('tLabel').textContent = 'ฉบับที่ ' + (tab+1) + ' · ' + minutes + ' นาที'; tDraw(); }
+function tDraw(){ el('timerDisp').textContent = mmss(tLeft); el('usedDisp').textContent = mmss(tTotal - tLeft); }
+function tStart(){ if(tRun) return; tRun = true; el('tBtn').textContent = 'หยุด'; tInt = setInterval(function(){ tLeft = Math.max(0, tLeft-1); tDraw(); if(tLeft<=0) tStop(); }, 1000); }
+function tStop(){ tRun = false; clearInterval(tInt); el('tBtn').textContent = 'เริ่ม'; }
+function tToggle(){ tRun ? tStop() : tStart(); }
+function tReset(){ tStop(); tLeft = tTotal; tDraw(); }
+
+/* ===== API + record ===== */
+async function api(action, data, post){
+  if(!API) return null;
+  try{
+    if(post){ const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},data||{}))}); return await res.json(); }
+    let url=API+'?action='+encodeURIComponent(action);
+    if(data) Object.keys(data).forEach(function(k){ url+='&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
+    const res=await fetch(url); return await res.json();
+  }catch(e){ console.warn('api error:',e); return null; }
+}
+async function loadStudents(){
+  if(!API) return;
+  const st = await api('listStudents');
+  if(st && st.ok && st.students){ el('studentList').innerHTML = st.students.map(function(s){ return '<option value="'+s.fullName+'">'; }).join(''); }
+}
+async function saveScore(){
+  const name = el('rName').value.trim(); const msg = el('saveMsg');
+  if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อนักเรียน'; return; }
+  if(!API){ msg.style.color='var(--miss)'; msg.textContent='ยังไม่ได้ตั้งค่า API ใน config.js'; return; }
+  const score = Math.max(0, Math.min(100, parseInt(el('rScore').value,10)||0));
+  const used = (parseInt(el('rMin').value,10)||0)*60 + (parseInt(el('rSec').value,10)||0);
+  const btn = el('saveBtn'); btn.disabled = true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
+  const res = await api('saveSession', {
+    studentName:name, level:curLevel, round:1, mode:'เวทคณิต',
+    totalQuestions:50, good:0, near:0, miss:0, score:score, maxScore:100, timeSec:used
+  }, true);
+  btn.disabled = false;
+  if(res && res.ok){ msg.style.color='var(--good)'; msg.textContent='บันทึกแล้ว ✓ ('+res.pct+'%)'; }
+  else { msg.style.color='var(--miss)'; msg.textContent=(res&&res.error)?res.error:'บันทึกไม่สำเร็จ'; }
+}
+
+generate();
+document.addEventListener('DOMContentLoaded', loadStudents);
+</script>
+</body>
+</html>
