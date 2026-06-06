@@ -37,7 +37,8 @@
   /* ===== กระดาษ ===== */
   #doc{ background:#fff; color:#111; border-radius:10px; padding:22px 26px; max-width:800px; margin:0 auto; font-family:'Sarabun',sans-serif; box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
   #doc .hdr{ border:1.5px solid #111; padding:6px 8px; text-align:center; font-size:14px; line-height:1.5; font-weight:600; margin-bottom:14px; }
-  #doc .cover-body{ min-height:215mm; display:flex; flex-direction:column; justify-content:center; }
+  #doc .coverpage{ min-height:255mm; display:flex; flex-direction:column; }
+  #doc .cover-body{ flex:1; display:flex; flex-direction:column; justify-content:center; }
   #doc .cover-title{ text-align:center; font-weight:600; font-size:17px; text-decoration:underline; margin:24px 0 14px; }
   #doc .cover-meta{ text-align:center; font-size:15px; line-height:2; }
   #doc .cover-name{ font-size:14px; line-height:2.4; margin-top:24px; }
@@ -47,7 +48,7 @@
   #doc .cover-box .l{ width:110px; padding:10px 8px; border-right:1.4px solid #111; }
   #doc .cover-box .r{ flex:1; }
   #doc .cover-box .row1{ border-bottom:1.4px solid #111; }
-  #doc .secttitle{ font-weight:600; font-size:14px; margin:18px 0 10px; border-bottom:1px solid #333; padding-bottom:3px; }
+  #doc .secttitle{ font-weight:600; font-size:14px; margin:18px 0 10px; border-bottom:1px solid #333; padding-bottom:3px; page-break-after:avoid; break-after:avoid; }
   #doc .qgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; }
   #doc .qbox{ border:1px solid #111; border-radius:4px; padding:10px 12px; page-break-inside:avoid; }
   #doc .qn{ color:#222; font-weight:600; margin-right:4px; }
@@ -260,14 +261,14 @@ function headerHTML(){
   return '<div class="hdr">ข้อสอบจำลองเวทคณิต ' + current.label + '<br>' + HEADER_BY + '</div>';
 }
 function coverHTML(b){
-  return headerHTML()
+  return '<div class="coverpage">' + headerHTML()
     + '<div class="cover-body">'
     + '<div class="cover-title">ฉบับที่ ' + b.no + '  ' + b.title + '</div>'
     + '<div class="cover-meta">จำนวน ' + b.count + ' ข้อ  รวม ' + b.score + ' คะแนน<br>กำหนดเวลา ' + b.minutes + ' นาที</div>'
     + '<div class="cover-name">ชื่อ-สกุล ....................................................... ชั้น ..............<br>โรงเรียน ...........................................................</div>'
     + '<div class="cover-note">(โปรดกรอกรายละเอียดข้างบน แล้วรอกรรมการให้สัญญาณเริ่มทำข้อสอบ)</div>'
     + '<div class="cover-box"><div class="row1"><div class="l">ส่งลำดับที่</div><div class="r"></div></div><div><div class="l">คะแนนที่ได้</div><div class="r"></div></div></div>'
-    + '</div>';
+    + '</div></div>';
 }
 const CREDIT = '<div class="foot pagelast">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>';
 function renderProblem(p, num){
