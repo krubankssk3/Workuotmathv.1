@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ซ้อมคิดเลขเร็ว</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#121838; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.09);
+    --digit:#41d3f0; --digit-glow:rgba(65,211,240,.45);
+    --target:#ffc640; --target-glow:rgba(255,198,64,.5);
+    --good:#34d399; --near:#ffc640; --miss:#fb7185;
+    --text:#eaeefb; --muted:#8990b6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(65,211,240,.13), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(255,198,64,.10), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2));
+    background-attachment:fixed;
+  }
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.4; z-index:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px; mask-image:radial-gradient(circle at 50% 35%,#000,transparent 82%);
+  }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .screen{ position:relative; z-index:1; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:18px; }
+  .glass{ width:100%; max-width:480px; background:var(--card); border:1px solid var(--line); border-radius:28px; backdrop-filter:blur(12px); padding:22px; box-shadow:0 30px 70px -30px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.06); }
+  .playscreen{ position:relative; z-index:1; min-height:100vh; width:100%; max-width:580px; margin:0 auto; display:flex; flex-direction:column; padding:18px 18px 28px; }
+  .play-center{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
+  .tile{
+    aspect-ratio:1; border-radius:20px; display:flex; align-items:center; justify-content:center;
+    font-family:'Chakra Petch',monospace; font-weight:700;
+    background:linear-gradient(150deg,rgba(65,211,240,.16),rgba(65,211,240,.05));
+    border:1px solid rgba(65,211,240,.30); color:var(--digit);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
+    transition:transform .18s ease, box-shadow .25s ease;
+    font-size:clamp(38px,11vw,60px); overflow:hidden;
+  }
+  .tile.spinning{ color:#bdeefb; }
+  .tile.spinning .num{ filter:blur(2px); opacity:.85; }
+  .tile.settled{ animation:pop .42s cubic-bezier(.2,1.4,.4,1); box-shadow:0 0 0 1px var(--digit), 0 0 28px var(--digit-glow), inset 0 1px 0 rgba(255,255,255,.1); }
+  @keyframes pop{0%{transform:scale(.55)}55%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .num{display:inline-block;}
+  #target{ font-family:'Chakra Petch',monospace; font-weight:700; color:var(--target);
+    font-size:clamp(88px,27vw,156px); line-height:1; letter-spacing:1px; text-shadow:0 0 44px var(--target-glow); }
+  #target.settled{animation:pop .5s cubic-bezier(.2,1.4,.4,1);}
+  .report{ border:1px solid; border-radius:18px; padding:15px 6px; cursor:pointer; background:transparent; color:var(--text);
+    font-family:'Kanit',sans-serif; font-weight:500; font-size:15px; display:flex; flex-direction:column; align-items:center; gap:6px;
+    transition:transform .12s ease, box-shadow .2s ease, background .2s ease; }
+  .report svg{width:26px;height:26px;}
+  .report:active{transform:scale(.95);}
+  .r-good{border-color:rgba(52,211,153,.5); color:var(--good);}
+  .r-good:hover{background:rgba(52,211,153,.12); box-shadow:0 0 24px rgba(52,211,153,.25);}
+  .r-near{border-color:rgba(255,198,64,.5); color:var(--near);}
+  .r-near:hover{background:rgba(255,198,64,.12); box-shadow:0 0 24px rgba(255,198,64,.22);}
+  .r-miss{border-color:rgba(251,113,133,.5); color:var(--miss);}
+  .r-miss:hover{background:rgba(251,113,133,.12); box-shadow:0 0 24px rgba(251,113,133,.22);}
+  .reportbar.timeup{animation:nudge 1s ease infinite;}
+  @keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  .btn-primary{ background:linear-gradient(120deg,var(--digit),#7ce0f2); color:#04222b; font-weight:600; border:none; border-radius:16px;
+    padding:14px 26px; font-family:'Kanit',sans-serif; font-size:17px; cursor:pointer; box-shadow:0 12px 30px -8px var(--digit-glow); transition:transform .12s ease; }
+  .btn-primary:active{transform:scale(.96);}
+  .btn-primary:disabled{opacity:.6;cursor:default;box-shadow:none;}
+  .backbtn{ display:inline-flex; align-items:center; gap:5px; font-family:'Kanit'; font-size:13px; color:var(--muted);
+    background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; transition:.15s; }
+  .backbtn:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .backbtn svg{width:16px;height:16px;}
+  .seg{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:14px; padding:4px; display:flex; gap:4px;}
+  .seg button{flex:1; border:none; background:transparent; color:var(--muted); font-family:'Kanit',sans-serif; font-weight:500; padding:9px 6px; border-radius:10px; cursor:pointer; font-size:13px; transition:.15s;}
+  .seg button.active{background:rgba(65,211,240,.18); color:var(--digit);}
+  .medal{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;box-shadow:0 0 50px -6px var(--mc,#ffc640);}
+  #nameInput{width:100%;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);font-family:'Kanit';font-size:15px;margin-bottom:10px;}
+  #nameInput:focus{outline:none;border-color:var(--digit);box-shadow:0 0 0 2px var(--digit-glow);}
+  .fade-in{animation:fade .4s ease both;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+  <!-- ===== START ===== -->
+  <div id="startView" class="screen fade-in">
+    <div class="glass">
+      <div class="text-center mb-1">
+        <div class="num-font" style="font-size:13px;letter-spacing:3px;color:var(--muted)">QUICK CALCULATION</div>
+        <h1 class="m-0 leading-tight" style="font-weight:700;font-size:34px">ซ้อมคิดเลขเร็ว</h1>
+        <p class="mt-1 mb-5" style="color:var(--muted);font-size:14px">สุ่มเลขโดด ทำให้ได้ผลลัพธ์ภายใน 30 วินาที</p>
+      </div>
+      <p class="mb-2" style="font-size:13px;color:var(--muted)">เลือกรอบ</p>
+      <div class="seg mb-4" id="roundSeg">
+        <button data-round="1" class="active">รอบ 1 · 4 ตัว → 2 หลัก</button>
+        <button data-round="2">รอบ 2 · 5 ตัว → 3 หลัก</button>
+      </div>
+      <p class="mb-2" style="font-size:13px;color:var(--muted)">ระดับชั้น</p>
+      <div class="seg mb-6" id="levelSeg">
+        <button data-level="ป.ต้น" class="active">ป.ต้น</button>
+        <button data-level="ป.ปลาย">ป.ปลาย</button>
+        <button data-level="ม.ต้น">ม.ต้น</button>
+      </div>
+      <button class="btn-primary w-full" onclick="startGame()">เริ่มซ้อม</button>
+
+      <div id="lbBox" class="hidden" style="margin-top:22px;border-top:1px solid var(--line);padding-top:16px">
+        <div class="flex items-center gap-2 mb-2" style="color:var(--muted);font-size:13px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--target)" stroke-width="2" style="width:16px;height:16px"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3"/></svg>
+          อันดับคะแนนสูงสุด
+        </div>
+        <div id="lbList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PLAY (full screen) ===== -->
+  <div id="playView" class="playscreen hidden">
+    <div class="flex items-center justify-between mb-4">
+      <button class="backbtn" onclick="goStart()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>
+        หน้าแรก
+      </button>
+      <div class="flex items-center gap-3" style="font-size:13px;color:var(--muted)">
+        <span>ข้อ <b id="qNow" style="color:var(--text)">1</b>/<span id="qTotal">10</span></span>
+        <span>คะแนน <b id="scoreNow" style="color:var(--text)">0</b></span>
+        <button id="muteBtn" class="backbtn" style="padding:7px 9px" onclick="toggleMute()" aria-label="เปิด/ปิดเสียง">
+          <svg id="icSound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18.5 6a9 9 0 010 12"/></svg>
+          <svg id="icMute" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col items-center gap-3">
+      <span id="roundPill" class="num-font" style="font-size:12px;font-weight:600;background:rgba(255,198,64,.14);color:var(--target);padding:5px 12px;border-radius:10px"></span>
+      <div class="relative" style="width:clamp(124px,33vw,158px);aspect-ratio:1">
+        <svg width="100%" height="100%" viewBox="0 0 88 88" style="transform:rotate(-90deg)">
+          <circle cx="44" cy="44" r="38" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="6"/>
+          <circle id="ring" cx="44" cy="44" r="38" fill="none" stroke="var(--digit)" stroke-width="6" stroke-linecap="round" stroke-dasharray="238.8" stroke-dashoffset="0"/>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span id="timeNum" class="num-font" style="font-size:clamp(46px,12vw,62px);font-weight:700;line-height:1">30</span>
+          <span style="font-size:12px;color:var(--muted)">วินาที</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="play-center">
+      <div class="w-full text-center">
+        <p class="m-0 mb-3" style="font-size:13px;color:var(--muted)">เลขโดด · ใช้ครบทุกตัว ตัวละครั้ง</p>
+        <div id="digits" class="grid gap-3" style="margin:0 auto"></div>
+      </div>
+      <div class="text-center">
+        <p class="m-0" style="font-size:14px;color:var(--muted)">ทำให้ได้ผลลัพธ์</p>
+        <div id="target">--</div>
+        <p id="opsNote" class="mt-2 mb-0" style="font-size:12px;color:var(--muted)"></p>
+      </div>
+    </div>
+
+    <div class="reportbar" style="border-top:1px solid var(--line);padding-top:16px">
+      <p id="reportLabel" class="text-center m-0 mb-3" style="font-size:13px;color:var(--muted)">ทำเสร็จแล้วกดผลของคุณ</p>
+      <div class="grid grid-cols-3 gap-2.5">
+        <button class="report r-good" onclick="report('good')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/></svg>ตรงเป้า
+        </button>
+        <button class="report r-near" onclick="report('near')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9h14M5 15h14"/><path d="M9 5l-4 4 4 4M15 11l4 4-4 4"/></svg>ใกล้เคียง
+        </button>
+        <button class="report r-miss" onclick="report('miss')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>ไม่ได้
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULT ===== -->
+  <div id="resultView" class="screen hidden">
+    <div class="glass text-center">
+      <div id="medal" class="medal mb-4"><span id="medalPct" class="num-font" style="font-size:30px;font-weight:700;color:#1a1205">0%</span></div>
+      <h2 class="m-0" style="font-weight:700;font-size:26px" id="medalName">—</h2>
+      <p class="mt-1 mb-5" style="color:var(--muted);font-size:14px" id="resultSub"></p>
+      <div class="grid grid-cols-3 gap-2 mb-6">
+        <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:14px;padding:12px 4px">
+          <div class="num-font" style="font-size:24px;font-weight:700;color:var(--good)" id="cGood">0</div><div style="font-size:12px;color:var(--muted)">ตรงเป้า</div>
+        </div>
+        <div style="background:rgba(255,198,64,.1);border:1px solid rgba(255,198,64,.3);border-radius:14px;padding:12px 4px">
+          <div class="num-font" style="font-size:24px;font-weight:700;color:var(--near)" id="cNear">0</div><div style="font-size:12px;color:var(--muted)">ใกล้เคียง</div>
+        </div>
+        <div style="background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);border-radius:14px;padding:12px 4px">
+          <div class="num-font" style="font-size:24px;font-weight:700;color:var(--miss)" id="cMiss">0</div><div style="font-size:12px;color:var(--muted)">ไม่ได้</div>
+        </div>
+      </div>
+
+      <div id="saveBox" class="hidden" style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:18px">
+        <p class="m-0 mb-2" style="font-size:13px;color:var(--muted)">บันทึกผลในชื่อ</p>
+        <input list="studentList" id="nameInput" placeholder="พิมพ์หรือเลือกชื่อนักเรียน" autocomplete="off" />
+        <datalist id="studentList"></datalist>
+        <button id="saveBtn" class="btn-primary w-full" onclick="saveResult()">บันทึกผล</button>
+        <p id="saveMsg" class="text-center m-0 mt-2" style="font-size:13px;min-height:18px"></p>
+      </div>
+
+      <button class="btn-primary w-full mb-2" onclick="startGame()">เล่นอีกครั้ง</button>
+      <button onclick="goStart()" style="background:none;border:none;color:var(--muted);font-family:'Kanit';font-size:14px;cursor:pointer">กลับหน้าแรก</button>
+    </div>
+  </div>
+
+<script src="config.js"></script>
+<script>
+const QUESTIONS = 10, TIME = 30, POINT_GOOD = 10, POINT_NEAR = 5;
+const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('วาง') === -1) ? API_URL : '';
+const OPS = {
+  'ป.ต้น':'ใช้ได้: + − × ÷ และยกกำลัง',
+  'ป.ปลาย':'ใช้ได้: + − × ÷ ยกกำลัง และถอดราก',
+  'ม.ต้น':'ใช้ได้: + − × ÷ ยกกำลัง ถอดราก แฟกทอเรียล ซิกมา'
+};
+let cfg = { round:1, level:'ป.ต้น' };
+let state = { q:0, score:0, good:0, near:0, miss:0 };
+let timer = null, locked = false, lastName = '';
+
+/* ---------- API helper ---------- */
+async function api(action, data, post){
+  if(!API) return null;
+  try{
+    if(post){
+      const res = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, data||{})) });
+      return await res.json();
+    }
+    let url = API + '?action=' + encodeURIComponent(action);
+    if(data) Object.keys(data).forEach(function(k){ url += '&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
+    const res = await fetch(url);
+    return await res.json();
+  }catch(e){ console.warn('api error:', e); return null; }
+}
+
+async function loadStartData(){
+  const box = document.getElementById('lbBox');
+  if(!API){ box.classList.add('hidden'); return; }
+  const lb = await api('getLeaderboard', { limit:5 });
+  if(lb && lb.ok && lb.leaderboard && lb.leaderboard.length){
+    document.getElementById('lbList').innerHTML = lb.leaderboard.map(function(r,i){
+      return '<div class="flex items-center justify-between" style="padding:7px 0;border-bottom:1px solid var(--line)">'
+        + '<span style="font-size:14px;color:var(--muted)"><b class="num-font" style="color:var(--text);margin-right:9px">'+(i+1)+'</b>'+r.studentName+'</span>'
+        + '<span class="num-font" style="color:var(--target);font-weight:600">'+r.score+'</span></div>';
+    }).join('');
+    box.classList.remove('hidden');
+  } else { box.classList.add('hidden'); }
+
+  const st = await api('listStudents');
+  if(st && st.ok && st.students){
+    document.getElementById('studentList').innerHTML = st.students.map(function(s){ return '<option value="'+s.fullName+'">'; }).join('');
+  }
+}
+
+/* ---------- sound (Web Audio) ---------- */
+let audioCtx=null, muted=false, tickTimer=null;
+function initAudio(){ try{ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){} }
+function blip(freq,dur,type,vol){
+  if(muted||!audioCtx) return;
+  const t=audioCtx.currentTime;
+  const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+  o.type=type||'square'; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol||0.08,t+0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t+dur+0.03);
+}
+function startTicks(){ stopTicks(); tickTimer=setInterval(function(){ blip(1450+Math.random()*350,0.022,'square',0.035); },50); }
+function stopTicks(){ if(tickTimer){ clearInterval(tickTimer); tickTimer=null; } }
+function lockSound(i){ blip(420+i*95,0.11,'triangle',0.13); }
+function chime(){ blip(784,0.16,'sine',0.13); setTimeout(function(){ blip(1175,0.30,'sine',0.11); },70); }
+function reportSound(kind){
+  if(kind==='good'){ blip(660,0.10,'sine',0.12); setTimeout(function(){ blip(990,0.18,'sine',0.11); },80); }
+  else if(kind==='near'){ blip(520,0.14,'triangle',0.10); }
+  else { blip(200,0.20,'sawtooth',0.08); }
+}
+function fanfare(){ [523,659,784,1047].forEach(function(f,i){ setTimeout(function(){ blip(f,0.26,'sine',0.12); }, i*120); }); }
+function toggleMute(){ muted=!muted; document.getElementById('icSound').classList.toggle('hidden',muted); document.getElementById('icMute').classList.toggle('hidden',!muted); if(!muted) initAudio(); }
+
+/* ---------- controls ---------- */
+document.querySelectorAll('#roundSeg button').forEach(function(b){ b.onclick=function(){ document.querySelectorAll('#roundSeg button').forEach(function(x){x.classList.remove('active');}); b.classList.add('active'); cfg.round=+b.dataset.round; }; });
+document.querySelectorAll('#levelSeg button').forEach(function(b){ b.onclick=function(){ document.querySelectorAll('#levelSeg button').forEach(function(x){x.classList.remove('active');}); b.classList.add('active'); cfg.level=b.dataset.level; }; });
+
+function show(id){
+  ['startView','playView','resultView'].forEach(function(v){ document.getElementById(v).classList.add('hidden'); });
+  const el=document.getElementById(id); el.classList.remove('hidden'); el.classList.add('fade-in');
+}
+function goStart(){ clearInterval(timer); stopTicks(); locked=true; loadStartData(); show('startView'); }
+
+/* ---------- number generation (ตามกติกา) ---------- */
+function genDigits(n){
+  while(true){
+    const d=[]; for(let i=0;i<n;i++) d.push(Math.floor(Math.random()*10));
+    const c={}; d.forEach(function(x){ c[x]=(c[x]||0)+1; });
+    if(Object.values(c).some(function(v){return v>2;})) continue;
+    if((c[0]||0)>1) continue;
+    return d;
+  }
+}
+function genTarget(n){ return n===4 ? 10+Math.floor(Math.random()*90) : 100+Math.floor(Math.random()*900); }
+
+function startGame(){
+  initAudio();
+  state = { q:0, score:0, good:0, near:0, miss:0 };
+  document.getElementById('qTotal').textContent = QUESTIONS;
+  document.getElementById('scoreNow').textContent = 0;
+  const isR1 = cfg.round===1;
+  document.getElementById('roundPill').textContent = isR1 ? 'รอบ 1 · 4 ตัว → 2 หลัก' : 'รอบ 2 · 5 ตัว → 3 หลัก';
+  document.getElementById('opsNote').textContent = OPS[cfg.level] || '';
+  const n = isR1 ? 4 : 5;
+  const dg = document.getElementById('digits');
+  dg.style.gridTemplateColumns = 'repeat('+n+', minmax(0,1fr))';
+  dg.style.maxWidth = (n*98)+'px';
+  dg.innerHTML = '';
+  for(let i=0;i<n;i++){ const t=document.createElement('div'); t.className='tile'; t.innerHTML='<span class="num">0</span>'; dg.appendChild(t); }
+  show('playView');
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(state.q >= QUESTIONS){ return finish(); }
+  state.q++; locked = true;
+  document.getElementById('qNow').textContent = state.q;
+  document.querySelector('.reportbar').classList.remove('timeup');
+  document.getElementById('reportLabel').textContent = 'กำลังสุ่มโจทย์...';
+
+  const n = cfg.round===1 ? 4 : 5;
+  const digits = genDigits(n);
+  const target = genTarget(n);
+  const tiles = document.querySelectorAll('.tile');
+  const targetEl = document.getElementById('target');
+
+  startTicks();
+  tiles.forEach(function(t,i){
+    t.classList.remove('settled'); t.classList.add('spinning');
+    const numEl = t.querySelector('.num');
+    const iv = setInterval(function(){ numEl.textContent = Math.floor(Math.random()*10); }, 55);
+    setTimeout(function(){ clearInterval(iv); numEl.textContent = digits[i]; t.classList.remove('spinning'); t.classList.add('settled'); lockSound(i); }, 650 + i*170);
+  });
+
+  const targetStop = 650 + n*170 + 250;
+  targetEl.classList.remove('settled');
+  const tiv = setInterval(function(){ const len=n===4?2:3; let r=''; for(let k=0;k<len;k++) r+=Math.floor(Math.random()*10); targetEl.textContent=r; }, 55);
+  setTimeout(function(){
+    clearInterval(tiv); targetEl.textContent = target; targetEl.classList.add('settled');
+    stopTicks(); chime();
+    document.getElementById('reportLabel').textContent = 'ทำเสร็จแล้วกดผลของคุณ';
+    locked = false; startTimer();
+  }, targetStop);
+}
+
+function startTimer(){
+  clearInterval(timer);
+  const ring = document.getElementById('ring'); const circ = 238.8; const numEl = document.getElementById('timeNum');
+  numEl.textContent = TIME; ring.style.stroke = 'var(--digit)'; ring.style.strokeDashoffset = 0;
+  const t0 = Date.now(); let lastSec = TIME;
+  timer = setInterval(function(){
+    const left = Math.max(0, TIME - (Date.now()-t0)/1000);
+    const sec = Math.ceil(left);
+    if(sec!==lastSec){ lastSec=sec; if(sec<=5 && sec>0) blip(900,0.06,'square',0.07); }
+    numEl.textContent = sec;
+    ring.style.strokeDashoffset = circ * (1 - left/TIME);
+    if(left <= 10) ring.style.stroke = 'var(--miss)';
+    else if(left <= 18) ring.style.stroke = 'var(--target)';
+    if(left <= 0){ clearInterval(timer); numEl.textContent=0; blip(290,0.4,'sawtooth',0.10); document.getElementById('reportLabel').textContent='หมดเวลา! กดผลของคุณ'; document.querySelector('.reportbar').classList.add('timeup'); }
+  }, 80);
+}
+
+function report(kind){
+  if(locked) return; locked = true; clearInterval(timer);
+  reportSound(kind);
+  if(kind==='good'){ state.good++; state.score += POINT_GOOD; }
+  else if(kind==='near'){ state.near++; state.score += POINT_NEAR; }
+  else { state.miss++; }
+  document.getElementById('scoreNow').textContent = state.score;
+  setTimeout(nextQuestion, 220);
+}
+
+function finish(){
+  clearInterval(timer); stopTicks(); fanfare();
+  const max = QUESTIONS*POINT_GOOD; const pct = Math.round(state.score/max*100);
+  let name, color;
+  if(pct>=80){ name='เหรียญทอง'; color='#ffc640'; }
+  else if(pct>=70){ name='เหรียญเงิน'; color='#cdd4e6'; }
+  else if(pct>=60){ name='เหรียญทองแดง'; color='#e08a4b'; }
+  else { name='เกียรติบัตรเข้าร่วม'; color='#7ce0f2'; }
+  const medal = document.getElementById('medal');
+  medal.style.background = 'radial-gradient(circle at 35% 30%, '+color+', '+color+'99)';
+  medal.style.setProperty('--mc', color);
+  document.getElementById('medalPct').textContent = pct+'%';
+  document.getElementById('medalName').textContent = name;
+  document.getElementById('resultSub').textContent = cfg.level+' · รอบ '+cfg.round+' · ได้ '+state.score+' จาก '+max+' คะแนน';
+  document.getElementById('cGood').textContent = state.good;
+  document.getElementById('cNear').textContent = state.near;
+  document.getElementById('cMiss').textContent = state.miss;
+
+  // save box
+  const sb = document.getElementById('saveBox');
+  if(API){
+    sb.classList.remove('hidden');
+    const b = document.getElementById('saveBtn'); b.disabled=false; b.textContent='บันทึกผล';
+    document.getElementById('saveMsg').textContent='';
+    document.getElementById('nameInput').value = lastName || '';
+  } else { sb.classList.add('hidden'); }
+
+  show('resultView');
+}
+
+async function saveResult(){
+  const name = document.getElementById('nameInput').value.trim();
+  const msg = document.getElementById('saveMsg');
+  if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกหรือเลือกชื่อก่อนบันทึก'; return; }
+  if(!API){ msg.style.color='var(--miss)'; msg.textContent='ยังไม่ได้ตั้งค่า API ใน config.js'; return; }
+  const btn = document.getElementById('saveBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
+  lastName = name;
+  const res = await api('saveSession', {
+    studentName:name, level:cfg.level, round:cfg.round, mode:'คิดเลขเร็ว',
+    totalQuestions:QUESTIONS, good:state.good, near:state.near, miss:state.miss,
+    score:state.score, maxScore:QUESTIONS*POINT_GOOD
+  }, true);
+  if(res && res.ok){ msg.style.color='var(--good)'; msg.textContent='บันทึกแล้ว ✓ ('+res.pct+'%)'; btn.textContent='บันทึกแล้ว'; }
+  else { btn.disabled=false; msg.style.color='var(--miss)'; msg.textContent='บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'; }
+}
+
+document.addEventListener('DOMContentLoaded', loadStartData);
+</script>
+</body>
+</html>
