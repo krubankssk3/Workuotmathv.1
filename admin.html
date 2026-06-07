@@ -38,6 +38,19 @@
   td{ padding:10px 6px; border-top:1px solid var(--line); }
   .hidden{display:none!important;}
   .fade-in{animation:fade .4s ease both;} @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .modal{ position:fixed; inset:0; background:rgba(4,7,18,.72); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:18px; z-index:50; }
+  .medbar{ height:8px; border-radius:99px; background:rgba(255,255,255,.06); overflow:hidden; }
+
+  /* รายงาน PDF รายบุคคล */
+  #reportPrint{ display:none; }
+  @media print{
+    @page{ size:A4; margin:14mm; }
+    body{ background:#fff !important; }
+    #loginView, #adminView, #editModal{ display:none !important; }
+    #reportPrint{ display:block !important; color:#0a0e1f; font-family:'Kanit',sans-serif; }
+    #reportPrint .htbl td, #reportPrint .htbl th{ border-bottom:1px solid #e2e8f0; }
+  }
 </style>
 </head>
 <body>
@@ -71,9 +84,11 @@
       <button class="ghost" onclick="logout()">ออกจากระบบ</button>
     </div>
 
-    <div class="flex gap-2 mb-5">
+    <div class="flex gap-2 mb-5 flex-wrap">
       <button class="tab active" id="tabBtnDash" onclick="switchTab('dash')">แดชบอร์ด</button>
       <button class="tab" id="tabBtnStu" onclick="switchTab('stu')">นักเรียน</button>
+      <button class="tab" id="tabBtnRec" onclick="switchTab('rec')">ประวัติการซ้อม</button>
+      <button class="tab" id="tabBtnRep" onclick="switchTab('rep')">รายงานรายคน</button>
     </div>
 
     <!-- DASHBOARD -->
@@ -141,7 +156,66 @@
         <p id="stuEmpty" class="hidden m-0 mt-2" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีนักเรียน</p>
       </div>
     </section>
+
+    <!-- RECORDS (ประวัติการซ้อม) -->
+    <section id="tabRec" class="hidden">
+      <div class="card mb-4">
+        <div class="grid gap-3" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+          <input id="recName" class="fld" placeholder="ค้นหาชื่อ" oninput="renderRecords()" />
+          <select id="recMode" class="fld" onchange="renderRecords()">
+            <option value="">ทุกโหมด</option>
+            <option>คิดเลขเร็ว</option><option>เวทคณิต</option><option>สูตรคูณเร็ว</option><option>เกม24</option>
+          </select>
+          <input id="recFrom" class="fld" type="date" onchange="renderRecords()" title="ตั้งแต่วันที่" />
+          <input id="recTo" class="fld" type="date" onchange="renderRecords()" title="ถึงวันที่" />
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <span id="recCount" style="font-size:13px;color:var(--muted)"></span>
+          <button class="ghost" onclick="el('recName').value='';el('recMode').value='';el('recFrom').value='';el('recTo').value='';renderRecords()">ล้างตัวกรอง</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>วันเวลา</th><th>ชื่อ</th><th>โหมด</th><th style="text-align:right">คะแนน</th><th style="text-align:right">%</th><th>เหรียญ</th><th style="text-align:right">จัดการ</th></tr></thead>
+          <tbody id="recBody"></tbody>
+        </table></div>
+        <p id="recEmpty" class="hidden m-0 mt-2" style="font-size:13px;color:var(--muted);text-align:center">ไม่พบรายการ</p>
+      </div>
+    </section>
+
+    <!-- REPORT (รายงานรายคน) -->
+    <section id="tabRep" class="hidden">
+      <div class="card mb-4 flex items-center gap-3 flex-wrap">
+        <span style="font-size:14px;color:var(--muted)">เลือกนักเรียน</span>
+        <select id="repSel" class="fld" style="width:auto;min-width:210px;flex:1" onchange="loadReport()">
+          <option value="">— เลือกนักเรียนที่ลงทะเบียน —</option>
+        </select>
+        <button class="btn-primary hidden" id="repPdfBtn" onclick="exportReportPDF()">ส่งออก PDF</button>
+      </div>
+      <div id="repBody"></div>
+      <p id="repHint" class="m-0" style="font-size:13px;color:var(--muted);text-align:center;padding:24px">เลือกนักเรียนเพื่อดูรายงานพัฒนาการ</p>
+    </section>
   </div>
+
+  <!-- ===== EDIT SESSION MODAL ===== -->
+  <div id="editModal" class="modal hidden">
+    <div class="glass" style="max-width:380px">
+      <p class="m-0 mb-4" style="font-weight:600;font-size:17px">แก้ไขรายการซ้อม</p>
+      <label style="font-size:12px;color:var(--muted)">ชื่อนักเรียน</label>
+      <input id="edName" class="fld mb-3 mt-1" />
+      <label style="font-size:12px;color:var(--muted)">คะแนน (เต็ม <span id="edMax">-</span>)</label>
+      <input id="edScore" class="fld mt-1 mb-1" type="number" min="0" />
+      <p class="m-0 mb-4" style="font-size:12px;color:var(--muted)">% และเหรียญจะคำนวณใหม่อัตโนมัติ</p>
+      <div class="flex items-center gap-2">
+        <button class="btn-primary" id="edSaveBtn" onclick="saveSessionEdit()">บันทึก</button>
+        <button class="ghost" onclick="el('editModal').classList.add('hidden')">ยกเลิก</button>
+        <span id="edMsg" style="font-size:13px"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PRINTABLE REPORT (PDF) ===== -->
+  <div id="reportPrint"></div>
 
 <script src="config.js"></script>
 <script>
@@ -149,6 +223,7 @@ const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('ว�
 const MEDAL_LABEL = { gold:'ทอง', silver:'เงิน', bronze:'ทองแดง', cert:'เข้าร่วม' };
 const MEDAL_COLOR = { gold:'#ffc640', silver:'#cdd4e6', bronze:'#e08a4b', cert:'#7ce0f2' };
 let studentsCache = [], editingId = null;
+let recCache = [], recLoaded = false, editSesId = null;
 
 function el(id){ return document.getElementById(id); }
 function val(id){ return el(id).value; }
@@ -177,7 +252,7 @@ async function doLogin(){
     el('loginView').classList.add('hidden');
     el('adminView').classList.remove('hidden');
     el('adminView').classList.add('fade-in');
-    loadDashboard(); loadStudents();
+    loadDashboard(); loadStudents(); loadRecords();
   } else {
     msg.style.color='var(--miss)';
     msg.textContent = (res && res.error) ? res.error : 'เข้าสู่ระบบไม่สำเร็จ';
@@ -190,11 +265,14 @@ function logout(){
 }
 
 /* ---------- tabs ---------- */
+function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
 function switchTab(t){
-  el('tabDash').classList.toggle('hidden', t!=='dash');
-  el('tabStu').classList.toggle('hidden', t!=='stu');
-  el('tabBtnDash').classList.toggle('active', t==='dash');
-  el('tabBtnStu').classList.toggle('active', t==='stu');
+  ['dash','stu','rec','rep'].forEach(function(x){
+    el('tab'+cap(x)).classList.toggle('hidden', x!==t);
+    el('tabBtn'+cap(x)).classList.toggle('active', x===t);
+  });
+  if(t==='rec' && !recLoaded) loadRecords();
+  if(t==='rep') fillStudentSelect();
 }
 
 /* ---------- dashboard ---------- */
@@ -240,6 +318,7 @@ async function loadStudents(){
     }).join('');
     el('stuEmpty').classList.add('hidden');
   } else { body.innerHTML=''; el('stuEmpty').classList.remove('hidden'); }
+  fillStudentSelect();
 }
 
 async function saveStudent(){
@@ -284,6 +363,208 @@ async function delStudent(id){
   const res = await api('deleteStudent', { id:id }, true);
   if(res && res.ok){ loadStudents(); }
   else { alert('ลบไม่สำเร็จ'); }
+}
+
+/* ---------- records (ประวัติการซ้อม) ---------- */
+function medalChip(m){ return '<span style="color:'+(MEDAL_COLOR[m]||'#8990b6')+'">'+(MEDAL_LABEL[m]||'-')+'</span>'; }
+function fmtTs(ts){ ts = String(ts||''); return ts.length>=16 ? ts.slice(0,16) : ts; }
+
+async function loadRecords(){
+  const res = await api('listSessions');
+  recCache = (res && res.ok && res.sessions) ? res.sessions : [];
+  recLoaded = true;
+  renderRecords();
+}
+
+function renderRecords(){
+  const q = (el('recName').value||'').trim();
+  const mode = el('recMode').value, from = el('recFrom').value, to = el('recTo').value;
+  let rows = recCache.slice();
+  if(q)    rows = rows.filter(function(r){ return String(r.studentName).indexOf(q) >= 0; });
+  if(mode) rows = rows.filter(function(r){ return r.mode === mode; });
+  if(from) rows = rows.filter(function(r){ return String(r.timestamp).slice(0,10) >= from; });
+  if(to)   rows = rows.filter(function(r){ return String(r.timestamp).slice(0,10) <= to; });
+  el('recCount').textContent = rows.length + ' รายการ' + (rows.length!==recCache.length ? (' (จากทั้งหมด '+recCache.length+')') : '');
+  const body = el('recBody');
+  if(!rows.length){ body.innerHTML=''; el('recEmpty').classList.remove('hidden'); return; }
+  el('recEmpty').classList.add('hidden');
+  body.innerHTML = rows.map(function(r){
+    return '<tr><td style="color:var(--muted);white-space:nowrap">'+fmtTs(r.timestamp)+'</td>'
+      + '<td>'+r.studentName+'</td>'
+      + '<td style="color:var(--muted)">'+r.mode+'</td>'
+      + '<td class="num-font" style="text-align:right;font-weight:600">'+r.score+'<span style="color:var(--muted);font-weight:400">/'+r.maxScore+'</span></td>'
+      + '<td class="num-font" style="text-align:right">'+r.pct+'%</td>'
+      + '<td>'+medalChip(r.medal)+'</td>'
+      + '<td style="text-align:right;white-space:nowrap">'
+      + '<button class="ghost" style="padding:5px 9px" onclick="editSession(\''+r.id+'\')">แก้</button> '
+      + '<button class="ghost" style="padding:5px 9px;color:var(--miss);border-color:rgba(251,113,133,.4)" onclick="delSession(\''+r.id+'\')">ลบ</button>'
+      + '</td></tr>';
+  }).join('');
+}
+
+async function delSession(id){
+  const r = recCache.filter(function(x){ return String(x.id)===String(id); })[0];
+  if(!confirm('ลบรายการของ "'+(r?r.studentName:'')+'" ('+(r?fmtTs(r.timestamp):'')+') ?\nลบแล้วกู้คืนไม่ได้')) return;
+  const res = await api('deleteSession', { id:id }, true);
+  if(res && res.ok){
+    recCache = recCache.filter(function(x){ return String(x.id)!==String(id); });
+    renderRecords();
+    if(el('repSel').value) loadReport();
+  } else alert('ลบไม่สำเร็จ');
+}
+
+function editSession(id){
+  const r = recCache.filter(function(x){ return String(x.id)===String(id); })[0];
+  if(!r) return;
+  editSesId = id;
+  el('edName').value = r.studentName; el('edScore').value = r.score; el('edMax').textContent = r.maxScore;
+  el('edMsg').textContent = ''; el('editModal').classList.remove('hidden');
+}
+
+async function saveSessionEdit(){
+  if(!editSesId) return;
+  const btn = el('edSaveBtn'); btn.disabled = true;
+  el('edMsg').style.color='var(--muted)'; el('edMsg').textContent='กำลังบันทึก...';
+  const res = await api('updateSession', { id:editSesId, studentName:el('edName').value.trim(), score:el('edScore').value }, true);
+  btn.disabled = false;
+  if(res && res.ok){
+    el('editModal').classList.add('hidden');
+    await loadRecords();
+    if(el('repSel').value) loadReport();
+  } else { el('edMsg').style.color='var(--miss)'; el('edMsg').textContent='บันทึกไม่สำเร็จ'; }
+}
+
+/* ---------- report (รายงานรายคน) ---------- */
+function fillStudentSelect(){
+  const sel = el('repSel'); if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— เลือกนักเรียนที่ลงทะเบียน —</option>' + studentsCache.map(function(s){
+    const nm = String(s.fullName||'').replace(/"/g,'&quot;');
+    const cls = s.classLevel ? (' ('+s.classLevel+(s.room?('/'+s.room):'')+')') : '';
+    return '<option value="'+nm+'">'+s.fullName+cls+'</option>';
+  }).join('');
+  sel.value = cur;
+}
+
+function reportSummary(sessions){
+  const n = sessions.length;
+  const avg = n ? Math.round(sessions.reduce(function(s,r){ return s+Number(r.pct||0); },0)/n) : 0;
+  let best = null; sessions.forEach(function(r){ if(!best || Number(r.score)>Number(best.score)) best = r; });
+  const medals = { gold:0, silver:0, bronze:0, cert:0 };
+  sessions.forEach(function(r){ if(medals[r.medal]!=null) medals[r.medal]++; });
+  const byMode = {}; sessions.forEach(function(r){ byMode[r.mode] = (byMode[r.mode]||0)+1; });
+  const chrono = sessions.slice().sort(function(a,b){ return String(a.timestamp).localeCompare(String(b.timestamp)); });
+  return { n:n, avg:avg, best:best, medals:medals, byMode:byMode, chrono:chrono };
+}
+
+// กราฟเส้นพัฒนาการ (% ความแม่นยำ) เป็น SVG ฝังตรง — ใช้ได้ทั้งจอ (มืด) และหน้าพิมพ์ (ขาว)
+function trendSVG(pts, c){
+  const W=620, H=220, PADL=34, PADR=14, PADT=14, PADB=30;
+  const iw=W-PADL-PADR, ih=H-PADT-PADB, n=pts.length;
+  function x(i){ return PADL + (n<=1 ? iw/2 : iw*i/(n-1)); }
+  function y(v){ return PADT + ih*(1 - Math.max(0,Math.min(100,v))/100); }
+  let grid='';
+  [0,25,50,75,100].forEach(function(v){ const yy=y(v);
+    grid += '<line x1="'+PADL+'" y1="'+yy+'" x2="'+(W-PADR)+'" y2="'+yy+'" stroke="'+c.grid+'" stroke-width="1"/>';
+    grid += '<text x="'+(PADL-6)+'" y="'+(yy+3.5)+'" text-anchor="end" font-size="10" fill="'+c.text+'">'+v+'</text>';
+  });
+  let poly='', dots='';
+  pts.forEach(function(p,i){ const xx=x(i).toFixed(1), yy=y(p.pct).toFixed(1);
+    poly += (i?' ':'')+xx+','+yy;
+    dots += '<circle cx="'+xx+'" cy="'+yy+'" r="3.4" fill="'+c.line+'"/>';
+  });
+  const line = n>1 ? '<polyline points="'+poly+'" fill="none" stroke="'+c.line+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' : '';
+  let xl=''; const step = Math.max(1, Math.ceil(n/8));
+  pts.forEach(function(p,i){ if(i%step===0 || i===n-1){ xl += '<text x="'+x(i).toFixed(1)+'" y="'+(H-9)+'" text-anchor="middle" font-size="9" fill="'+c.text+'">'+p.label+'</text>'; } });
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">'+grid+line+dots+xl+'</svg>';
+}
+
+function statCard(label, val, color){
+  return '<div class="card"><p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">'+label+'</p>'
+    + '<p class="num-font m-0" style="font-size:24px;font-weight:700'+(color?(';color:'+color):'')+'">'+val+'</p></div>';
+}
+
+async function loadReport(){
+  const name = el('repSel').value;
+  el('repPdfBtn').classList.add('hidden');
+  if(!name){ el('repBody').innerHTML=''; el('repHint').classList.remove('hidden'); return; }
+  if(!recLoaded){ await loadRecords(); }
+  el('repHint').classList.add('hidden');
+  const sessions = recCache.filter(function(r){ return String(r.studentName)===String(name); });
+  renderReportProfile(name, sessions);
+  if(sessions.length) el('repPdfBtn').classList.remove('hidden');
+}
+
+function renderReportProfile(name, sessions){
+  const sm = reportSummary(sessions);
+  const stu = studentsCache.filter(function(x){ return x.fullName===name; })[0] || {};
+  if(!sm.n){ el('repBody').innerHTML = '<div class="card" style="text-align:center;color:var(--muted)">นักเรียนคนนี้ยังไม่มีบันทึกการซ้อม</div>'; return; }
+  const pts = sm.chrono.map(function(r){ return { pct:Number(r.pct||0), label:fmtTs(r.timestamp).slice(5,10) }; });
+  const modeRows = Object.keys(sm.byMode).map(function(m){
+    const pc = Math.round(sm.byMode[m]/sm.n*100);
+    return '<div style="margin-bottom:9px"><div class="flex justify-between" style="font-size:13px"><span>'+m+'</span><span style="color:var(--muted)">'+sm.byMode[m]+' ครั้ง</span></div>'
+      + '<div class="medbar mt-1"><div style="height:100%;width:'+pc+'%;background:var(--digit)"></div></div></div>';
+  }).join('');
+  const hist = sm.chrono.slice().reverse().slice(0,15).map(function(r){
+    return '<tr><td style="color:var(--muted);white-space:nowrap">'+fmtTs(r.timestamp)+'</td><td style="color:var(--muted)">'+r.mode+'</td>'
+      + '<td class="num-font" style="text-align:right">'+r.score+'/'+r.maxScore+'</td><td class="num-font" style="text-align:right">'+r.pct+'%</td><td>'+medalChip(r.medal)+'</td></tr>';
+  }).join('');
+  const medalsHtml = ['gold','silver','bronze','cert'].map(function(k){
+    return '<span style="display:inline-flex;align-items:center;gap:5px;margin-right:12px"><span style="width:10px;height:10px;border-radius:50%;background:'+MEDAL_COLOR[k]+'"></span>'+MEDAL_LABEL[k]+' '+sm.medals[k]+'</span>';
+  }).join('');
+  el('repBody').innerHTML =
+      '<div class="card mb-4"><div class="flex items-center justify-between flex-wrap gap-2">'
+    +   '<div><p class="m-0" style="font-weight:600;font-size:18px">'+name+'</p>'
+    +     '<p class="m-0" style="font-size:13px;color:var(--muted)">'+(stu.classLevel?('ชั้น '+stu.classLevel+(stu.room?(' ห้อง '+stu.room):'')):'ไม่ระบุชั้น')+(stu.studentCode?(' · รหัส '+stu.studentCode):'')+'</p></div>'
+    +   '<div style="font-size:13px">'+medalsHtml+'</div></div></div>'
+    + '<div class="grid gap-3 mb-4" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">'
+    +   statCard('ซ้อมทั้งหมด', sm.n+' ครั้ง', '')
+    +   statCard('เฉลี่ย', sm.avg+'%', 'var(--digit)')
+    +   statCard('คะแนนสูงสุด', (sm.best?sm.best.score+'/'+sm.best.maxScore:'-'), 'var(--good)')
+    +   statCard('เหรียญทอง', sm.medals.gold+'', 'var(--target)')
+    + '</div>'
+    + '<div class="card mb-4"><p class="m-0 mb-2" style="font-weight:500">พัฒนาการ (% ความแม่นยำ ตามลำดับเวลา)</p>'
+    +   trendSVG(pts, { line:'#41d3f0', text:'#8990b6', grid:'rgba(255,255,255,.10)' }) + '</div>'
+    + '<div class="grid gap-4" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">'
+    +   '<div class="card"><p class="m-0 mb-3" style="font-weight:500">โหมดที่ซ้อม</p>'+modeRows+'</div>'
+    +   '<div class="card"><p class="m-0 mb-3" style="font-weight:500">ประวัติล่าสุด</p><div style="overflow-x:auto"><table>'
+    +     '<thead><tr><th>วันเวลา</th><th>โหมด</th><th style="text-align:right">คะแนน</th><th style="text-align:right">%</th><th>เหรียญ</th></tr></thead>'
+    +     '<tbody>'+hist+'</tbody></table></div></div>'
+    + '</div>';
+}
+
+function exportReportPDF(){
+  const name = el('repSel').value; if(!name) return;
+  const sessions = recCache.filter(function(r){ return String(r.studentName)===String(name); });
+  const sm = reportSummary(sessions); if(!sm.n) return;
+  const stu = studentsCache.filter(function(x){ return x.fullName===name; })[0] || {};
+  const pts = sm.chrono.map(function(r){ return { pct:Number(r.pct||0), label:fmtTs(r.timestamp).slice(5,10) }; });
+  const svg = trendSVG(pts, { line:'#2563eb', text:'#475569', grid:'#e2e8f0' });
+  const modeList = Object.keys(sm.byMode).map(function(m){ return m+' '+sm.byMode[m]+' ครั้ง'; }).join(' · ');
+  const histAll = sm.chrono.slice().reverse().map(function(r){
+    return '<tr><td style="padding:5px">'+fmtTs(r.timestamp)+'</td><td style="padding:5px">'+r.mode+'</td>'
+      + '<td style="padding:5px;text-align:center">'+(r.level||'-')+'</td><td style="padding:5px;text-align:right">'+r.score+'/'+r.maxScore+'</td>'
+      + '<td style="padding:5px;text-align:right">'+r.pct+'%</td><td style="padding:5px;text-align:center">'+(MEDAL_LABEL[r.medal]||'-')+'</td></tr>';
+  }).join('');
+  el('reportPrint').innerHTML =
+      '<div style="text-align:center;border-bottom:2px solid #0a0e1f;padding-bottom:10px;margin-bottom:16px">'
+    +   '<div style="font-size:20px;font-weight:700">รายงานผลการฝึกซ้อมคณิตศาสตร์รายบุคคล</div>'
+    +   '<div style="font-size:14px;color:#475569">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div></div>'
+    + '<table style="width:100%;font-size:14px;margin-bottom:14px"><tbody>'
+    +   '<tr><td style="padding:3px"><b>ชื่อ-สกุล:</b> '+name+'</td><td style="padding:3px"><b>ชั้น:</b> '+(stu.classLevel||'-')+(stu.room?('/'+stu.room):'')+'</td><td style="padding:3px"><b>รหัส:</b> '+(stu.studentCode||'-')+'</td></tr>'
+    +   '<tr><td style="padding:3px"><b>ซ้อมทั้งหมด:</b> '+sm.n+' ครั้ง</td><td style="padding:3px"><b>เฉลี่ย:</b> '+sm.avg+'%</td><td style="padding:3px"><b>คะแนนสูงสุด:</b> '+(sm.best?sm.best.score+'/'+sm.best.maxScore:'-')+'</td></tr>'
+    +   '<tr><td style="padding:3px" colspan="3"><b>เหรียญ:</b> ทอง '+sm.medals.gold+' · เงิน '+sm.medals.silver+' · ทองแดง '+sm.medals.bronze+' · เข้าร่วม '+sm.medals.cert+'</td></tr>'
+    +   '<tr><td style="padding:3px" colspan="3"><b>โหมดที่ซ้อม:</b> '+modeList+'</td></tr></tbody></table>'
+    + '<div style="font-weight:600;margin-bottom:4px">กราฟพัฒนาการ (% ความแม่นยำ)</div>'
+    + '<div style="border:1px solid #e2e8f0;border-radius:8px;padding:8px;margin-bottom:16px">'+svg+'</div>'
+    + '<div style="font-weight:600;margin-bottom:6px">ประวัติการซ้อมทั้งหมด ('+sm.n+' ครั้ง)</div>'
+    + '<table class="htbl" style="width:100%;font-size:12px;border-collapse:collapse">'
+    +   '<thead><tr style="border-bottom:1.5px solid #0a0e1f"><th style="text-align:left;padding:5px">วันเวลา</th><th style="text-align:left;padding:5px">โหมด</th><th style="text-align:center;padding:5px">ระดับ</th><th style="text-align:right;padding:5px">คะแนน</th><th style="text-align:right;padding:5px">%</th><th style="text-align:center;padding:5px">เหรียญ</th></tr></thead>'
+    +   '<tbody>'+histAll+'</tbody></table>'
+    + '<div style="margin-top:30px;display:flex;justify-content:space-between;align-items:flex-end;font-size:13px">'
+    +   '<div>พิมพ์เมื่อ: '+new Date().toLocaleDateString('th-TH')+'</div>'
+    +   '<div style="text-align:center">ลงชื่อ ........................................ ครูผู้สอน<br>( นายชิติพัทธ์ นิลวรรณ )</div></div>';
+  window.print();
 }
 
 if(!API){ el('loginMsg').textContent = 'ยังไม่ได้ตั้งค่า API ใน config.js'; }
