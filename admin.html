@@ -136,7 +136,12 @@
             <option>ม.1</option><option>ม.2</option><option>ม.3</option>
           </select>
           <input id="fRoom" class="fld" placeholder="ห้อง" />
+          <div class="flex gap-2">
+            <input id="fPass" class="fld" placeholder="รหัสเข้าเล่น" style="flex:1" />
+            <button class="ghost" type="button" onclick="el('fPass').value=genPin()" title="สุ่มรหัส 4 หลัก">สุ่ม</button>
+          </div>
         </div>
+        <p class="m-0 mb-3" style="font-size:12px;color:var(--muted)">รหัสเข้าเล่น = รหัสผ่านส่วนตัวของนักเรียน (ไม่ซ้ำกัน) ใช้เข้าเล่นเพื่อให้คะแนนขึ้นกระดานอันดับ</p>
         <div class="flex items-center gap-2">
           <button class="btn-primary" id="saveStuBtn" onclick="saveStudent()">บันทึก</button>
           <button class="ghost hidden" id="cancelEditBtn" onclick="resetForm()">ยกเลิกแก้ไข</button>
@@ -150,7 +155,7 @@
           <span id="stuCount" style="font-size:13px;color:var(--muted)"></span>
         </div>
         <div style="overflow-x:auto"><table>
-          <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ระดับ</th><th>ห้อง</th><th style="text-align:right">จัดการ</th></tr></thead>
+          <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ระดับ</th><th>ห้อง</th><th>รหัสเข้าเล่น</th><th style="text-align:right">จัดการ</th></tr></thead>
           <tbody id="stuBody"></tbody>
         </table></div>
         <p id="stuEmpty" class="hidden m-0 mt-2" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีนักเรียน</p>
@@ -311,6 +316,7 @@ async function loadStudents(){
     body.innerHTML = studentsCache.map(function(s){
       return '<tr><td style="color:var(--muted)">'+(s.studentCode||'-')+'</td><td>'+s.fullName+'</td>'
         + '<td style="color:var(--muted)">'+(s.classLevel||'-')+'</td><td style="color:var(--muted)">'+(s.room||'-')+'</td>'
+        + '<td>'+(s.password ? '<span class="num-font" style="color:var(--target)">'+s.password+'</span>' : '<span style="color:var(--miss);font-size:12px">ยังไม่ตั้ง</span>')+'</td>'
         + '<td style="text-align:right;white-space:nowrap">'
         + '<button class="ghost" style="padding:5px 10px" onclick="editStudent(\''+s.id+'\')">แก้ไข</button> '
         + '<button class="ghost" style="padding:5px 10px;color:var(--miss);border-color:rgba(251,113,133,.4)" onclick="delStudent(\''+s.id+'\')">ลบ</button>'
@@ -325,7 +331,7 @@ async function saveStudent(){
   const name = val('fName').trim();
   const msg = el('stuMsg');
   if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อ-สกุล'; return; }
-  const data = { studentCode:val('fCode'), fullName:name, classLevel:val('fLevel'), room:val('fRoom') };
+  const data = { studentCode:val('fCode'), fullName:name, classLevel:val('fLevel'), room:val('fRoom'), password:val('fPass').trim() };
   const btn = el('saveStuBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
   let res;
   if(editingId){ data.id=editingId; res = await api('updateStudent', data, true); }
@@ -340,7 +346,7 @@ function editStudent(id){
   if(!s) return;
   editingId = id;
   el('fCode').value = s.studentCode||''; el('fName').value = s.fullName||'';
-  el('fLevel').value = s.classLevel||''; el('fRoom').value = s.room||'';
+  el('fLevel').value = s.classLevel||''; el('fRoom').value = s.room||''; el('fPass').value = s.password||'';
   el('formTitle').textContent = 'แก้ไขข้อมูลนักเรียน';
   el('saveStuBtn').textContent = 'บันทึกการแก้ไข';
   el('cancelEditBtn').classList.remove('hidden');
@@ -350,12 +356,13 @@ function editStudent(id){
 
 function resetForm(keepMsg){
   editingId = null;
-  ['fCode','fName','fLevel','fRoom'].forEach(function(i){ el(i).value=''; });
+  ['fCode','fName','fLevel','fRoom','fPass'].forEach(function(i){ el(i).value=''; });
   el('formTitle').textContent = 'เพิ่มนักเรียน';
   el('saveStuBtn').textContent = 'บันทึก';
   el('cancelEditBtn').classList.add('hidden');
   if(!keepMsg) el('stuMsg').textContent = '';
 }
+function genPin(){ return String(Math.floor(1000 + Math.random()*9000)); }
 
 async function delStudent(id){
   const s = studentsCache.filter(function(x){ return String(x.id)===String(id); })[0];
