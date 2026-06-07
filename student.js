@@ -30,20 +30,31 @@
     } catch (e) {}
   }
 
-  // ล็อกชื่อตามบัญชีที่ล็อกอิน + แสดงป้ายเล็ก ๆ ว่ากำลังเล่นในชื่อใคร
-  function lockNameField(s) {
+  // ใส่ชื่อในช่อง #nameInput/#rName ตามสถานะล็อกอิน
+  // - ล็อกอินแล้ว: เติมชื่อบัญชี + ล็อกแก้ไม่ได้
+  // - ยังไม่ล็อกอิน: ใส่ค่า fallback (ชื่อที่เคยพิมพ์) + แก้ไขได้
+  function applyName(fallback) {
     var inp = document.getElementById('nameInput') || document.getElementById('rName');
     if (!inp) return;
-    inp.value = s.name || s.fullName || '';
-    inp.setAttribute('readonly', 'readonly');
-    inp.style.opacity = '.85';
-    inp.style.cursor = 'default';
-    inp.title = 'เล่นในชื่อที่เข้าสู่ระบบ (แก้ไขไม่ได้)';
+    var s = getStudent();
+    if (s && (s.name || s.fullName)) {
+      inp.value = s.name || s.fullName;
+      inp.setAttribute('readonly', 'readonly');
+      inp.style.opacity = '.85';
+      inp.style.cursor = 'default';
+      inp.title = 'เล่นในชื่อที่เข้าสู่ระบบ (แก้ไขไม่ได้)';
+    } else {
+      inp.value = fallback || inp.value || '';
+      inp.removeAttribute('readonly');
+      inp.style.opacity = '';
+      inp.style.cursor = '';
+      inp.title = '';
+    }
   }
+  window.applyMathName = applyName;
 
   document.addEventListener('DOMContentLoaded', function () {
     bumpView();
-    var s = getStudent();
-    if (s) lockNameField(s);   // ล็อกอินแล้วเท่านั้นจึงล็อกชื่อ
+    applyName();   // เติม/ล็อกชื่อตามสถานะล็อกอิน
   });
 })();
