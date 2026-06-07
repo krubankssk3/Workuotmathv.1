@@ -118,7 +118,11 @@
   <div class="wrap">
 
     <!-- top -->
-    <div class="flex justify-end mb-6 reveal" style="animation-delay:.0s">
+    <div class="flex justify-end gap-2 mb-6 reveal" style="animation-delay:.0s">
+      <button class="adminlink" type="button" onclick="openDev()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        ประวัติผู้พัฒนา
+      </button>
       <a class="adminlink" href="admin.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
         เข้าระบบครู
@@ -131,6 +135,26 @@
       <h1 class="title m-0">ระบบจัดซ้อมรายวิชาคณิตศาสตร์</h1>
       <div class="byline mt-2 mb-3" style="font-size:clamp(18px,3vw,24px);font-weight:600;color:#7fe3f5">By ครูแบงค์</div>
       <p class="tagline m-0">จัดซ้อมมิติใหม่ ไม่เหมือนใครเพราะเบื่อ GSP</p>
+    </div>
+
+    <!-- visitors today + trend -->
+    <div class="card mb-6 reveal" id="visitCard" style="animation-delay:.13s">
+      <div class="flex items-center gap-5 flex-wrap">
+        <div style="text-align:center;flex-shrink:0">
+          <div style="width:96px;height:96px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+               background:radial-gradient(circle at 35% 30%, rgba(65,211,240,.28), rgba(124,224,242,.10));border:1px solid rgba(65,211,240,.4);box-shadow:0 0 26px rgba(65,211,240,.22)">
+            <div id="visToday" class="num-font" style="font-size:30px;font-weight:700;line-height:1;color:#7fe3f5">0</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:7px">เข้าชมวันนี้</div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div class="flex items-center justify-between mb-1">
+            <span class="glow-head" style="font-size:14px;font-weight:600;--gh:#41d3f0">ผู้เข้าชมรายวัน</span>
+            <span id="visTotal" style="font-size:12px;color:var(--muted)"></span>
+          </div>
+          <div id="visChart" style="margin-top:8px"></div>
+        </div>
+      </div>
     </div>
 
     <!-- student auth -->
@@ -209,6 +233,14 @@
       <p class="m-0" style="font-size:13px;color:var(--muted)">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</p>
     </div>
 
+  </div>
+
+  <!-- developer profile modal -->
+  <div id="devModal" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(4,7,18,.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+    <div class="card" style="max-width:440px;width:100%;max-height:88vh;overflow:auto;position:relative">
+      <button onclick="el('devModal').style.display='none'" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,.08);border:none;color:var(--muted);width:30px;height:30px;border-radius:9px;cursor:pointer;font-size:16px">✕</button>
+      <div id="devBody"></div>
+    </div>
   </div>
 
 <script src="config.js"></script>
@@ -368,7 +400,73 @@ function studentLogout(){ clearStudent(); renderAuth(); }
 
 function gateNav(e, a){ return true; }   // ทุกคนเข้าเล่นได้ (ล็อกอินเป็นทางเลือก เพื่อให้คะแนนขึ้นกระดาน)
 
-document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); });
+/* ---------- visitors (ผู้เข้าชมรายวัน) ---------- */
+async function trackVisit(){
+  if(!API) return;
+  try{
+    const today = new Date().toISOString().slice(0,10);
+    if(localStorage.getItem('visitDay') !== today){
+      await api('bumpVisit', {}, true);
+      localStorage.setItem('visitDay', today);
+    }
+  }catch(e){}
+  loadVisits();
+}
+
+async function loadVisits(){
+  if(!API) return;
+  const r = await api('getVisits', { days:14 });
+  if(!r || !r.ok) return;
+  countUp(el('visToday'), r.today || 0);
+  const total = (r.visits||[]).reduce(function(s,d){ return s + (d.count||0); }, 0);
+  el('visTotal').textContent = 'รวม ' + total.toLocaleString() + ' ครั้ง / ' + (r.visits||[]).length + ' วัน';
+  el('visChart').innerHTML = barChartSVG(r.visits || []);
+}
+
+// กราฟแท่งผู้เข้าชมรายวัน (SVG)
+function barChartSVG(data){
+  if(!data.length) return '<p style="font-size:13px;color:var(--muted);margin:6px 0">ยังไม่มีข้อมูล</p>';
+  const W=560, H=150, PADB=24, PADT=14, PADL=6, PADR=6;
+  const iw=W-PADL-PADR, ih=H-PADT-PADB, n=data.length;
+  const max=Math.max.apply(null, [1].concat(data.map(function(d){return d.count;})));
+  const bw=iw/n, gap=Math.min(8, bw*0.28);
+  let bars='';
+  data.forEach(function(d,i){
+    const bh=Math.round(ih*d.count/max);
+    const x=PADL+bw*i+gap/2, y=PADT+ih-bh, w=bw-gap;
+    const last=i===n-1;
+    bars+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.max(bh,2)+'" rx="3" fill="'+(last?'#7fe3f5':'rgba(65,211,240,.45)')+'"/>';
+    if(d.count>0) bars+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(y-3).toFixed(1)+'" text-anchor="middle" font-size="9" fill="#8990b6">'+d.count+'</text>';
+    if(n<=14){ const dd=d.date.slice(8)+'/'+d.date.slice(5,7); bars+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-size="8" fill="#8990b6">'+dd+'</text>'; }
+  });
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">'+bars+'</svg>';
+}
+
+/* ---------- developer profile ---------- */
+async function openDev(){
+  el('devModal').style.display='flex';
+  el('devBody').innerHTML = '<p style="text-align:center;color:var(--muted);padding:30px 0">กำลังโหลด...</p>';
+  const r = await api('getDeveloper');
+  renderDev((r && r.ok && r.developer) ? r.developer : {});
+}
+function renderDev(d){
+  const has = d && (d.name || d.photo || d.reason);
+  if(!has){ el('devBody').innerHTML = '<p style="text-align:center;color:var(--muted);padding:30px 0">ยังไม่มีข้อมูลผู้พัฒนา<br><span style="font-size:12px">(ครูกรอกได้ที่ระบบแอดมิน)</span></p>'; return; }
+  const photo = d.photo
+    ? '<img src="'+d.photo+'" alt="ผู้พัฒนา" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid rgba(127,227,245,.5);box-shadow:0 0 26px rgba(127,227,245,.3)"/>'
+    : '<div style="width:120px;height:120px;border-radius:50%;background:rgba(127,227,245,.12);display:flex;align-items:center;justify-content:center;border:3px solid rgba(127,227,245,.4)"><svg viewBox="0 0 24 24" fill="none" stroke="#7fe3f5" stroke-width="1.6" style="width:54px;height:54px"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>';
+  function row(label, val){ return val ? '<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--muted)">'+label+'</div><div style="font-size:15px">'+val+'</div></div>' : ''; }
+  el('devBody').innerHTML =
+      '<div style="text-align:center;margin-bottom:18px">'+photo
+    + '<div style="font-size:20px;font-weight:700;margin-top:12px">'+(d.name||'')+'</div>'
+    + (d.position ? '<div style="font-size:14px;color:#7fe3f5;margin-top:2px">'+d.position+'</div>' : '')
+    + '</div>'
+    + row('โรงเรียน', d.school)
+    + row('สังกัด', d.affiliation)
+    + (d.reason ? '<div style="margin-top:6px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">เหตุผลในการพัฒนาระบบ</div><div style="font-size:14px;line-height:1.65;color:var(--text);white-space:pre-wrap">'+d.reason+'</div></div>' : '');
+}
+
+document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); trackVisit(); });
 </script>
 </body>
 </html>
