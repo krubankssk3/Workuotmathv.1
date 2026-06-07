@@ -417,7 +417,7 @@ async function saveResult(){
   const btn = document.getElementById('saveBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
   lastName = name;
   const res = await api('saveSession', {
-    studentName:name, level:cfg.level, round:cfg.round, mode:'คิดเลขเร็ว',
+    studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'', level:cfg.level, round:cfg.round, mode:'คิดเลขเร็ว',
     totalQuestions:QUESTIONS, good:state.good, near:state.near, miss:state.miss,
     score:state.score, maxScore:QUESTIONS*POINT_GOOD
   }, true);
