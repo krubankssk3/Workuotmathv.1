@@ -50,6 +50,13 @@
 
   .stat{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 14px; text-align:center; backdrop-filter:blur(10px); }
   .stat .v{ font-size:clamp(26px,5vw,36px); font-weight:700; }
+  .ainp{ padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text);font-family:'Kanit';font-size:14px;min-width:0; }
+  .ainp:focus{ outline:none;border-color:#41d3f0;box-shadow:0 0 0 2px rgba(65,211,240,.3); }
+  .abtn{ background:linear-gradient(120deg,#41d3f0,#7ce0f2);color:#04222b;font-weight:600;border:none;border-radius:10px;padding:9px 18px;font-family:'Kanit';font-size:14px;cursor:pointer;white-space:nowrap; }
+  .abtn:active{ transform:scale(.97); }
+  .alink{ background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:7px 13px;font-family:'Kanit';font-size:13px;cursor:pointer; }
+  .alink:hover{ color:var(--text); }
+  .mode-card.locked{ cursor:pointer; }
 
   .grid-cards{ display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
   .mode-card{ position:relative; overflow:hidden; display:block; text-decoration:none; color:var(--text); cursor:pointer;
@@ -126,6 +133,9 @@
       <p class="tagline m-0">จัดซ้อมมิติใหม่ ไม่เหมือนใครเพราะเบื่อ GSP</p>
     </div>
 
+    <!-- student auth -->
+    <div class="card mb-6 reveal" id="authBar" style="animation-delay:.15s;padding:14px 16px"></div>
+
     <!-- stats -->
     <div class="grid gap-3 mb-9 reveal" style="grid-template-columns:repeat(3,1fr);animation-delay:.2s">
       <div class="stat"><div class="num-font v" id="statSessions" style="color:#41d3f0">0</div><div style="font-size:12px;color:var(--muted)">รอบที่ซ้อม</div></div>
@@ -136,28 +146,28 @@
     <!-- cards -->
     <div class="grid-cards mb-10 reveal" style="animation-delay:.3s">
 
-      <a class="mode-card" href="quick-calc-practice.html" style="--acc:#41d3f0;--accGlow:rgba(65,211,240,.5);--accSoft:rgba(65,211,240,.14)">
+      <a class="mode-card" onclick="return gateNav(event,this)" href="quick-calc-practice.html" style="--acc:#41d3f0;--accGlow:rgba(65,211,240,.5);--accSoft:rgba(65,211,240,.14)">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
         <h3>คิดเลขเร็ว</h3>
         <p>สุ่มเลขโดด ทำให้ได้ผลลัพธ์ภายในเวลา</p>
         <div class="usage">เล่นแล้ว <b id="uQuick">0</b> ครั้ง</div>
       </a>
 
-      <a class="mode-card" href="vedic.html" style="--acc:#a78bfa;--accGlow:rgba(167,139,250,.5);--accSoft:rgba(167,139,250,.14)">
+      <a class="mode-card" onclick="return gateNav(event,this)" href="vedic.html" style="--acc:#a78bfa;--accGlow:rgba(167,139,250,.5);--accSoft:rgba(167,139,250,.14)">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7M18 13l3 3M21 13l-3 3"/></svg></div>
         <h3>เวทคณิต</h3>
         <p>สร้างข้อสอบจำลองเวทคณิต พิมพ์ไปฝึก + บันทึกคะแนน</p>
         <div class="usage">เล่นแล้ว <b id="uVedic">0</b> ครั้ง</div>
       </a>
 
-      <a class="mode-card" href="multiply.html" style="--acc:#34d399;--accGlow:rgba(52,211,153,.5);--accSoft:rgba(52,211,153,.14)">
+      <a class="mode-card" onclick="return gateNav(event,this)" href="multiply.html" style="--acc:#34d399;--accGlow:rgba(52,211,153,.5);--accSoft:rgba(52,211,153,.14)">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
         <h3>สูตรคูณเร็ว</h3>
         <p>สร้างกระดาษคำตอบ พิมพ์ไปฝึก + บันทึกคะแนน</p>
         <div class="usage">เล่นแล้ว <b id="uMul">0</b> ครั้ง</div>
       </a>
 
-      <a class="mode-card" href="game24.html" style="--acc:#ffc640;--accGlow:rgba(255,198,64,.5);--accSoft:rgba(255,198,64,.14)">
+      <a class="mode-card" onclick="return gateNav(event,this)" href="game24.html" style="--acc:#ffc640;--accGlow:rgba(255,198,64,.5);--accSoft:rgba(255,198,64,.14)">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="16" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="16" r="1.3" fill="currentColor"/><circle cx="16" cy="16" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/></svg></div>
         <h3>เกม 24</h3>
         <p>สุ่มเลข 4 ตัว รวมให้ได้ 24 ใน 15 วินาที</p>
@@ -184,10 +194,11 @@
         <div id="popBars" class="flex flex-col gap-3"></div>
       </div>
       <div class="card">
-        <div class="flex items-center gap-2 mb-4">
+        <div class="flex items-center gap-2 mb-1">
           <svg viewBox="0 0 24 24" fill="none" stroke="#ffc640" stroke-width="2" style="width:18px;height:18px"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/></svg>
           <span class="glow-head" style="font-weight:600;--gh:#ffc640">อันดับคะแนนรวม</span>
         </div>
+        <p class="m-0 mb-4" style="font-size:12px;color:var(--muted)">เฉพาะนักเรียนที่ลงทะเบียน · ต้องเข้าสู่ระบบด้วยรหัสผ่านส่วนตัวก่อนเล่น</p>
         <div id="lbList" class="flex flex-col"></div>
         <p id="lbEmpty" class="hidden m-0" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีข้อมูลการซ้อม</p>
       </div>
@@ -206,9 +217,13 @@ const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('ว�
 function el(id){ return document.getElementById(id); }
 function soon(name){ alert('โหมด "' + name + '" กำลังพัฒนา เร็ว ๆ นี้'); }
 
-async function api(action, data){
+async function api(action, data, post){
   if(!API) return null;
   try{
+    if(post){
+      const res = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, data||{})) });
+      return await res.json();
+    }
     let url = API + '?action=' + encodeURIComponent(action);
     if(data) Object.keys(data).forEach(function(k){ url += '&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
     const res = await fetch(url);
@@ -295,16 +310,75 @@ async function loadStats(){
     countUp(el('statSessions'), s.totalSessions);
     countUp(el('statPlayers'), s.players);
     countUp(el('statAcc'), s.avgPct, '%');
-    const bm = s.byMode || {};
-    setUsage('uQuick', bm['คิดเลขเร็ว']);
-    setUsage('uVedic', bm['เวทคณิต']);
-    setUsage('uMul',   bm['สูตรคูณเร็ว']);
-    setUsage('u24',    bm['เกม24']);
-    renderPopularity(bm);
   }
 }
 
-document.addEventListener('DOMContentLoaded', function(){ renderPopularity({}); loadStats(); loadLeaderboard(); });
+async function loadViews(){
+  if(!API) return;
+  const r = await api('getViews');
+  const v = (r && r.ok && r.views) ? r.views : {};
+  setUsage('uQuick', v['คิดเลขเร็ว']);
+  setUsage('uVedic', v['เวทคณิต']);
+  setUsage('uMul',   v['สูตรคูณเร็ว']);
+  setUsage('u24',    v['เกม24']);
+  renderPopularity(v);
+}
+
+/* ---------- student auth ---------- */
+const SKEY = 'mathStudent';
+let pendingHref = null;
+function getStudent(){ try{ return JSON.parse(localStorage.getItem(SKEY)||'null'); }catch(e){ return null; } }
+function setStudent(s){ localStorage.setItem(SKEY, JSON.stringify(s)); }
+function clearStudent(){ localStorage.removeItem(SKEY); }
+
+function renderAuth(){
+  const bar = el('authBar'); if(!bar) return;
+  const s = getStudent();
+  if(s){
+    bar.innerHTML = '<div class="flex items-center justify-between gap-2 flex-wrap">'
+      + '<span style="font-size:14px"><span style="color:var(--muted)">กำลังเล่นในชื่อ:</span> <b>'+s.name+'</b>'
+      + (s.level ? (' <span style="color:var(--muted)">('+s.level+(s.room?('/'+s.room):'')+')</span>') : '')
+      + '</span><button class="alink" onclick="studentLogout()">ออกจากระบบ</button></div>';
+  } else {
+    bar.innerHTML = '<div class="flex items-center gap-2 flex-wrap">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="#41d3f0" stroke-width="2" style="width:18px;height:18px;flex-shrink:0"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>'
+      + '<span style="font-size:13px;color:var(--muted);margin-right:2px">เข้าสู่ระบบนักเรียนเพื่อเล่นและเก็บคะแนน</span>'
+      + '<input id="slLogin" class="ainp" placeholder="เลขประจำตัว/ชื่อ" style="flex:1;min-width:120px" />'
+      + '<input id="slPass" class="ainp" type="password" placeholder="รหัสผ่าน" style="width:120px" onkeydown="if(event.key===\'Enter\')studentDoLogin()" />'
+      + '<button class="abtn" onclick="studentDoLogin()">เข้าสู่ระบบ</button>'
+      + '<span id="slMsg" style="font-size:13px;flex-basis:100%;color:var(--miss)"></span></div>';
+  }
+}
+
+async function studentDoLogin(){
+  const msg = el('slMsg');
+  if(!API){ msg.textContent='ยังไม่ได้ตั้งค่า API ใน config.js'; return; }
+  const login = el('slLogin').value.trim(), pass = el('slPass').value;
+  if(!login || !pass){ msg.style.color='var(--miss)'; msg.textContent='กรอกชื่อ/เลขประจำตัว และรหัสผ่าน'; return; }
+  msg.style.color='var(--muted)'; msg.textContent='กำลังตรวจสอบ...';
+  const res = await api('studentLogin', { login:login, password:pass }, true);
+  if(res && res.ok && res.student){
+    setStudent({ name:res.student.fullName, code:res.student.studentCode, level:res.student.classLevel, room:res.student.room });
+    renderAuth();
+    if(pendingHref){ const h = pendingHref; pendingHref = null; location.href = h; }
+  } else { msg.style.color='var(--miss)'; msg.textContent = (res && res.error) ? res.error : 'เข้าสู่ระบบไม่สำเร็จ'; }
+}
+
+function studentLogout(){ clearStudent(); renderAuth(); }
+
+function gateNav(e, a){
+  if(getStudent()) return true;            // ล็อกอินแล้ว → ไปเล่นได้
+  e.preventDefault();
+  pendingHref = a.getAttribute('href');     // จำโหมดที่จะไป แล้วพาไปหลังล็อกอิน
+  const bar = el('authBar');
+  bar.scrollIntoView({ behavior:'smooth', block:'center' });
+  bar.style.transition='box-shadow .3s'; bar.style.boxShadow='0 0 0 2px #41d3f0';
+  setTimeout(function(){ bar.style.boxShadow='none'; }, 1600);
+  const li = el('slLogin'); if(li) li.focus();
+  return false;
+}
+
+document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); });
 </script>
 </body>
 </html>
