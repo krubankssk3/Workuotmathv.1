@@ -36,17 +36,18 @@
   .playscreen{ position:relative; z-index:1; min-height:100vh; width:100%; max-width:1180px; margin:0 auto; display:flex; flex-direction:column; padding:18px 18px 28px; }
   .play-center{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; }
   .tile{
-    aspect-ratio:1; border-radius:20px; display:flex; align-items:center; justify-content:center;
+    aspect-ratio:1; border-radius:22px; display:flex; align-items:center; justify-content:center;
     font-family:'Chakra Petch',monospace; font-weight:700;
-    background:linear-gradient(150deg,rgba(65,211,240,.16),rgba(65,211,240,.05));
-    border:1px solid rgba(65,211,240,.30); color:var(--digit);
+    --c:#41d3f0; --cBg:rgba(65,211,240,.15); --cg:rgba(65,211,240,.5);
+    background:var(--cBg);
+    border:1px solid var(--c); color:var(--c);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.10);
     transition:transform .18s ease, box-shadow .25s ease;
-    font-size:clamp(60px,15vw,150px); overflow:hidden;
+    font-size:clamp(64px,16vw,150px); overflow:hidden;
   }
-  .tile.spinning{ color:#bdeefb; }
+  .tile.spinning{ filter:brightness(1.2); }
   .tile.spinning .num{ filter:blur(2px); opacity:.85; }
-  .tile.settled{ animation:pop .42s cubic-bezier(.2,1.4,.4,1); box-shadow:0 0 0 1px var(--digit), 0 0 28px var(--digit-glow), inset 0 1px 0 rgba(255,255,255,.1); }
+  .tile.settled{ animation:pop .42s cubic-bezier(.2,1.4,.4,1); box-shadow:0 0 0 1px var(--c), 0 0 28px var(--cg), inset 0 1px 0 rgba(255,255,255,.1); }
   @keyframes pop{0%{transform:scale(.55)}55%{transform:scale(1.15)}100%{transform:scale(1)}}
   .num{display:inline-block;}
   #target{ font-family:'Chakra Petch',monospace; font-weight:700; color:var(--target);
@@ -223,6 +224,13 @@ const OPS = {
   'ม.ต้น':'ใช้ได้: + − × ÷ ยกกำลัง ถอดราก แฟกทอเรียล ซิกมา'
 };
 let cfg = { round:1, level:'ป.ต้น' };
+const TILE_COLORS = [
+  { c:'#41d3f0', bg:'rgba(65,211,240,.15)', g:'rgba(65,211,240,.55)' },
+  { c:'#a78bfa', bg:'rgba(167,139,250,.15)', g:'rgba(167,139,250,.55)' },
+  { c:'#34d399', bg:'rgba(52,211,153,.15)', g:'rgba(52,211,153,.5)' },
+  { c:'#ff7eb6', bg:'rgba(255,126,182,.15)', g:'rgba(255,126,182,.5)' },
+  { c:'#fb923c', bg:'rgba(251,146,60,.15)', g:'rgba(251,146,60,.5)' }
+];
 let state = { q:0, score:0, good:0, near:0, miss:0 };
 let timer = null, locked = false, lastName = '';
 
@@ -317,9 +325,14 @@ function startGame(){
   const n = isR1 ? 4 : 5;
   const dg = document.getElementById('digits');
   dg.style.gridTemplateColumns = 'repeat('+n+', minmax(0,1fr))';
-  dg.style.maxWidth = (n*98)+'px';
+  dg.style.maxWidth = Math.min(n*260, 1040)+'px';
   dg.innerHTML = '';
-  for(let i=0;i<n;i++){ const t=document.createElement('div'); t.className='tile'; t.innerHTML='<span class="num">0</span>'; dg.appendChild(t); }
+  for(let i=0;i<n;i++){
+    const t=document.createElement('div'); t.className='tile';
+    const col=TILE_COLORS[i % TILE_COLORS.length];
+    t.style.setProperty('--c',col.c); t.style.setProperty('--cBg',col.bg); t.style.setProperty('--cg',col.g);
+    t.innerHTML='<span class="num">0</span>'; dg.appendChild(t);
+  }
   show('playView');
   nextQuestion();
 }
