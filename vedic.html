@@ -466,7 +466,7 @@ async function saveScore(){
   const used = (parseInt(el('rMin').value,10)||0)*60 + (parseInt(el('rSec').value,10)||0);
   const btn = el('saveBtn'); btn.disabled = true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
   const res = await api('saveSession', {
-    studentName:name, level:curLevel, round:1, mode:'เวทคณิต',
+    studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'', level:curLevel, round:1, mode:'เวทคณิต',
     totalQuestions:50, good:0, near:0, miss:0, score:score, maxScore:100, timeSec:used
   }, true);
   btn.disabled = false;
