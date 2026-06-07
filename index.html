@@ -222,9 +222,22 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="#ffc640" stroke-width="2" style="width:18px;height:18px"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z"/></svg>
           <span class="glow-head" style="font-weight:600;--gh:#ffc640">อันดับคะแนนรวม</span>
         </div>
-        <p class="m-0 mb-4" style="font-size:12px;color:var(--muted)">เฉพาะนักเรียนที่ลงทะเบียน · ต้องเข้าสู่ระบบด้วยรหัสผ่านส่วนตัวก่อนเล่น</p>
+
+        <div class="flex items-center gap-2 mt-4 mb-1">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#41d3f0" stroke-width="2" style="width:15px;height:15px"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>
+          <span style="font-size:13px;font-weight:600;color:#7fe3f5">นักเรียนที่ลงทะเบียน</span>
+        </div>
+        <p class="m-0 mb-2" style="font-size:11px;color:var(--muted)">ต้องเข้าสู่ระบบด้วยรหัสผ่านส่วนตัวก่อนเล่น</p>
         <div id="lbList" class="flex flex-col"></div>
-        <p id="lbEmpty" class="hidden m-0" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีข้อมูลการซ้อม</p>
+        <p id="lbEmpty" class="hidden m-0" style="font-size:13px;color:var(--muted);text-align:center;padding:6px 0">ยังไม่มีข้อมูล</p>
+
+        <div class="flex items-center gap-2 mt-5 mb-1" style="border-top:1px dashed var(--line);padding-top:14px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" style="width:15px;height:15px"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          <span style="font-size:13px;font-weight:600;color:#a78bfa">บุคคลทั่วไป (สาธารณะ)</span>
+        </div>
+        <p class="m-0 mb-2" style="font-size:11px;color:var(--muted)">ผู้เล่นที่ไม่ได้ลงทะเบียน</p>
+        <div id="lbPublic" class="flex flex-col"></div>
+        <p id="lbPubEmpty" class="hidden m-0" style="font-size:13px;color:var(--muted);text-align:center;padding:6px 0">ยังไม่มีข้อมูล</p>
       </div>
     </div>
 
@@ -310,29 +323,32 @@ function renderPopularity(byMode){
   }
 }
 
-async function loadLeaderboard(){
-  const empty = el('lbEmpty');
-  if(!API){ empty.classList.remove('hidden'); return; }
-  const lb = await api('getLeaderboard', { limit:8 });
-  const list = el('lbList');
-  if(lb && lb.ok && lb.leaderboard && lb.leaderboard.length){
+function renderBoard(listEl, emptyEl, rows){
+  if(rows && rows.length){
     const rc = ['#ffc640','#cdd4e6','#e08a4b'];
-    list.innerHTML = lb.leaderboard.map(function(r,i){
+    listEl.innerHTML = rows.map(function(r,i){
       const mm = modeMeta(r.mode);
       const bg = i<3 ? rc[i] : 'rgba(255,255,255,.08)';
       const col = i<3 ? '#1a1205' : 'var(--muted)';
-      return '<div class="lb-row flex items-center gap-3" style="padding:7px 0;border-bottom:1px solid var(--line);animation-delay:'+(i*0.13)+'s">'
+      return '<div class="lb-row flex items-center gap-3" style="padding:7px 0;border-bottom:1px solid var(--line);animation-delay:'+(i*0.1)+'s">'
         + '<span class="rankc" style="background:'+bg+';color:'+col+'">'+(i+1)+'</span>'
         + '<span style="flex:1;font-size:14px">'+r.studentName+'</span>'
         + '<span class="mchip" style="background:'+mm.c+'22;color:'+mm.c+'">'+mm.label+'</span>'
         + '<span class="lb-score num-font" data-to="'+r.score+'" style="font-weight:600;min-width:44px;text-align:right">0</span>'
         + '</div>';
     }).join('');
-    list.querySelectorAll('.lb-score').forEach(function(e,i){
-      setTimeout(function(){ countUp(e, Number(e.dataset.to), '', 700); }, 260 + i*130);
+    listEl.querySelectorAll('.lb-score').forEach(function(e,i){
+      setTimeout(function(){ countUp(e, Number(e.dataset.to), '', 700); }, 200 + i*110);
     });
-    empty.classList.add('hidden');
-  } else { list.innerHTML=''; empty.classList.remove('hidden'); }
+    emptyEl.classList.add('hidden');
+  } else { listEl.innerHTML=''; emptyEl.classList.remove('hidden'); }
+}
+
+async function loadLeaderboard(){
+  if(!API){ el('lbEmpty').classList.remove('hidden'); el('lbPubEmpty').classList.remove('hidden'); return; }
+  const lb = await api('getLeaderboard', { limit:8 });
+  renderBoard(el('lbList'), el('lbEmpty'), (lb && lb.ok) ? lb.leaderboard : []);
+  renderBoard(el('lbPublic'), el('lbPubEmpty'), (lb && lb.ok) ? lb.publicBoard : []);
 }
 
 async function loadStats(){
@@ -453,8 +469,8 @@ function renderDev(d){
   const has = d && (d.name || d.photo || d.reason);
   if(!has){ el('devBody').innerHTML = '<p style="text-align:center;color:var(--muted);padding:30px 0">ยังไม่มีข้อมูลผู้พัฒนา<br><span style="font-size:12px">(ครูกรอกได้ที่ระบบแอดมิน)</span></p>'; return; }
   const photo = d.photo
-    ? '<img src="'+d.photo+'" alt="ผู้พัฒนา" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid rgba(127,227,245,.5);box-shadow:0 0 26px rgba(127,227,245,.3)"/>'
-    : '<div style="width:120px;height:120px;border-radius:50%;background:rgba(127,227,245,.12);display:flex;align-items:center;justify-content:center;border:3px solid rgba(127,227,245,.4)"><svg viewBox="0 0 24 24" fill="none" stroke="#7fe3f5" stroke-width="1.6" style="width:54px;height:54px"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>';
+    ? '<img src="'+d.photo+'" alt="ผู้พัฒนา" style="display:block;margin:0 auto;width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid rgba(127,227,245,.5);box-shadow:0 0 26px rgba(127,227,245,.3)"/>'
+    : '<div style="display:flex;margin:0 auto;width:120px;height:120px;border-radius:50%;background:rgba(127,227,245,.12);align-items:center;justify-content:center;border:3px solid rgba(127,227,245,.4)"><svg viewBox="0 0 24 24" fill="none" stroke="#7fe3f5" stroke-width="1.6" style="width:54px;height:54px"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>';
   function row(label, val){ return val ? '<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--muted)">'+label+'</div><div style="font-size:15px">'+val+'</div></div>' : ''; }
   el('devBody').innerHTML =
       '<div style="text-align:center;margin-bottom:18px">'+photo
