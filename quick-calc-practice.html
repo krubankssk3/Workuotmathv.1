@@ -403,7 +403,7 @@ function finish(){
     sb.classList.remove('hidden');
     const b = document.getElementById('saveBtn'); b.disabled=false; b.textContent='บันทึกผล';
     document.getElementById('saveMsg').textContent='';
-    document.getElementById('nameInput').value = lastName || '';
+    if(window.applyMathName){ window.applyMathName(lastName); } else { document.getElementById('nameInput').value = lastName || ''; }
   } else { sb.classList.add('hidden'); }
 
   show('resultView');
