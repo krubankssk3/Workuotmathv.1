@@ -358,7 +358,7 @@ async function studentDoLogin(){
   msg.style.color='var(--muted)'; msg.textContent='กำลังตรวจสอบ...';
   const res = await api('studentLogin', { login:login, password:pass }, true);
   if(res && res.ok && res.student){
-    setStudent({ name:res.student.fullName, code:res.student.studentCode, level:res.student.classLevel, room:res.student.room });
+    setStudent({ name:res.student.fullName, code:res.student.studentCode, level:res.student.classLevel, room:res.student.room, token:res.student.token });
     renderAuth();
     if(pendingHref){ const h = pendingHref; pendingHref = null; location.href = h; }
   } else { msg.style.color='var(--miss)'; msg.textContent = (res && res.error) ? res.error : 'เข้าสู่ระบบไม่สำเร็จ'; }
@@ -366,17 +366,7 @@ async function studentDoLogin(){
 
 function studentLogout(){ clearStudent(); renderAuth(); }
 
-function gateNav(e, a){
-  if(getStudent()) return true;            // ล็อกอินแล้ว → ไปเล่นได้
-  e.preventDefault();
-  pendingHref = a.getAttribute('href');     // จำโหมดที่จะไป แล้วพาไปหลังล็อกอิน
-  const bar = el('authBar');
-  bar.scrollIntoView({ behavior:'smooth', block:'center' });
-  bar.style.transition='box-shadow .3s'; bar.style.boxShadow='0 0 0 2px #41d3f0';
-  setTimeout(function(){ bar.style.boxShadow='none'; }, 1600);
-  const li = el('slLogin'); if(li) li.focus();
-  return false;
-}
+function gateNav(e, a){ return true; }   // ทุกคนเข้าเล่นได้ (ล็อกอินเป็นทางเลือก เพื่อให้คะแนนขึ้นกระดาน)
 
 document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); });
 </script>
