@@ -316,7 +316,7 @@ function finish(){
   document.getElementById('cGood').textContent=state.good;
   document.getElementById('cMiss').textContent=state.miss;
   const sb=document.getElementById('saveBox');
-  if(API){ sb.classList.remove('hidden'); const b=document.getElementById('saveBtn'); b.disabled=false; b.textContent='บันทึกผล'; document.getElementById('saveMsg').textContent=''; document.getElementById('nameInput').value=lastName||''; }
+  if(API){ sb.classList.remove('hidden'); const b=document.getElementById('saveBtn'); b.disabled=false; b.textContent='บันทึกผล'; document.getElementById('saveMsg').textContent=''; if(window.applyMathName){ window.applyMathName(lastName); } else { document.getElementById('nameInput').value=lastName||''; } }
   else sb.classList.add('hidden');
   show('resultView');
 }
