@@ -328,7 +328,7 @@ async function saveResult(){
   const btn=document.getElementById('saveBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
   lastName=name;
   const res=await api('saveSession', {
-    studentName:name, level:'-', round:1, mode:'เกม24',
+    studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'', level:'-', round:1, mode:'เกม24',
     totalQuestions:QUESTIONS, good:state.good, near:0, miss:state.miss,
     score:state.score, maxScore:QUESTIONS*POINT
   }, true);
