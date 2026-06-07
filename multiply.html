@@ -36,7 +36,7 @@
   a{text-decoration:none;}
 
   /* ===== กระดาษ (ขาว) ===== */
-  #sheet{ background:#fff; color:#111; border-radius:10px; padding:26px 28px; max-width:780px; margin:0 auto;
+  #sheet{ background:#fff; color:#111; border-radius:10px; padding:26px 30px; max-width:1000px; margin:0 auto;
     font-family:'Sarabun',sans-serif; box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
   #sheet .head{ position:relative; text-align:center; margin-bottom:6px; }
   #sheet h2{ margin:0; font-size:20px; font-weight:600; }
@@ -53,13 +53,22 @@
 
   .hidden{display:none!important;}
 
-  /* ===== โหมดพิมพ์ ===== */
+  /* ===== โหมดพิมพ์ (แนวนอน A4 เต็มหน้า) ===== */
   @media print {
     body{ background:#fff !important; }
     .noprint{ display:none !important; }
     .wrap{ padding:0; max-width:none; }
     #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:0; }
-    @page{ size:A4 portrait; margin:12mm; }
+    @page{ size:A4 landscape; margin:10mm; }
+    /* ขยายให้เต็มหน้ากระดาษแนวนอน */
+    #sheet h2{ font-size:24px; }
+    #sheet .sub{ font-size:15px; }
+    #sheet .info{ font-size:15px; margin:14px 0 20px; }
+    #sheet .grid5{ gap:18px 26px; }
+    #sheet .q{ font-size:16px; gap:7px; }
+    #sheet .q .n{ min-width:24px; }
+    #sheet .box{ min-width:58px; height:26px; }
+    #sheet .foot{ margin-top:24px; font-size:13px; }
   }
 </style>
 </head>
@@ -71,6 +80,21 @@
     <div class="flex items-center justify-between mb-4">
       <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
       <span style="font-weight:600">ซ้อมสูตรคูณเร็ว</span>
+    </div>
+
+    <!-- ตัวจับเวลา (แยกบนสุด) -->
+    <div class="card mb-4">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span style="font-size:13px;color:var(--muted)">⏱ ตัวจับเวลา (30 นาที)</span>
+          <span class="num-font" id="timerDisp" style="font-size:38px;font-weight:700;color:var(--acc);line-height:1">30:00</span>
+          <span style="font-size:12px;color:var(--muted)">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></span>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:90px">เริ่ม</button>
+          <button class="ghost" onclick="tReset()">รีเซ็ต</button>
+        </div>
+      </div>
     </div>
 
     <div class="card mb-4">
@@ -85,18 +109,8 @@
       </div>
     </div>
 
-    <!-- timer + record -->
-    <div class="grid gap-4 mb-5" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
-
-      <div class="card text-center">
-        <p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">ตัวจับเวลา (30 นาที)</p>
-        <div class="num-font" id="timerDisp" style="font-size:48px;font-weight:700;color:var(--acc);line-height:1.1">30:00</div>
-        <p class="m-0 mb-3" style="font-size:12px;color:var(--muted)">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
-        <div class="flex gap-2 justify-center">
-          <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:90px">เริ่ม</button>
-          <button class="ghost" onclick="tReset()">รีเซ็ต</button>
-        </div>
-      </div>
+    <!-- บันทึกคะแนน -->
+    <div class="mb-5" style="max-width:560px;margin:0 auto">
 
       <div class="card">
         <p class="m-0 mb-3" style="font-size:13px;color:var(--muted)">บันทึกคะแนน (กรอกเองหลังตรวจกระดาษ)</p>
