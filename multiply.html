@@ -238,7 +238,7 @@ async function saveScore(){
   const final = parseInt(el('rFinal').value,10) || 0;
   const btn = el('saveBtn'); btn.disabled = true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
   const res = await api('saveSession', {
-    studentName:name, level:curLevel, round:1, mode:'สูตรคูณเร็ว',
+    studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'', level:curLevel, round:1, mode:'สูตรคูณเร็ว',
     totalQuestions:TOTAL, good:correct, near:0, miss:TOTAL-correct,
     score:final, maxScore:MAX_SCORE, timeSec:used
   }, true);
