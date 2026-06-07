@@ -31,6 +31,7 @@
   .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
   .fld{ width:100%; padding:11px 13px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); font-family:'Kanit'; font-size:14px; }
   .fld:focus{ outline:none; border-color:var(--digit); box-shadow:0 0 0 2px var(--digit-glow); }
+  .fld option{ color:#10162b; background:#fff; }
   .tab{ background:none; border:none; color:var(--muted); font-family:'Kanit'; font-weight:500; font-size:14px; padding:9px 16px; border-radius:11px; cursor:pointer; }
   .tab.active{ background:rgba(65,211,240,.16); color:var(--digit); }
   table{ width:100%; border-collapse:collapse; font-size:14px; }
@@ -66,9 +67,19 @@
         <p class="mt-1 mb-0" style="color:var(--muted);font-size:13px">สำหรับผู้ดูแลระบบ</p>
       </div>
       <input id="username" class="fld mb-3" placeholder="ชื่อผู้ใช้" autocomplete="username" />
-      <input id="password" class="fld mb-4" type="password" placeholder="รหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+      <div style="position:relative" class="mb-4">
+        <input id="password" class="fld" type="password" placeholder="รหัสผ่าน" autocomplete="current-password" style="padding-right:44px" onkeydown="if(event.key==='Enter')doLogin()" />
+        <button type="button" id="pwToggle" onclick="togglePw('password',this)" aria-label="แสดงรหัสผ่าน"
+          style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:6px;display:flex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
       <button class="btn-primary w-full" onclick="doLogin()">เข้าสู่ระบบ</button>
       <p id="loginMsg" class="text-center m-0 mt-3" style="font-size:13px;color:var(--miss);min-height:18px"></p>
+      <a href="index.html" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;color:var(--muted);text-decoration:none;font-size:13px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>
+        กลับหน้าหลัก
+      </a>
     </div>
   </div>
 
@@ -314,6 +325,14 @@ function logout(){
 
 /* ---------- tabs ---------- */
 function cap(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+var EYE_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+var EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px"><path d="M2 12s3.5-7 10-7c2 0 3.8.6 5.3 1.5M22 12s-3.5 7-10 7c-2 0-3.8-.6-5.3-1.5"/><path d="M9.5 9.5a3 3 0 004.2 4.2"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
+function togglePw(id, btn){
+  var inp = document.getElementById(id);
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show ? EYE_OFF : EYE_ON;
+}
 function switchTab(t){
   ['dash','stu','rec','rep','dev'].forEach(function(x){
     el('tab'+cap(x)).classList.toggle('hidden', x!==t);
