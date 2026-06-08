@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ซ้อมซูโดกุ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#121838; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --acc:#818cf8; --acc-glow:rgba(129,140,248,.45); --text:#eaeefb; --muted:#8b93b8; --miss:#fb7185; --good:#34d399;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:radial-gradient(900px 500px at 15% -10%, rgba(129,140,248,.14), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(167,139,250,.10), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .wrap{ position:relative; z-index:1; max-width:1000px; margin:0 auto; padding:20px 18px 40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 18px; backdrop-filter:blur(10px); }
+  .btn{ background:linear-gradient(120deg,var(--acc),#a5b4fc); color:#10122e; font-weight:600; border:none; border-radius:13px;
+    padding:11px 18px; font-family:'Kanit'; font-size:15px; cursor:pointer; transition:transform .12s; }
+  .btn:active{transform:scale(.96);}
+  .ghost{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 14px; cursor:pointer; color:var(--muted); font-family:'Kanit'; font-size:14px; transition:.15s; }
+  .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .fld{ width:100%; padding:10px 12px; border-radius:11px; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); font-family:'Kanit'; font-size:14px; }
+  .fld:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 2px var(--acc-glow); }
+  .fld option{ color:#10162b; background:#fff; }
+  .seg{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:13px; padding:4px; display:inline-flex; gap:4px; }
+  .seg button{ border:none; background:transparent; color:var(--muted); font-family:'Kanit'; font-weight:500; padding:8px 18px; border-radius:9px; cursor:pointer; font-size:14px; }
+  .seg button.active{ background:linear-gradient(120deg,#818cf8,#a5b4fc); color:#10122e; font-weight:700; box-shadow:0 4px 14px rgba(129,140,248,.3); }
+  .backbtn{ display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; }
+  .backbtn:hover{ color:var(--text); } .backbtn svg{width:16px;height:16px;}
+  a{text-decoration:none;}
+  .typebtn{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:11px 12px; cursor:pointer;
+    color:var(--text); font-family:'Kanit'; font-size:13.5px; text-align:left; transition:.15s; line-height:1.3; }
+  .typebtn:hover{ background:rgba(129,140,248,.12); border-color:rgba(129,140,248,.4); }
+  .typebtn.active{ background:linear-gradient(120deg,rgba(129,140,248,.9),rgba(165,180,252,.9)); color:#10122e; font-weight:700; border-color:transparent; }
+  .typebtn small{ display:block; opacity:.7; font-size:11px; font-weight:400; }
+  .typebtn.active small{ opacity:.85; }
+
+  /* ===== กระดาษ (ขาว) ===== */
+  #sheet{ background:#fff; color:#111; border-radius:10px; padding:24px 26px; max-width:1000px; margin:0 auto;
+    font-family:'Sarabun',sans-serif; box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
+  #sheet h2{ text-align:center; margin:0 0 2px; font-size:22px; font-weight:700; }
+  #sheet .sub{ text-align:center; color:#555; font-size:13px; margin:0 0 6px; }
+  #sheet .info{ font-size:14px; color:#222; margin:14px 0 16px; line-height:1.5; }
+  #sheet .meta{ font-size:14px; color:#333; margin:6px 0 4px; }
+  #grids{ display:flex; gap:30px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+  #grids .gcol{ text-align:center; }
+  #grids .glabel{ font-size:13px; color:#444; margin-bottom:6px; font-weight:600; }
+  #grids svg{ width:100%; height:auto; max-width:430px; }
+  #answerCol.hidden{ display:none; }
+  #sheet .foot{ text-align:center; color:#888; font-size:12px; margin-top:22px; }
+
+  /* ===== โหมดพิมพ์ (แนวนอน A4) ===== */
+  @media print {
+    body{ background:#fff !important; }
+    .noprint{ display:none !important; }
+    .wrap{ padding:0; max-width:none; }
+    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:4mm 4mm 0; }
+    @page{ size:A4 landscape; margin:10mm; }
+    #grids svg{ max-width:none; width:380px; }
+    #grids{ gap:40px; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="flex items-center justify-between" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
+      <span style="font-weight:600">ซ้อมซูโดกุ</span>
+    </div>
+
+    <!-- ตัวจับเวลา -->
+    <div class="card noprint" style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--muted)">⏱ จับเวลาทำปริศนา (60 นาที/รอบ)</span>
+        <button class="btn" onclick="openTimer()">เปิดหน้าจับเวลา</button>
+      </div>
+      <span id="miniTimer" class="num-font" style="font-size:20px;color:var(--acc)">60:00</span>
+    </div>
+
+    <!-- เลือกระดับ + แบบ -->
+    <div class="card noprint" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--muted)">ระดับ</span>
+        <div class="seg" id="lvSeg">
+          <button data-lv="ป" class="active" onclick="setLevel('ป')">ประถม (ป.1–6)</button>
+          <button data-lv="ม" onclick="setLevel('ม')">มัธยม (ม.1–3)</button>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 8px">เลือกแบบปริศนา (แต่ละปุ่มสร้างปริศนาแยกกัน)</p>
+      <div id="typeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px"></div>
+    </div>
+
+    <!-- แถบเครื่องมือกระดาษ -->
+    <div class="card noprint" id="toolbar" style="margin-bottom:16px;display:none">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="ghost" onclick="genCurrent()">↻ สุ่มชุดใหม่</button>
+        <button class="ghost" id="ansBtn" onclick="toggleAnswer()">ดูเฉลย</button>
+        <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
+      </div>
+    </div>
+
+    <!-- บันทึกคะแนน -->
+    <div class="card noprint" id="scoreCard" style="margin-bottom:20px;max-width:560px;display:none">
+      <p style="margin:0 0 3px;font-weight:600">บันทึกคะแนน (ตามกติกา)</p>
+      <p style="margin:0 0 12px;font-size:12px;color:var(--muted)">ข้อละ 10 คะแนน · ผิดช่องละ −3 · โบนัสเวลา = นาทีที่เหลือ × 3</p>
+      <input id="rName" list="studentList" class="fld" placeholder="ชื่อนักเรียน" autocomplete="off" style="margin-bottom:10px" />
+      <datalist id="studentList"></datalist>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:12px;color:var(--muted)">ข้อที่ทำถูก (0–10)</label>
+          <input id="rCorrect" class="fld" type="number" min="0" max="10" value="0" oninput="calcScore()" style="margin-top:3px" /></div>
+        <div><label style="font-size:12px;color:var(--muted)">ช่องที่ผิด (รวม)</label>
+          <input id="rWrong" class="fld" type="number" min="0" value="0" oninput="calcScore()" style="margin-top:3px" /></div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div><label style="font-size:12px;color:var(--muted)">เวลาที่เหลือ</label>
+          <div style="display:flex;gap:6px;margin-top:3px"><input id="rMin" class="fld" type="number" min="0" value="60" oninput="calcScore()" style="width:70px" /><span style="align-self:center">นาที</span>
+          <input id="rSec" class="fld" type="number" min="0" max="59" value="0" oninput="calcScore()" style="width:70px" /><span style="align-self:center">วิ</span></div></div>
+        <button class="ghost" onclick="pullTime()">ดึงเวลาจากตัวจับเวลา</button>
+      </div>
+      <p style="margin:6px 0 12px;font-size:13px">คะแนนรวม : <span id="rTotal" class="num-font" style="font-size:22px;font-weight:700;color:var(--acc)">0</span> <span id="rMedal" style="font-size:13px;color:var(--muted)"></span></p>
+      <div style="display:flex;align-items:center;gap:10px"><button class="btn" id="saveBtn" onclick="saveScore()">บันทึกผล</button><span id="saveMsg" style="font-size:13px"></span></div>
+    </div>
+
+    <!-- กระดาษ -->
+    <div id="sheet" style="display:none">
+      <h2 id="shTitle">ซูโดกุ</h2>
+      <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
+      <div class="meta">ชื่อ-สกุล ............................................ ชั้น ......... เลขที่ ...... เวลา 60 นาที</div>
+      <div class="info" id="shInfo"></div>
+      <div id="grids">
+        <div class="gcol"><div class="glabel">โจทย์</div><div id="puzzleSvg"></div></div>
+        <div class="gcol hidden" id="answerCol"><div class="glabel">เฉลย</div><div id="answerSvg"></div></div>
+      </div>
+      <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
+    </div>
+  </div>
+
+  <!-- หน้าจับเวลาเต็มจอ -->
+  <div id="timerScreen" style="display:none;position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 28%, #1a1d3a, #05080f 72%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">
+    <button onclick="closeTimer()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:none;color:#cbd5e1;padding:10px 18px;border-radius:12px;cursor:pointer;font-family:'Kanit';font-size:15px">✕ ปิด</button>
+    <p style="color:var(--muted);font-size:clamp(15px,3vw,20px);margin:0 0 2px">ตัวจับเวลา · 60 นาที</p>
+    <div class="num-font" id="timerDisp" style="font-size:clamp(110px,32vw,300px);font-weight:700;color:var(--acc);line-height:1;text-shadow:0 0 60px rgba(129,140,248,.5)">60:00</div>
+    <p style="color:var(--muted);font-size:clamp(16px,4vw,22px);margin:8px 0 30px">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:160px;font-size:19px;padding:15px 30px">เริ่ม</button>
+      <button class="ghost" onclick="tReset()" style="font-size:19px;padding:15px 30px">รีเซ็ต</button>
+    </div>
+  </div>
+
+<script src="config.js"></script>
+<script>
+window.PRACTICE_MODE = 'ซูโดกุ';
+</script>
+<script src="student.js"></script>
+<script>
+function el(id){ return document.getElementById(id); }
+const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('วาง') === -1) ? API_URL : '';
+
+/* ============ ENGINE (ตรวจสอบด้วย node แล้วว่าสร้างทุกแบบถูกต้อง) ============ */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function range(n){ return [...Array(n).keys()]; }
+function popcount(x){ let n=0; while(x){x&=x-1;n++;} return n; }
+function buildModel(N, boxMap, extra){
+  const cells=N*N, units=[];
+  for(let r=0;r<N;r++){ const u=[]; for(let c=0;c<N;c++) u.push(r*N+c); units.push(u); }
+  for(let c=0;c<N;c++){ const u=[]; for(let r=0;r<N;r++) u.push(r*N+c); units.push(u); }
+  const boxes={};
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){ const b=boxMap(r,c); (boxes[b]=boxes[b]||[]).push(r*N+c); }
+  Object.keys(boxes).forEach(k=>units.push(boxes[k]));
+  (extra||[]).forEach(u=>units.push(u.slice()));
+  const peers=Array.from({length:cells},()=>new Set());
+  units.forEach(u=>u.forEach(a=>u.forEach(b=>{ if(a!==b) peers[a].add(b); })));
+  return { N, cells, units, peers:peers.map(s=>[...s]) };
+}
+function solve(model, given, maxSteps){
+  const N=model.N, cells=model.cells, peers=model.peers, FULL=(1<<N)-1;
+  const cand=new Array(cells).fill(FULL), val=new Array(cells).fill(0);
+  function assign(i,v){ val[i]=v; cand[i]=0; const bit=1<<(v-1);
+    for(const p of peers[i]){ if(val[p]===0 && (cand[p]&bit)){ cand[p]&=~bit; if(cand[p]===0) return false; } } return true; }
+  for(let i=0;i<cells;i++){ if(given[i]){ if(!(cand[i]&(1<<(given[i]-1)))) return null; if(!assign(i,given[i])) return null; } }
+  let steps=0; const cap=maxSteps||300000;
+  function rec(){
+    if(++steps>cap) return 'TO';
+    let best=-1,bc=99;
+    for(let i=0;i<cells;i++){ if(val[i]===0){ const pc=popcount(cand[i]); if(pc===0) return false; if(pc<bc){bc=pc;best=i; if(pc===1)break;} } }
+    if(best<0) return true;
+    const vals=[]; for(let v=1;v<=N;v++) if(cand[best]&(1<<(v-1))) vals.push(v); shuffle(vals);
+    for(const v of vals){ const sv=val.slice(), sc=cand.slice();
+      if(assign(best,v)){ const r=rec(); if(r===true) return true; if(r==='TO') return 'TO'; }
+      for(let k=0;k<cells;k++){ val[k]=sv[k]; cand[k]=sc[k]; } }
+    return false;
+  }
+  return rec()===true ? val.slice() : null;
+}
+function countSolutions(model, given, limit){
+  const N=model.N, cells=model.cells, peers=model.peers, FULL=(1<<N)-1;
+  const cand=new Array(cells).fill(FULL), val=new Array(cells).fill(0);
+  function assign(i,v){ val[i]=v; cand[i]=0; const bit=1<<(v-1);
+    for(const p of peers[i]){ if(val[p]===0 && (cand[p]&bit)){ cand[p]&=~bit; if(cand[p]===0) return false; } } return true; }
+  for(let i=0;i<cells;i++){ if(given[i]){ if(!assign(i,given[i])) return 0; } }
+  let count=0;
+  function rec(){ if(count>=limit) return;
+    let best=-1,bc=99; for(let i=0;i<cells;i++){ if(val[i]===0){ const pc=popcount(cand[i]); if(pc===0) return; if(pc<bc){bc=pc;best=i;} } }
+    if(best<0){ count++; return; }
+    for(let v=1;v<=N;v++){ if(cand[best]&(1<<(v-1))){ const sv=val.slice(),sc=cand.slice(); if(assign(best,v)) rec(); for(let k=0;k<cells;k++){val[k]=sv[k];cand[k]=sc[k];} if(count>=limit) return; } }
+  }
+  rec(); return count;
+}
+function filled(g){ let n=0; for(const v of g) if(v) n++; return n; }
+function makeJigsaw(N, rounds){
+  const box = N===9 ? ((r,c)=>Math.floor(r/3)*3+Math.floor(c/3)) : ((r,c)=>Math.floor(r/2)*2+Math.floor(c/3));
+  const reg=new Array(N*N); for(let r=0;r<N;r++)for(let c=0;c<N;c++) reg[r*N+c]=box(r,c);
+  function nb(i){ const r=(i/N)|0,c=i%N,o=[]; if(r>0)o.push(i-N); if(r<N-1)o.push(i+N); if(c>0)o.push(i-1); if(c<N-1)o.push(i+1); return o; }
+  const cellsOf={}; for(let ri=0;ri<N;ri++) cellsOf[ri]=new Set(); reg.forEach((ri,i)=>cellsOf[ri].add(i));
+  function connected(set){ const arr=[...set]; const seen=new Set([arr[0]]),st=[arr[0]]; while(st.length){ const x=st.pop(); for(const y of nb(x)) if(set.has(y)&&!seen.has(y)){seen.add(y);st.push(y);} } return seen.size===arr.length; }
+  function adj(cell,ri){ for(const x of nb(cell)) if(reg[x]===ri) return true; return false; }
+  const tries=(rounds||18)*N*N;
+  for(let s=0;s<tries;s++){
+    const a=Math.floor(Math.random()*N*N), A=reg[a];
+    const ns=nb(a).map(x=>reg[x]).filter(x=>x!==A); if(!ns.length) continue;
+    const B=ns[Math.floor(Math.random()*ns.length)];
+    const bc=[...cellsOf[B]].filter(x=>adj(x,A)); if(!bc.length) continue;
+    const b=bc[Math.floor(Math.random()*bc.length)]; if(a===b) continue;
+    cellsOf[A].delete(a); cellsOf[A].add(b); cellsOf[B].delete(b); cellsOf[B].add(a);
+    if(connected(cellsOf[A])&&connected(cellsOf[B])){ reg[a]=B; reg[b]=A; }
+    else { cellsOf[A].add(a); cellsOf[A].delete(b); cellsOf[B].add(b); cellsOf[B].delete(a); }
+  }
+  return reg;
+}
+function diagUnits(N){ const d1=[],d2=[]; for(let i=0;i<N;i++){ d1.push(i*N+i); d2.push(i*N+(N-1-i)); } return [d1,d2]; }
+function rectBox(N){ return N===6 ? ((r,c)=>Math.floor(r/2)*2+Math.floor(c/3)) : ((r,c)=>Math.floor(r/3)*3+Math.floor(c/3)); }
+function windokuUnits(){ return [[1,1],[1,5],[5,1],[5,5]].map(([sr,sc])=>{ const u=[]; for(let r=sr;r<sr+3;r++)for(let c=sc;c<sc+3;c++) u.push(r*9+c); return u; }); }
+function asteriskUnit(){ return [[[1,4],[2,2],[2,6],[4,1],[4,4],[4,7],[6,2],[6,6],[7,4]].map(([r,c])=>r*9+c)]; }
+function generate(v){
+  const N=v.N;
+  for(let attempt=0; attempt<60; attempt++){
+    let regArr, boxMap;
+    if(v.jigsaw){ regArr=makeJigsaw(N, N===9?18:16); boxMap=(r,c)=>regArr[r*N+c]; }
+    else { const f=rectBox(N); regArr=new Array(N*N); for(let r=0;r<N;r++)for(let c=0;c<N;c++) regArr[r*N+c]=f(r,c); boxMap=f; }
+    let extra=[];
+    if(v.diagonal) extra=extra.concat(diagUnits(N));
+    if(v.windoku) extra=extra.concat(windokuUnits());
+    if(v.asterisk) extra=extra.concat(asteriskUnit());
+    const model=buildModel(N, boxMap, extra);
+    const sol=solve(model, new Array(N*N).fill(0), 60000);
+    if(!sol) continue;
+    const puzzle=sol.slice(); const order=shuffle(range(N*N));
+    for(const i of order){ if(filled(puzzle)<=v.clues) break; const bak=puzzle[i]; puzzle[i]=0;
+      if(v.unique){ if(countSolutions(model,puzzle,2)!==1) puzzle[i]=bak; } }
+    return { N, reg:regArr, sol, puzzle };
+  }
+  return null;
+}
+
+/* ============ ตัววาดกริด SVG ============ */
+function gridSVG(spec, showSol){
+  const N=spec.N, reg=spec.reg, sol=spec.sol, vals = showSol ? sol : spec.puzzle, sym=spec.symbols;
+  const C=46, T=N*C, PAD=4, W=T+PAD*2;
+  const shade=new Set();
+  if(spec.deco==='evenodd'){ for(let i=0;i<N*N;i++) if(sol[i]%2===0) shade.add(i); }
+  if(spec.deco==='asterisk'){ asteriskUnit()[0].forEach(i=>shade.add(i)); }
+  if(spec.deco==='windoku'){ windokuUnits().forEach(u=>u.forEach(i=>shade.add(i))); }
+  let s='<svg viewBox="0 0 '+W+' '+W+'" xmlns="http://www.w3.org/2000/svg" font-family="Sarabun,Kanit,sans-serif">';
+  s+='<rect x="0" y="0" width="'+W+'" height="'+W+'" fill="#fff"/>';
+  const X=c=>PAD+c*C, Y=r=>PAD+r*C;
+  // shaded cells
+  shade.forEach(i=>{ const r=(i/N)|0,c=i%N; s+='<rect x="'+X(c)+'" y="'+Y(r)+'" width="'+C+'" height="'+C+'" fill="#d6d6d6"/>'; });
+  // diagonals
+  if(spec.diagonal){
+    s+='<line x1="'+X(0)+'" y1="'+Y(0)+'" x2="'+X(N)+'" y2="'+Y(N)+'" stroke="#9aa0b5" stroke-width="1.5" stroke-dasharray="4 4"/>';
+    s+='<line x1="'+X(N)+'" y1="'+Y(0)+'" x2="'+X(0)+'" y2="'+Y(N)+'" stroke="#9aa0b5" stroke-width="1.5" stroke-dasharray="4 4"/>';
+  }
+  // thin grid lines
+  for(let i=0;i<=N;i++){
+    s+='<line x1="'+X(i)+'" y1="'+Y(0)+'" x2="'+X(i)+'" y2="'+Y(N)+'" stroke="#bbb" stroke-width="1"/>';
+    s+='<line x1="'+X(0)+'" y1="'+Y(i)+'" x2="'+X(N)+'" y2="'+Y(i)+'" stroke="#bbb" stroke-width="1"/>';
+  }
+  // thick region borders
+  const TH=3;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const here=reg[r*N+c];
+    if(c===N-1 || reg[r*N+c+1]!==here) s+='<line x1="'+X(c+1)+'" y1="'+Y(r)+'" x2="'+X(c+1)+'" y2="'+Y(r+1)+'" stroke="#111" stroke-width="'+TH+'"/>';
+    if(c===0) s+='<line x1="'+X(0)+'" y1="'+Y(r)+'" x2="'+X(0)+'" y2="'+Y(r+1)+'" stroke="#111" stroke-width="'+TH+'"/>';
+    if(r===N-1 || reg[(r+1)*N+c]!==here) s+='<line x1="'+X(c)+'" y1="'+Y(r+1)+'" x2="'+X(c+1)+'" y2="'+Y(r+1)+'" stroke="#111" stroke-width="'+TH+'"/>';
+    if(r===0) s+='<line x1="'+X(c)+'" y1="'+Y(0)+'" x2="'+X(c+1)+'" y2="'+Y(0)+'" stroke="#111" stroke-width="'+TH+'"/>';
+  }
+  // consecutive bars (from solution)
+  if(spec.deco==='consecutive'){
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+      const i=r*N+c;
+      if(c<N-1 && Math.abs(sol[i]-sol[i+1])===1){ const cx=X(c+1), cy=Y(r)+C/2; s+='<rect x="'+(cx-3)+'" y="'+(cy-9)+'" width="6" height="18" fill="#111"/>'; }
+      if(r<N-1 && Math.abs(sol[i]-sol[i+N])===1){ const cx=X(c)+C/2, cy=Y(r+1); s+='<rect x="'+(cx-9)+'" y="'+(cy-3)+'" width="18" height="6" fill="#111"/>'; }
+    }
+  }
+  // numbers / letters
+  const fs=Math.round(C*0.62);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const v=vals[r*N+c]; if(!v) continue;
+    s+='<text x="'+(X(c)+C/2)+'" y="'+(Y(r)+C/2)+'" text-anchor="middle" dominant-baseline="central" font-size="'+fs+'" font-weight="700" fill="#111">'+sym[v-1]+'</text>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+/* ============ นิยามแบบปริศนา ============ */
+const ALPHA=['A','B','C','D','E','F','G','H','I'];
+const THAI6=['ก','ข','ค','ง','จ','ฉ'];
+const THAI9=['ก','ข','ค','ง','จ','ฉ','ช','ซ','ฌ'];
+function numSym(N){ const a=[]; for(let i=1;i<=N;i++) a.push(String(i)); return a; }
+
+function makeSpec(def){
+  // def: {N, jigsaw, diagonal, windoku, asterisk, deco, sym, clues, unique}
+  return def;
+}
+// instruction text
+function infoText(d){
+  const N=d.N;
+  let what;
+  if(d.sym==='alpha') what='ตัวอักษร '+ALPHA.slice(0,N).join(' ');
+  else if(d.sym==='thai') what='ตัวอักษร '+(N===6?THAI6:THAI9).join(' ');
+  else what='ตัวเลข 1 ถึง '+N;
+  let extra='';
+  const box = (N===6?'2×3':'3×3');
+  if(d.jigsaw && d.diagonal) extra='และตารางย่อยที่ตีกรอบด้วยเส้นหนา และแนวทแยงมุมทั้งสองเส้น';
+  else if(d.jigsaw) extra='และตารางย่อยที่ตีกรอบด้วยเส้นหนา';
+  else if(d.diagonal) extra='ตารางย่อยขนาด '+box+' และแนวทแยงมุมทั้งสองเส้น';
+  else extra='และตารางย่อยขนาด '+box;
+  let base='เติม'+what+' ลงในช่องว่าง ไม่ให้ซ้ำกันในแต่ละแถว แนวตั้ง แนวนอน '+extra;
+  if(d.deco==='evenodd') base+=' (ช่องที่แรเงาต้องเป็นเลขคู่ ช่องว่างเป็นเลขคี่)';
+  if(d.deco==='consecutive') base+=' หากมีแถบดำคั่นระหว่าง 2 ช่อง เลขทั้งสองต้องเรียงต่อกัน ถ้าไม่มีแถบ ห้ามเรียงต่อกัน';
+  if(d.deco==='asterisk') base+=' และช่องที่แรเงา 9 ช่อง (รูปดาว) ต้องมีเลขครบ 1–9';
+  if(d.deco==='windoku') base+=' และช่องแรเงาขนาด 3×3 ทั้ง 4 กลุ่ม ต้องมีเลขครบ 1–9';
+  return base;
+}
+
+const LEVELS = {
+  'ป': [
+    { label:'6×6 คลาสสิก', N:6, clues:18, unique:true },
+    { label:'6×6 ตัวอักษร', N:6, sym:'alpha', clues:18, unique:true },
+    { label:'6×6 ทแยงมุม', N:6, diagonal:true, clues:18, unique:true },
+    { label:'6×6 จิ๊กซอว์', N:6, jigsaw:true, clues:18, unique:true },
+    { label:'6×6 อักษรไทย', N:6, sym:'thai', clues:18, unique:true },
+    { label:'9×9 คลาสสิก', N:9, clues:40 },
+    { label:'9×9 ตัวอักษร', N:9, sym:'alpha', clues:40 },
+    { label:'9×9 ทแยงมุม', N:9, diagonal:true, clues:42 },
+    { label:'9×9 จิ๊กซอว์', N:9, jigsaw:true, clues:42 },
+    { label:'9×9 คู่-คี่', N:9, deco:'evenodd', clues:40 },
+  ],
+  'ม': [
+    { label:'คลาสสิก', N:9, clues:36 },
+    { label:'ทแยงมุม', N:9, diagonal:true, clues:40 },
+    { label:'ตัวอักษร', N:9, sym:'alpha', clues:36 },
+    { label:'จิ๊กซอว์', N:9, jigsaw:true, clues:40 },
+    { label:'คู่-คี่', N:9, deco:'evenodd', clues:36 },
+    { label:'ต่อเนื่อง', N:9, deco:'consecutive', clues:38 },
+    { label:'ดาว (Asterisk)', N:9, asterisk:true, deco:'asterisk', clues:40 },
+    { label:'อักษรไทย', N:9, sym:'thai', clues:36 },
+    { label:'ทแยง-จิ๊กซอว์', N:9, jigsaw:true, diagonal:true, clues:44 },
+    { label:'วินโดกุ', N:9, windoku:true, deco:'windoku', clues:40 },
+  ]
+};
+
+let curLevel='ป', curIdx=-1, curResult=null, showAnswer=false;
+
+function setLevel(lv){
+  curLevel=lv; curIdx=-1; curResult=null;
+  document.querySelectorAll('#lvSeg button').forEach(b=>b.classList.toggle('active', b.dataset.lv===lv));
+  renderTypeButtons();
+  el('sheet').style.display='none'; el('toolbar').style.display='none'; el('scoreCard').style.display='none';
+}
+function renderTypeButtons(){
+  const list=LEVELS[curLevel];
+  el('typeGrid').innerHTML = list.map(function(d,i){
+    return '<button class="typebtn" data-i="'+i+'" onclick="pickType('+i+')">'+d.label+'<small>'+(d.N)+'×'+(d.N)+'</small></button>';
+  }).join('');
+}
+function pickType(i){
+  curIdx=i;
+  document.querySelectorAll('#typeGrid button').forEach(b=>b.classList.toggle('active', Number(b.dataset.i)===i));
+  genCurrent();
+}
+function buildSpec(){
+  const d=LEVELS[curLevel][curIdx];
+  return Object.assign({}, d, { symbols: d.sym==='alpha'?ALPHA.slice(0,d.N) : d.sym==='thai'?(d.N===6?THAI6:THAI9) : numSym(d.N) });
+}
+function genCurrent(){
+  if(curIdx<0) return;
+  const d=LEVELS[curLevel][curIdx];
+  el('puzzleSvg').innerHTML='<p style="color:#888;padding:20px">กำลังสร้างปริศนา...</p>';
+  el('sheet').style.display='block'; el('toolbar').style.display='block'; el('scoreCard').style.display='block';
+  setTimeout(function(){
+    const res=generate(d);
+    if(!res){ el('puzzleSvg').innerHTML='<p style="color:#c00">สร้างไม่สำเร็จ ลองสุ่มใหม่อีกครั้ง</p>'; return; }
+    const spec=buildSpec(); spec.reg=res.reg; spec.sol=res.sol; spec.puzzle=res.puzzle;
+    curResult=spec;
+    el('shTitle').textContent='ซูโดกุ — '+(curLevel==='ป'?'ระดับประถมศึกษา':'ระดับมัธยมศึกษา')+' · '+d.label;
+    el('shInfo').textContent=infoText(d);
+    el('puzzleSvg').innerHTML=gridSVG(spec, false);
+    el('answerSvg').innerHTML=gridSVG(spec, true);
+    el('saveMsg').textContent='';
+  }, 30);
+}
+function toggleAnswer(){
+  showAnswer=!showAnswer;
+  el('answerCol').classList.toggle('hidden', !showAnswer);
+  el('ansBtn').textContent = showAnswer?'ซ่อนเฉลย':'ดูเฉลย';
+}
+
+/* ============ ตัวจับเวลา 60 นาที ============ */
+const FULL_SEC=60*60;
+let tLeft=FULL_SEC, tRun=false, tInt=null;
+function mmss(s){ const m=Math.floor(s/60), x=s%60; return (m<10?'0':'')+m+':'+(x<10?'0':'')+x; }
+function tDraw(){ el('timerDisp').textContent=mmss(tLeft); el('usedDisp').textContent=mmss(FULL_SEC-tLeft); el('miniTimer').textContent=mmss(tLeft); }
+function tToggle(){
+  tRun=!tRun; el('tBtn').textContent=tRun?'หยุด':'เริ่ม';
+  if(tRun){ tInt=setInterval(function(){ if(tLeft>0){ tLeft--; tDraw(); } else { tRun=false; el('tBtn').textContent='หมดเวลา'; clearInterval(tInt); } }, 1000); }
+  else clearInterval(tInt);
+}
+function tReset(){ clearInterval(tInt); tRun=false; tLeft=FULL_SEC; el('tBtn').textContent='เริ่ม'; tDraw(); }
+function openTimer(){ el('timerScreen').style.display='flex'; }
+function closeTimer(){ el('timerScreen').style.display='none'; }
+function pullTime(){ el('rMin').value=Math.floor(tLeft/60); el('rSec').value=tLeft%60; calcScore(); }
+
+/* ============ คะแนน ============ */
+function medalOf(p){ return p>=80?'เหรียญทอง':p>=70?'เหรียญเงิน':p>=60?'เหรียญทองแดง':'เกียรติบัตร'; }
+function calcScore(){
+  const correct=Math.max(0,Math.min(10, Number(el('rCorrect').value)||0));
+  const wrong=Math.max(0, Number(el('rWrong').value)||0);
+  const mn=Math.max(0, Number(el('rMin').value)||0);
+  const base=correct*10, pen=wrong*3, bonus=mn*3;
+  const total=Math.max(0, base-pen)+bonus;
+  const pct=Math.max(0, Math.min(100, total));
+  el('rTotal').textContent=total;
+  el('rMedal').textContent='· '+pct+'% · '+medalOf(pct);
+  return { total, pct, medal:medalOf(pct) };
+}
+async function saveScore(){
+  const name=el('rName').value.trim();
+  const msg=el('saveMsg');
+  if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อก่อนบันทึก'; return; }
+  if(!API){ msg.style.color='var(--miss)'; msg.textContent='ยังไม่ได้ตั้งค่า API'; return; }
+  const sc=calcScore();
+  const timeSec=FULL_SEC-(Number(el('rMin').value)*60+Number(el('rSec').value));
+  const btn=el('saveBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
+  try{
+    const res=await fetch(API,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'saveSession', studentName:name,
+        token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'',
+        level:(curLevel==='ป'?'ประถม':'มัธยม'), round:1, mode:'ซูโดกุ',
+        totalQuestions:10, good:Math.max(0,Math.min(10,Number(el('rCorrect').value)||0)), near:0, miss:Number(el('rWrong').value)||0,
+        score:sc.total, maxScore:100, pct:sc.pct, medal:sc.medal, timeSec:timeSec }) });
+    const j=await res.json();
+    if(j&&j.ok){ msg.style.color='var(--good)'; msg.textContent='บันทึกแล้ว ✓'; }
+    else { msg.style.color='var(--miss)'; msg.textContent=(j&&j.error)?j.error:'บันทึกไม่สำเร็จ'; }
+  }catch(e){ msg.style.color='var(--miss)'; msg.textContent='เชื่อมต่อไม่ได้'; }
+  btn.disabled=false;
+}
+
+/* ============ init ============ */
+async function loadStudentList(){
+  if(!API) return;
+  try{ const r=await fetch(API+'?action=listStudents'); const j=await r.json();
+    if(j&&j.ok&&j.students){ el('studentList').innerHTML=j.students.map(s=>'<option value="'+s.fullName+'">').join(''); } }catch(e){}
+}
+renderTypeButtons(); tDraw(); calcScore();
+// ไม่โหลดรายชื่อ (listStudents ต้องใช้สิทธิ์แอดมิน) — ชื่อพิมพ์เองหรือมาจากการเข้าสู่ระบบนักเรียน
+</script>
+</body>
+</html>
