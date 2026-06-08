@@ -186,9 +186,12 @@
           <input id="recFrom" class="fld" type="date" onchange="renderRecords()" title="ตั้งแต่วันที่" />
           <input id="recTo" class="fld" type="date" onchange="renderRecords()" title="ถึงวันที่" />
         </div>
-        <div class="flex items-center justify-between mt-3">
+        <div class="flex items-center justify-between mt-3 flex-wrap gap-2">
           <span id="recCount" style="font-size:13px;color:var(--muted)"></span>
-          <button class="ghost" onclick="el('recName').value='';el('recMode').value='';el('recFrom').value='';el('recTo').value='';renderRecords()">ล้างตัวกรอง</button>
+          <div class="flex gap-2">
+            <button class="ghost" onclick="exportRecordsCSV()">⬇ ส่งออก CSV</button>
+            <button class="ghost" onclick="el('recName').value='';el('recMode').value='';el('recFrom').value='';el('recTo').value='';renderRecords()">ล้างตัวกรอง</button>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -287,39 +290,56 @@ let recCache = [], recLoaded = false, editSesId = null;
 function el(id){ return document.getElementById(id); }
 function val(id){ return el(id).value; }
 
+let ADMIN_TOKEN = '';
 async function api(action, data, post){
   if(!API) return null;
+  data = Object.assign({}, data || {});
+  if(ADMIN_TOKEN) data.token = ADMIN_TOKEN;   // แนบสิทธิ์ผู้ดูแลให้ทุกคำขอ
   try{
+    let res;
     if(post){
-      const res = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, data||{})) });
-      return await res.json();
+      res = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, data)) });
+    } else {
+      let url = API + '?action=' + encodeURIComponent(action);
+      Object.keys(data).forEach(function(k){ url += '&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
+      res = await fetch(url);
     }
-    let url = API + '?action=' + encodeURIComponent(action);
-    if(data) Object.keys(data).forEach(function(k){ url += '&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
-    const res = await fetch(url);
-    return await res.json();
+    const json = await res.json();
+    // token หมดอายุ/ไม่ถูกต้อง → เด้งกลับหน้าเข้าสู่ระบบ
+    if(json && json.error && json.error.indexOf('ไม่ได้รับอนุญาต') === 0){ forceLogout(); }
+    return json;
   }catch(e){ console.warn('api error:', e); return null; }
 }
 
 /* ---------- login ---------- */
+function showAdmin(){
+  el('loginView').classList.add('hidden');
+  el('adminView').classList.remove('hidden');
+  el('adminView').classList.add('fade-in');
+  loadDashboard(); loadStudents(); loadRecords();
+}
 async function doLogin(){
   const msg = el('loginMsg');
   if(!API){ msg.textContent='ยังไม่ได้ตั้งค่า API ใน config.js'; return; }
   msg.style.color='var(--muted)'; msg.textContent='กำลังตรวจสอบ...';
   const res = await api('login', { username:val('username'), password:val('password') }, true);
   if(res && res.ok){
-    el('loginView').classList.add('hidden');
-    el('adminView').classList.remove('hidden');
-    el('adminView').classList.add('fade-in');
-    loadDashboard(); loadStudents(); loadRecords();
+    ADMIN_TOKEN = res.token || '';
+    try{ sessionStorage.setItem('adminToken', ADMIN_TOKEN); }catch(e){}
+    showAdmin();
   } else {
     msg.style.color='var(--miss)';
     msg.textContent = (res && res.error) ? res.error : 'เข้าสู่ระบบไม่สำเร็จ';
   }
 }
-function logout(){
+function forceLogout(){
+  ADMIN_TOKEN = '';
+  try{ sessionStorage.removeItem('adminToken'); }catch(e){}
   el('adminView').classList.add('hidden');
   el('loginView').classList.remove('hidden');
+}
+function logout(){
+  forceLogout();
   el('password').value=''; el('loginMsg').textContent='';
 }
 
@@ -446,7 +466,7 @@ async function loadRecords(){
   renderRecords();
 }
 
-function renderRecords(){
+function filteredRecords(){
   const q = (el('recName').value||'').trim();
   const mode = el('recMode').value, from = el('recFrom').value, to = el('recTo').value;
   let rows = recCache.slice();
@@ -454,6 +474,11 @@ function renderRecords(){
   if(mode) rows = rows.filter(function(r){ return r.mode === mode; });
   if(from) rows = rows.filter(function(r){ return String(r.timestamp).slice(0,10) >= from; });
   if(to)   rows = rows.filter(function(r){ return String(r.timestamp).slice(0,10) <= to; });
+  return rows;
+}
+
+function renderRecords(){
+  const rows = filteredRecords();
   el('recCount').textContent = rows.length + ' รายการ' + (rows.length!==recCache.length ? (' (จากทั้งหมด '+recCache.length+')') : '');
   const body = el('recBody');
   if(!rows.length){ body.innerHTML=''; el('recEmpty').classList.remove('hidden'); return; }
@@ -470,6 +495,24 @@ function renderRecords(){
       + '<button class="ghost" style="padding:5px 9px;color:var(--miss);border-color:rgba(251,113,133,.4)" onclick="delSession(\''+r.id+'\')">ลบ</button>'
       + '</td></tr>';
   }).join('');
+}
+
+// ส่งออกประวัติการซ้อม (ตามตัวกรองปัจจุบัน) เป็นไฟล์ CSV
+function exportRecordsCSV(){
+  const rows = filteredRecords();
+  if(!rows.length){ alert('ไม่มีข้อมูลให้ส่งออก'); return; }
+  const head = ['วันเวลา','ชื่อ','โหมด','ระดับ','รอบ','คะแนน','เต็ม','เปอร์เซ็นต์','เหรียญ','เวลา(วินาที)'];
+  function esc(v){ v = (v==null?'':String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+  const lines = rows.map(function(r){
+    return [fmtTs(r.timestamp), r.studentName, r.mode, r.level, r.round, r.score, r.maxScore, r.pct, r.medal, (r.timeSec||'')].map(esc).join(',');
+  });
+  const csv = '\uFEFF' + head.join(',') + '\n' + lines.join('\n');   // BOM กันภาษาไทยเพี้ยนใน Excel
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ประวัติการซ้อม_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function delSession(id){
@@ -695,6 +738,11 @@ async function saveDeveloper(){
 }
 
 if(!API){ el('loginMsg').textContent = 'ยังไม่ได้ตั้งค่า API ใน config.js'; }
+// คงสถานะล็อกอินเมื่อรีเฟรช (ภายในแท็บเดียว)
+try{
+  var savedTok = sessionStorage.getItem('adminToken');
+  if(savedTok){ ADMIN_TOKEN = savedTok; showAdmin(); }
+}catch(e){}
 </script>
 </body>
 </html>
