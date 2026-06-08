@@ -198,13 +198,12 @@
         <div class="usage">เล่นแล้ว <b id="u24">0</b> ครั้ง</div>
       </a>
 
-      <div class="mode-card card-soon" onclick="soon('ซูโดกุ')" style="--acc:#fb7185;--accGlow:rgba(251,113,133,.5);--accSoft:rgba(251,113,133,.14)">
-        <span class="badge-soon">กำลังพัฒนา</span>
+      <a class="mode-card" onclick="return gateNav(event,this)" href="sudoku.html" style="--acc:#818cf8;--accGlow:rgba(129,140,248,.5);--accSoft:rgba(129,140,248,.14)">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></div>
         <h3>ซูโดกุ</h3>
-        <p>ฝึกตรรกะด้วยตารางตัวเลข 9×9 หลายระดับ</p>
-        <div class="usage" style="color:#fb7185">เร็ว ๆ นี้</div>
-      </div>
+        <p>ใบงานปริศนาซูโดกุหลายแบบ พิมพ์ไปทำ + เฉลย</p>
+        <div class="usage">เล่นแล้ว <b id="usd">0</b> ครั้ง</div>
+      </a>
 
     </div>
 
@@ -296,7 +295,8 @@ const MODES = [
   { key:'คิดเลขเร็ว',  label:'คิดเลขเร็ว',  c:'#41d3f0' },
   { key:'เวทคณิต',     label:'เวทคณิต',     c:'#a78bfa' },
   { key:'สูตรคูณเร็ว', label:'สูตรคูณเร็ว', c:'#34d399' },
-  { key:'เกม24',       label:'เกม 24',      c:'#ffc640' }
+  { key:'เกม24',       label:'เกม 24',      c:'#ffc640' },
+  { key:'ซูโดกุ',      label:'ซูโดกุ',      c:'#818cf8' }
 ];
 function modeMeta(k){ return MODES.filter(function(m){ return m.key===k; })[0] || { label:k||'-', c:'#8b93b8' }; }
 
@@ -372,6 +372,7 @@ async function loadViews(){
   setUsage('uVedic', v['เวทคณิต']);
   setUsage('uMul',   v['สูตรคูณเร็ว']);
   setUsage('u24',    v['เกม24']);
+  setUsage('usd',    v['ซูโดกุ']);
   renderPopularity(v);
 }
 
