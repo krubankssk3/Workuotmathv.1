@@ -48,11 +48,13 @@
   #sheet .sub{ text-align:center; color:#555; font-size:13px; margin:0 0 6px; }
   #sheet .info{ font-size:14px; color:#222; margin:14px 0 16px; line-height:1.5; }
   #sheet .meta{ font-size:14px; color:#333; margin:6px 0 4px; }
-  #grids{ display:flex; gap:30px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
-  #grids .gcol{ text-align:center; }
-  #grids .glabel{ font-size:13px; color:#444; margin-bottom:6px; font-weight:600; }
-  #grids svg{ width:100%; height:auto; max-width:430px; }
-  #answerCol.hidden{ display:none; }
+  .gridrow{ display:flex; gap:26px; justify-content:center; align-items:flex-start; flex-wrap:wrap; }
+  .gridrow .gcol{ text-align:center; }
+  .gridrow .glabel{ font-size:14px; color:#333; margin-bottom:6px; font-weight:700; }
+  .gridrow svg{ width:100%; height:auto; max-width:380px; }
+  #answerPage{ margin-top:30px; padding-top:24px; border-top:2px dashed #bbb; }
+  #answerPage.hidden{ display:none; }
+  .pagehint{ text-align:center; font-size:12px; color:#999; margin:0 0 10px; }
   #sheet .foot{ text-align:center; color:#888; font-size:12px; margin-top:22px; }
 
   /* ===== โหมดพิมพ์ (แนวนอน A4) ===== */
@@ -62,8 +64,9 @@
     .wrap{ padding:0; max-width:none; }
     #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:4mm 4mm 0; }
     @page{ size:A4 landscape; margin:10mm; }
-    #grids svg{ max-width:none; width:380px; }
-    #grids{ gap:40px; }
+    .gridrow svg{ max-width:none; width:340px; }
+    .gridrow{ gap:34px; }
+    #answerPage{ page-break-before:always; margin-top:0; border-top:none; padding-top:0; }
   }
 </style>
 </head>
@@ -100,7 +103,7 @@
     <div class="card noprint" id="toolbar" style="margin-bottom:16px;display:none">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <button class="ghost" onclick="genCurrent()">↻ สุ่มชุดใหม่</button>
-        <button class="ghost" id="ansBtn" onclick="toggleAnswer()">ดูเฉลย</button>
+        <button class="ghost" id="ansBtn" onclick="toggleAnswer()">ซ่อนใบเฉลย</button>
         <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
       </div>
     </div>
@@ -129,15 +132,23 @@
 
     <!-- กระดาษ -->
     <div id="sheet" style="display:none">
-      <h2 id="shTitle">ซูโดกุ</h2>
-      <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
-      <div class="meta">ชื่อ-สกุล ............................................ ชั้น ......... เลขที่ ...... เวลา 60 นาที</div>
-      <div class="info" id="shInfo"></div>
-      <div id="grids">
-        <div class="gcol"><div class="glabel">โจทย์</div><div id="puzzleSvg"></div></div>
-        <div class="gcol hidden" id="answerCol"><div class="glabel" id="ansLabel">เฉลย</div><div id="ansNav" class="noprint" style="margin-bottom:6px"></div><div id="answerSvg"></div></div>
+      <!-- หน้าโจทย์ -->
+      <div id="puzzlePage">
+        <h2 id="shTitle">ซูโดกุ</h2>
+        <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
+        <div class="meta">ชื่อ-สกุล ............................................ ชั้น ......... เลขที่ ...... เวลา 60 นาที</div>
+        <div class="info" id="shInfo"></div>
+        <div class="gridrow" id="puzzleGrids"></div>
+        <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
       </div>
-      <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
+      <!-- หน้าเฉลย (พิมพ์เป็นแผ่นแยก) -->
+      <div id="answerPage">
+        <p class="pagehint noprint">— ใบเฉลย (เวลาพิมพ์จะอยู่คนละแผ่นกับโจทย์) —</p>
+        <h2 id="shTitleA">เฉลย</h2>
+        <div class="sub" id="shSubA">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
+        <div class="gridrow" id="answerGrids" style="margin-top:14px"></div>
+        <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
+      </div>
     </div>
   </div>
 
@@ -367,8 +378,8 @@ const LEVELS = {
   ]
 };
 
-let curLevel='ป', curIdx=-1, curResult=null, showAnswer=false;
-const ANS_CAP=8; let ansIdx=0;
+let curLevel='ป', curIdx=-1, curPuzzles=[], showAnswer=true;
+const ANS_CAP=8;
 
 // สร้างบริบทตัวแก้ที่รวมเงื่อนไขครบ (units + คู่/คี่ + แถบต่อเนื่อง)
 function buildCtx(spec){
@@ -418,21 +429,25 @@ function enumerate(ctx, given, limit){
   rec(); return sols;
 }
 
-function renderAnswer(){
-  const sols=curResult.solutions, n=sols.length, cap=(n>=ANS_CAP);
-  el('answerSvg').innerHTML=gridSVG(curResult, sols[ansIdx]||curResult.sol);
-  el('ansLabel').textContent = n>1 ? ('เฉลย (รูปแบบที่ '+(ansIdx+1)+' จาก '+(cap?(n+'+'):n)+')') : 'เฉลย';
-  if(n>1){
-    el('ansNav').innerHTML='<button class="ghost" onclick="ansStep(-1)">◀ ก่อนหน้า</button> '
-      +'<span style="font-size:12px;color:var(--muted);margin:0 4px">'+(ansIdx+1)+'/'+(cap?(n+'+'):n)+'</span> '
-      +'<button class="ghost" onclick="ansStep(1)">ถัดไป ▶</button>'
-      +(cap?'<div style="font-size:11px;color:var(--muted);margin-top:4px">ปริศนานี้มีเฉลยหลายรูปแบบ (แสดง '+ANS_CAP+' รูปแบบแรก)</div>':'');
-  } else el('ansNav').innerHTML='';
+function renderSheet(){
+  el('puzzleGrids').innerHTML = curPuzzles.map(function(p,i){
+    return '<div class="gcol"><div class="glabel">ข้อที่ '+(i+1)+'</div>'+gridSVG(p, p.puzzle)+'</div>';
+  }).join('');
+  el('answerGrids').innerHTML = curPuzzles.map(function(p,i){
+    const n=p.solutions.length, cap=(n>=ANS_CAP);
+    const lbl='เฉลยข้อที่ '+(i+1)+(n>1?' (มี '+(cap?(n+'+'):n)+' รูปแบบ)':'');
+    let nav='';
+    if(n>1){ nav='<div class="noprint" style="margin-top:6px;font-size:12px;color:#555">'
+      +'<button class="ghost" style="padding:4px 9px" onclick="ansStep('+i+',-1)">◀</button> '
+      +'<span style="margin:0 4px">รูปแบบ '+(p.ansIdx+1)+'/'+(cap?(n+'+'):n)+'</span> '
+      +'<button class="ghost" style="padding:4px 9px" onclick="ansStep('+i+',1)">▶</button></div>'; }
+    return '<div class="gcol"><div class="glabel">'+lbl+'</div>'+gridSVG(p, p.solutions[p.ansIdx]||p.sol)+nav+'</div>';
+  }).join('');
 }
-function ansStep(d){ const n=curResult.solutions.length; ansIdx=(ansIdx+d+n)%n; renderAnswer(); }
+function ansStep(i,d){ const p=curPuzzles[i]; const n=p.solutions.length; p.ansIdx=(p.ansIdx+d+n)%n; renderSheet(); }
 
 function setLevel(lv){
-  curLevel=lv; curIdx=-1; curResult=null;
+  curLevel=lv; curIdx=-1; curPuzzles=[];
   document.querySelectorAll('#lvSeg button').forEach(b=>b.classList.toggle('active', b.dataset.lv===lv));
   renderTypeButtons();
   el('sheet').style.display='none'; el('toolbar').style.display='none'; el('scoreCard').style.display='none';
@@ -455,30 +470,31 @@ function buildSpec(){
 function genCurrent(){
   if(curIdx<0) return;
   const d=LEVELS[curLevel][curIdx];
-  el('puzzleSvg').innerHTML='<p style="color:#888;padding:20px">กำลังสร้างปริศนา...</p>';
   el('sheet').style.display='block'; el('toolbar').style.display='block'; el('scoreCard').style.display='block';
+  el('puzzleGrids').innerHTML='<p style="color:#888;padding:20px">กำลังสร้างปริศนา 2 ข้อ...</p>'; el('answerGrids').innerHTML='';
   setTimeout(function(){
-    const res=generate(d);
-    if(!res){ el('puzzleSvg').innerHTML='<p style="color:#c00">สร้างไม่สำเร็จ ลองสุ่มใหม่อีกครั้ง</p>'; return; }
-    const spec=buildSpec(); spec.reg=res.reg; spec.sol=res.sol; spec.puzzle=res.puzzle;
-    curResult=spec;
+    curPuzzles=[];
+    for(let n=0;n<2;n++){
+      const res=generate(d); if(!res) continue;
+      const spec=buildSpec(); spec.reg=res.reg; spec.sol=res.sol; spec.puzzle=res.puzzle;
+      const ctx=buildCtx(spec);
+      let sols=enumerate(ctx, spec.puzzle, ANS_CAP); if(!sols.length) sols=[spec.sol];
+      const k=sols.findIndex(g=>g.join(',')===spec.sol.join(',')); if(k>0){ sols.splice(k,1); sols.unshift(spec.sol); }
+      spec.solutions=sols; spec.ansIdx=0;
+      curPuzzles.push(spec);
+    }
+    if(!curPuzzles.length){ el('puzzleGrids').innerHTML='<p style="color:#c00">สร้างไม่สำเร็จ ลองสุ่มใหม่</p>'; return; }
     el('shTitle').textContent='ซูโดกุ — '+(curLevel==='ป'?'ระดับประถมศึกษา':'ระดับมัธยมศึกษา')+' · '+d.label;
+    el('shTitleA').textContent='เฉลย — '+d.label;
     el('shInfo').textContent=infoText(d);
-    el('puzzleSvg').innerHTML=gridSVG(spec, spec.puzzle);
-    // แจกแจงเฉลยทั้งหมด (สูงสุด ANS_CAP รูปแบบ) โดยเคารพเงื่อนไขครบ
-    const ctx=buildCtx(spec);
-    let sols=enumerate(ctx, spec.puzzle, ANS_CAP);
-    if(!sols.length) sols=[spec.sol];
-    // ให้เฉลยที่สร้างไว้อยู่อันแรก
-    const k=sols.findIndex(g=>g.join(',')===spec.sol.join(',')); if(k>0){ sols.splice(k,1); sols.unshift(spec.sol); }
-    curResult.solutions=sols; ansIdx=0; renderAnswer();
+    renderSheet();
     el('saveMsg').textContent='';
   }, 30);
 }
 function toggleAnswer(){
   showAnswer=!showAnswer;
-  el('answerCol').classList.toggle('hidden', !showAnswer);
-  el('ansBtn').textContent = showAnswer?'ซ่อนเฉลย':'ดูเฉลย';
+  el('answerPage').classList.toggle('hidden', !showAnswer);
+  el('ansBtn').textContent = showAnswer?'ซ่อนใบเฉลย':'แสดงใบเฉลย';
 }
 
 /* ============ ตัวจับเวลา 60 นาที ============ */
