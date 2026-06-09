@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ข้อสอบจำลองเสมือน Sudoku · By ครูแบงค์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1030; --bg2:#141a44; --surface:#1b2150; --line:#2c3470;
+    --cyan:#34e0ee; --violet:#a78bfa; --pink:#fb7bc5;
+    --ink:#0f1024; --muted:#9aa3d6; --white:#f5f7ff;
+    --paper:#ffffff; --paper-ink:#15161d; --thick:#15161d;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:'Kanit',system-ui,sans-serif;
+    color:var(--white);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #20276b 0%, transparent 55%),
+      radial-gradient(1000px 700px at 110% 10%, #2a1856 0%, transparent 50%),
+      var(--bg);
+    min-height:100vh;
+  }
+
+  /* ---------- topbar / controls ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    padding:14px clamp(14px,3vw,34px);
+    background:rgba(13,16,48,.82);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .brandmark{font-weight:700;font-size:1em;letter-spacing:.3px;color:var(--white)}
+  .brandmark b{color:var(--cyan);font-weight:700}
+  .home-link{
+    flex:none;text-decoration:none;color:var(--muted);font-weight:600;font-size:15px;
+    padding:9px 14px;border:1px solid var(--line);border-radius:11px;background:var(--surface);transition:.18s;
+  }
+  .home-link:hover{color:var(--cyan);border-color:var(--cyan)}
+  .headline{font-weight:700;font-size:clamp(16px,2.2vw,21px);margin-right:auto;line-height:1.2}
+  .headline span{
+    background:linear-gradient(92deg,var(--cyan),var(--violet));
+    -webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;
+  }
+  .controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+  .lvbtn{
+    appearance:none;border:0;background:transparent;color:var(--muted);
+    font-family:inherit;font-weight:600;font-size:15px;padding:8px 18px;border-radius:9px;cursor:pointer;transition:.18s;
+  }
+  .lvbtn:hover{color:var(--white)}
+  .lvbtn.active{color:var(--ink);background:linear-gradient(92deg,var(--cyan),var(--violet));box-shadow:0 4px 18px -6px var(--cyan)}
+  .btn{
+    appearance:none;font-family:inherit;font-weight:600;font-size:15px;
+    padding:11px 20px;border-radius:12px;cursor:pointer;transition:.18s;border:1px solid transparent;
+  }
+  .btn.primary{
+    color:var(--ink);border:0;
+    background:linear-gradient(92deg,var(--cyan),var(--violet));
+    box-shadow:0 8px 26px -10px var(--cyan);
+  }
+  .btn.primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--cyan)}
+  .btn.primary:disabled{opacity:.55;cursor:wait;transform:none}
+  .btn.ghost{background:var(--surface);border:1px solid var(--line);color:var(--white)}
+  .btn.ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+
+  /* ---------- output area ---------- */
+  main{padding:clamp(16px,3vw,40px) 14px 80px;display:flex;flex-direction:column;align-items:center;gap:26px}
+  .loading{display:flex;flex-direction:column;align-items:center;gap:16px;color:var(--muted);padding:80px 0;font-size:17px}
+  .spin{width:42px;height:42px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--cyan);animation:sp 1s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* ---------- paper ---------- */
+  .paper{
+    width:100%;max-width:900px;background:var(--paper);color:var(--paper-ink);
+    border-radius:14px;padding:34px 38px;
+    box-shadow:0 30px 70px -30px rgba(0,0,0,.7);
+    font-family:'Sarabun',sans-serif;
+  }
+  .sheet-head{
+    display:flex;justify-content:space-between;font-size:13px;color:#555;
+    border-bottom:1.5px solid #222;padding-bottom:8px;margin-bottom:22px;font-weight:600;
+  }
+
+  /* cover */
+  .cover{text-align:center}
+  .cover .brand{font-family:'Kanit';font-weight:800;color:#6d3bd1;letter-spacing:.4px;white-space:nowrap}
+  .cover-title{font-family:'Kanit';font-weight:800;font-size:34px;margin:6px 0 2px;color:#15161d;letter-spacing:.5px}
+  .cover-sub{font-family:'Kanit';font-weight:600;font-size:22px;color:#0e7d8c;margin-bottom:14px}
+  .cover-meta{color:#444;font-size:15px;line-height:1.7;margin-bottom:18px}
+  .namebar{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin:6px 0;font-size:15px}
+  .namebar .line{display:inline-block;border-bottom:1.4px dotted #333;min-width:150px;height:1em;vertical-align:bottom}
+  .namebar .line.short{min-width:80px}
+  .namebar .line.long{min-width:380px}
+  .qlist{max-width:560px;margin:22px auto;padding:0;list-style:none;text-align:left;
+    display:grid;grid-template-columns:1fr 1fr;gap:6px 26px}
+  .qlist li{font-size:15px;border-bottom:1px dashed #ccc;padding:5px 2px;display:flex;align-items:baseline;gap:6px}
+  .qlist .qno{font-weight:700;color:#6d3bd1;min-width:22px}
+  .qlist .qpts{margin-left:auto;color:#888;font-size:13px;white-space:nowrap}
+  .scorebox{margin:14px auto 6px;border-collapse:collapse;width:100%;max-width:620px}
+  .scorebox td{border:1.2px solid #333;padding:8px 4px;text-align:center;font-size:13.5px}
+  .scorebox tr:first-child td{background:#f0eefb;font-weight:600}
+  .scorebox tr:last-child td{height:34px}
+  .foot{margin-top:26px;font-size:12.5px;color:#666;border-top:1px solid #ddd;padding-top:12px}
+
+  /* problems */
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:26px 30px}
+  .qcard{break-inside:avoid}
+  .qhead{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+  .qbadge{flex:none;width:26px;height:26px;border-radius:8px;background:#15161d;color:#fff;
+    font-family:'Kanit';font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .qbadge.sm{width:22px;height:22px;font-size:13px;border-radius:6px}
+  .qname{font-family:'Kanit';font-weight:700;font-size:15.5px;line-height:1.2}
+  .qrule{font-size:12px;color:#555;line-height:1.35;margin-top:2px}
+  .qpts2{margin-left:auto;flex:none;font-size:12px;color:#888;font-weight:600}
+
+  /* answers */
+  .agrid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px 24px}
+  .acard{break-inside:avoid}
+  .ahead{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .aname{font-family:'Kanit';font-weight:600;font-size:13.5px}
+
+  /* ---------- board ---------- */
+  .board{
+    position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);
+    width:100%;aspect-ratio:1/1;border:2.6px solid var(--thick);background:#fff;
+  }
+  .cell{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    border-right:1px solid #b7b9c8;border-bottom:1px solid #b7b9c8;
+    font-family:'Sarabun';font-weight:600;color:#15161d;line-height:1;user-select:none;
+  }
+  .n9 .cell{font-size:clamp(12px,2.1vw,20px)}
+  .n6 .cell{font-size:clamp(15px,2.7vw,24px)}
+  .cell.br-thick{border-right:2.4px solid var(--thick)}
+  .cell.bb-thick{border-bottom:2.4px solid var(--thick)}
+  .cell.br-none{border-right:0}
+  .cell.bb-none{border-bottom:0}
+  .cell.shade{background:#cccdd6}
+  /* เฉลย: ตัวโจทย์ดำหนา ตัวที่เฉลยเติมเป็นสีน้ำเงิน */
+  .acard .cell{font-weight:700}
+  .acard .cell.given{color:#15161d;font-weight:800}
+  .acard .cell:not(.given){color:#2a59d6}
+  .diag{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .diag line{stroke:#8b8c98;stroke-width:.4;stroke-dasharray:1.5 1.3}
+  .cmark{position:absolute;background:#15161d;transform:translate(-50%,-50%);border-radius:1px}
+  .cmark-v{width:3px;height:calc(100%/var(--n)*.5)}
+  .cmark-h{height:3px;width:calc(100%/var(--n)*.5)}
+
+  @media (max-width:720px){
+    .qgrid{grid-template-columns:1fr}
+    .qlist{grid-template-columns:1fr}
+    .agrid{grid-template-columns:1fr 1fr}
+    .paper{padding:22px 18px}
+    .headline{width:100%;margin-bottom:4px}
+  }
+
+  /* ---------- print ---------- */
+  @media print{
+    @page{size:A4;margin:11mm}
+    body{background:#fff}
+    .no-print{display:none!important}
+    main{padding:0;gap:0}
+    .paper{box-shadow:none;border-radius:0;max-width:none;width:100%;padding:0;page-break-after:always}
+    .paper:last-child{page-break-after:auto}
+    .cover .cover-title{font-size:30px}
+    .qgrid{gap:14px 22px}
+    .agrid{grid-template-columns:repeat(2,1fr)}
+    .qrule{font-size:11px}
+  }
+</style>
+</head>
+<body>
+  <header class="topbar no-print">
+    <a class="home-link" href="index.html">‹ หน้าแรก</a>
+    <div class="headline">เครื่องสร้าง<span>ข้อสอบจำลองเสมือน Sudoku</span> <span class="brandmark">By <b>ครูแบงค์</b></span></div>
+    <div class="controls">
+      <div class="seg">
+        <button class="lvbtn" data-lv="pri">ประถม</button>
+        <button class="lvbtn" data-lv="sec">มัธยม</button>
+      </div>
+      <button id="genBtn" class="btn primary">สุ่มสร้างชุดใหม่</button>
+      <button id="printBtn" class="btn ghost">พิมพ์ / บันทึก PDF</button>
+    </div>
+  </header>
+  <main id="output"></main>
+
+<script>
+/* ============================================================
+   Sudoku Engine v2 — "By ครูแบงค์" (solver แบบ propagation เร็ว)
+   ============================================================ */
+(function (root) {
+  'use strict';
+
+  function shuffle(a, rnd) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function mulberry32(seed) {
+    let t = seed >>> 0;
+    return function () {
+      t += 0x6d2b79f5;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function popcount(x) { let n = 0; while (x) { x &= x - 1; n++; } return n; }
+
+  // ---------- structures ----------
+  function baseUnits(N, br, bc) {
+    const units = [];
+    for (let r = 0; r < N; r++) units.push(Array.from({ length: N }, (_, c) => r * N + c));
+    for (let c = 0; c < N; c++) units.push(Array.from({ length: N }, (_, r) => r * N + c));
+    const region = new Array(N * N);
+    let bIdx = 0;
+    for (let R = 0; R < N; R += br)
+      for (let C = 0; C < N; C += bc) {
+        const u = [];
+        for (let dr = 0; dr < br; dr++)
+          for (let dc = 0; dc < bc; dc++) { const cell = (R + dr) * N + (C + dc); u.push(cell); region[cell] = bIdx; }
+        units.push(u); bIdx++;
+      }
+    return { units, region };
+  }
+  function diagUnits(N) {
+    const main = [], anti = [];
+    for (let i = 0; i < N; i++) { main.push(i * N + i); anti.push(i * N + (N - 1 - i)); }
+    return [main, anti];
+  }
+  function windokuUnits(N) {
+    const starts = [[1, 1], [1, 5], [5, 1], [5, 5]], out = [];
+    for (const [r0, c0] of starts) {
+      const u = [];
+      for (let dr = 0; dr < 3; dr++) for (let dc = 0; dc < 3; dc++) u.push((r0 + dr) * N + (c0 + dc));
+      out.push(u);
+    }
+    return out;
+  }
+  function windokuCells(N) { const s = new Set(); for (const u of windokuUnits(N)) u.forEach((c) => s.add(c)); return s; }
+  function asteriskCells(N) {
+    const rc = [[1, 4], [2, 2], [2, 6], [4, 1], [4, 4], [4, 7], [6, 2], [6, 6], [7, 4]];
+    return rc.map(([r, c]) => r * N + c);
+  }
+
+  function neighborsFn(N) {
+    return (cell) => {
+      const r = (cell / N) | 0, c = cell % N, out = [];
+      if (r > 0) out.push(cell - N);
+      if (r < N - 1) out.push(cell + N);
+      if (c > 0) out.push(cell - 1);
+      if (c < N - 1) out.push(cell + 1);
+      return out;
+    };
+  }
+
+  // ---------- jigsaw: เริ่มจากกล่อง แล้วสุ่มสลับคู่รักษาขนาด+ความเชื่อมต่อ ----------
+  function makeJigsawRegions(N, br, bc, rnd) {
+    const neigh = neighborsFn(N);
+    const region = new Array(N * N);
+    let b = 0;
+    for (let R = 0; R < N; R += br)
+      for (let C = 0; C < N; C += bc) {
+        for (let dr = 0; dr < br; dr++) for (let dc = 0; dc < bc; dc++) region[(R + dr) * N + (C + dc)] = b;
+        b++;
+      }
+    function connected(reg) {
+      const cells = [];
+      for (let i = 0; i < N * N; i++) if (region[i] === reg) cells.push(i);
+      if (!cells.length) return true;
+      const seen = new Set([cells[0]]), st = [cells[0]];
+      while (st.length) { const cur = st.pop(); for (const nb of neigh(cur)) if (region[nb] === reg && !seen.has(nb)) { seen.add(nb); st.push(nb); } }
+      return seen.size === cells.length;
+    }
+    const swaps = N * N * 15;
+    for (let s = 0; s < swaps; s++) {
+      const a = Math.floor(rnd() * N * N);
+      const nbs = neigh(a); const bb = nbs[Math.floor(rnd() * nbs.length)];
+      const rA = region[a], rB = region[bb];
+      if (rA === rB) continue;
+      const dCand = [];
+      for (let i = 0; i < N * N; i++) {
+        if (region[i] !== rB || i === a) continue;
+        for (const nb of neigh(i)) if (region[nb] === rA && nb !== a) { dCand.push(i); break; }
+      }
+      if (!dCand.length) continue;
+      const d = dCand[Math.floor(rnd() * dCand.length)];
+      region[a] = rB; region[d] = rA;
+      if (!(connected(rA) && connected(rB))) { region[a] = rA; region[d] = rB; }
+    }
+    const units = Array.from({ length: N }, () => []);
+    for (let cell = 0; cell < N * N; cell++) units[region[cell]].push(cell);
+    return { region, units };
+  }
+
+  // ---------- compile rules -> โครงสร้างเร็วสำหรับ solver ----------
+  function compile(rules) {
+    const N = rules.N, full = (1 << N) - 1;
+    const pset = Array.from({ length: N * N }, () => new Set());
+    for (const u of rules.units) for (const a of u) for (const c of u) if (a !== c) pset[a].add(c);
+    const peers = pset.map((s) => Array.from(s));
+    const baseMask = new Array(N * N).fill(full);
+    if (rules.parity) for (const [cell, par] of rules.parity) baseMask[cell] = (par === 'even') ? rules.evenMask : rules.oddMask;
+    let edgeMask = null;
+    if (rules.edgeMap) {
+      edgeMask = [new Array(N + 1).fill(0), new Array(N + 1).fill(0)]; // [0]=ห้ามต่อเนื่อง, [1]=ต้องต่อเนื่อง
+      for (let v = 1; v <= N; v++) {
+        let mc = 0, mn = 0;
+        for (let x = 1; x <= N; x++) { if (Math.abs(x - v) === 1) mc |= 1 << (x - 1); else mn |= 1 << (x - 1); }
+        edgeMask[1][v] = mc; edgeMask[0][v] = mn;
+      }
+    }
+    return { N, full, peers, baseMask, edgeMap: rules.edgeMap, edgeMask };
+  }
+
+  // ---------- นับจำนวนคำตอบ (หยุดที่ limit; budget=จำนวน node สูงสุด) ----------
+  function countSolutions(grid, C, limit, budget) {
+    if (budget === undefined) budget = Infinity;
+    const N = C.N, peers = C.peers, edgeMap = C.edgeMap, edgeMask = C.edgeMask;
+    const cand = C.baseMask.slice();
+    const val = new Int8Array(N * N);
+    const trail = [];
+    let solCount = 0, nodes = 0, aborted = false;
+
+    function assign(cell, v) {
+      const bit = 1 << (v - 1);
+      if (!(cand[cell] & bit)) return false;
+      trail.push(cell, cand[cell]); cand[cell] = bit; val[cell] = v;
+      const ps = peers[cell];
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i]; if (val[p]) continue;
+        const nm = cand[p] & ~bit;
+        if (nm !== cand[p]) { trail.push(p, cand[p]); cand[p] = nm; if (!nm) return false; }
+      }
+      if (edgeMap) {
+        const em = edgeMap[cell];
+        if (em) for (let i = 0; i < em.length; i++) {
+          const o = em[i].other; if (val[o]) continue;
+          const nm = cand[o] & edgeMask[em[i].consec ? 1 : 0][v];
+          if (nm !== cand[o]) { trail.push(o, cand[o]); cand[o] = nm; if (!nm) return false; }
+        }
+      }
+      return true;
+    }
+
+    for (let c = 0; c < N * N; c++) if (grid[c]) { if (!assign(c, grid[c])) return 0; }
+
+    function search() {
+      if (++nodes > budget) { aborted = true; return; }
+      let best = -1, bestCnt = 99;
+      for (let c = 0; c < N * N; c++) {
+        if (val[c]) continue;
+        const pc = popcount(cand[c]);
+        if (pc === 0) return;
+        if (pc < bestCnt) { bestCnt = pc; best = c; if (pc === 1) break; }
+      }
+      if (best === -1) { solCount++; return; }
+      let m = cand[best];
+      while (m) {
+        const bit = m & -m; m &= m - 1;
+        const v = 32 - Math.clz32(bit);
+        const mark = trail.length;
+        if (assign(best, v)) search();
+        while (trail.length > mark) { const pm = trail.pop(); const cl = trail.pop(); cand[cl] = pm; }
+        val[best] = 0;
+        if (solCount >= limit || aborted) return;
+      }
+    }
+    search();
+    // เกินงบ -> ถือว่า "ยังไม่การันตีคำตอบเดียว" (คืน limit เพื่อให้ dig คงช่องไว้)
+    if (aborted) return limit;
+    return solCount;
+  }
+
+  // ---------- หาเฉลยเต็มแบบสุ่ม (budget=node สูงสุด; เกิน -> null ให้ลองใหม่) ----------
+  function fillSolution(C, rnd, budget) {
+    if (budget === undefined) budget = Infinity;
+    const N = C.N, peers = C.peers, edgeMap = C.edgeMap, edgeMask = C.edgeMask;
+    const cand = C.baseMask.slice();
+    const val = new Int8Array(N * N);
+    const trail = [];
+    let nodes = 0, aborted = false;
+    function assign(cell, v) {
+      const bit = 1 << (v - 1);
+      if (!(cand[cell] & bit)) return false;
+      trail.push(cell, cand[cell]); cand[cell] = bit; val[cell] = v;
+      const ps = peers[cell];
+      for (let i = 0; i < ps.length; i++) {
+        const p = ps[i]; if (val[p]) continue;
+        const nm = cand[p] & ~bit;
+        if (nm !== cand[p]) { trail.push(p, cand[p]); cand[p] = nm; if (!nm) return false; }
+      }
+      if (edgeMap) {
+        const em = edgeMap[cell];
+        if (em) for (let i = 0; i < em.length; i++) {
+          const o = em[i].other; if (val[o]) continue;
+          const nm = cand[o] & edgeMask[em[i].consec ? 1 : 0][v];
+          if (nm !== cand[o]) { trail.push(o, cand[o]); cand[o] = nm; if (!nm) return false; }
+        }
+      }
+      return true;
+    }
+    function search() {
+      if (++nodes > budget) { aborted = true; return false; }
+      let best = -1, bestCnt = 99;
+      for (let c = 0; c < N * N; c++) {
+        if (val[c]) continue;
+        const pc = popcount(cand[c]);
+        if (pc === 0) return false;
+        if (pc < bestCnt) { bestCnt = pc; best = c; if (pc === 1) break; }
+      }
+      if (best === -1) return true;
+      const vals = [];
+      let m = cand[best];
+      while (m) { const bit = m & -m; m &= m - 1; vals.push(32 - Math.clz32(bit)); }
+      shuffle(vals, rnd);
+      for (const v of vals) {
+        const mark = trail.length;
+        if (assign(best, v) && search()) return true;
+        while (trail.length > mark) { const pm = trail.pop(); const cl = trail.pop(); cand[cl] = pm; }
+        val[best] = 0;
+        if (aborted) return false;
+      }
+      return false;
+    }
+    if (!search()) return null;
+    return Array.from(val);
+  }
+
+  // ---------- เจาะช่อง คงคำตอบเดียว ----------
+  function dig(solution, C, rnd, keepMin) {
+    const N = C.N;
+    const puzzle = solution.slice();
+    const order = shuffle(Array.from({ length: N * N }, (_, i) => i), rnd);
+    let clues = N * N;
+    for (const cell of order) {
+      if (clues <= keepMin) break;
+      const saved = puzzle[cell];
+      puzzle[cell] = 0;
+      if (countSolutions(puzzle, C, 2, 8000) === 1) clues--;
+      else puzzle[cell] = saved;
+    }
+    return puzzle;
+  }
+
+  function makeEdgeMap(N, edges) {
+    const map = new Array(N * N).fill(null);
+    for (const e of edges) {
+      (map[e.a] || (map[e.a] = [])).push({ other: e.b, consec: e.consec });
+      (map[e.b] || (map[e.b] = [])).push({ other: e.a, consec: e.consec });
+    }
+    return map;
+  }
+
+  // ---------- สร้างปริศนาตาม variant ----------
+  function build(variant, rnd) {
+    let N, br, bc;
+    if (variant[0] === '6') { N = 6; br = 2; bc = 3; }
+    else { N = 9; br = 3; bc = 3; }
+    const base = baseUnits(N, br, bc);
+    const isJig = variant.includes('Jigsaw');
+    const isDiag = variant.includes('Diagonal');
+    const isWin = variant.includes('Windoku');
+    const isAst = variant.includes('Asterisk');
+    const isConsec = variant.includes('Consecutive');
+    const isEO = variant.includes('Even-Odd') || variant.includes('EvenOdd');
+    const FILL_BUDGET = 30000;
+
+    let keepMin;
+    if (N === 6) keepMin = 12;
+    else if (isJig || isConsec || isAst) keepMin = 28;
+    else keepMin = 24;
+
+    for (let attempt = 0; attempt < 80; attempt++) {
+      let region, units;
+      if (isJig) {
+        const jg = makeJigsawRegions(N, br, bc, rnd); // สุ่มรูปร่างใหม่ทุกครั้งที่ลองใหม่
+        region = jg.region;
+        units = [];
+        for (let i = 0; i < 2 * N; i++) units.push(base.units[i]); // rows + cols
+        units = units.concat(jg.units);
+      } else { units = base.units.slice(); region = base.region; }
+
+      if (isDiag) units = units.concat(diagUnits(N));
+      let windoku = null, asterisk = null;
+      if (isWin) { windoku = windokuCells(N); units = units.concat(windokuUnits(N)); }
+      if (isAst) { asterisk = asteriskCells(N); units = units.concat([asterisk]); }
+
+      const rules = { N, units };
+      rules.evenMask = 0; rules.oddMask = 0;
+      for (let v = 1; v <= N; v++) { if (v % 2 === 0) rules.evenMask |= 1 << (v - 1); else rules.oddMask |= 1 << (v - 1); }
+
+      let C = compile(rules);
+      let solution = fillSolution(C, rnd, FILL_BUDGET);
+      if (!solution) continue; // รูปร่าง/เงื่อนไขนี้หาเฉลยช้า -> ลองใหม่
+
+      let edges = null, shade = null;
+      if (isConsec) {
+        edges = [];
+        for (let r = 0; r < N; r++)
+          for (let c = 0; c < N; c++) {
+            const cell = r * N + c;
+            if (c < N - 1) { const b2 = cell + 1; edges.push({ a: cell, b: b2, consec: Math.abs(solution[cell] - solution[b2]) === 1 }); }
+            if (r < N - 1) { const b2 = cell + N; edges.push({ a: cell, b: b2, consec: Math.abs(solution[cell] - solution[b2]) === 1 }); }
+          }
+        rules.edgeMap = makeEdgeMap(N, edges);
+        C = compile(rules);
+      }
+      if (isEO) {
+        shade = []; const parity = new Map();
+        for (let cell = 0; cell < N * N; cell++) if (solution[cell] % 2 === 0) { shade.push(cell); parity.set(cell, 'even'); }
+        rules.parity = parity;
+        C = compile(rules);
+      }
+
+      const puzzle = dig(solution, C, rnd, keepMin);
+      return {
+        N, variant, region, diag: isDiag, shade, asterisk, windoku, edges,
+        puzzle, solution, cluesLeft: puzzle.filter((x) => x).length,
+      };
+    }
+    return null;
+  }
+
+  const API = { build, mulberry32, compile, countSolutions, fillSolution, baseUnits, diagUnits, makeJigsawRegions };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  root.SudokuEngine = API;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+/* ========= App: UI + การวาดข้อสอบ ========= */
+(function () {
+  'use strict';
+  const E = window.SudokuEngine;
+
+  const THAI = ['ก', 'ข', 'ค', 'ง', 'จ', 'ฉ', 'ช', 'ซ', 'ฌ'];
+
+  function alphaList(N) {
+    let s = [];
+    for (let i = 0; i < N; i++) s.push(String.fromCharCode(65 + i));
+    return s.join(', ');
+  }
+  function thaiList(N) { return THAI.slice(0, N).join(', '); }
+
+  // กติกาแต่ละชนิด (อ้างอิงข้อสอบจริง)
+  const META = {
+    Classic: { name: 'Classic Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวเลขซ้ำกัน` },
+    Alphabet: { name: 'Alphabet Sudoku', glyph: 'alpha', rule: (N) => `เติมตัวอักษร ${alphaList(N)} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวอักษรซ้ำกัน` },
+    Diagonal: { name: 'Diagonal Sudoku', glyph: 'num', diag: true, rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน กรอบสี่เหลี่ยม และแนวทแยงมุม โดยไม่ให้ซ้ำกัน` },
+    Jigsaw: { name: 'Jigsaw Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน และกรอบพื้นที่ที่มีรูปร่างต่างกัน โดยไม่ให้ตัวเลขซ้ำกัน` },
+    'Even-Odd': { name: 'Even-Odd Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวเลขซ้ำกัน และช่องแรเงากำหนดให้เป็น “เลขคู่” เท่านั้นทั้งตาราง` },
+    Consecutive: { name: 'Consecutive Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวเลขซ้ำกัน ช่อง 2 ช่องที่มีเส้นหนาคั่นต้องเป็นเลขเรียงลำดับ (ต่างกัน 1) ส่วนช่องที่ไม่มีเส้นคั่นห้ามต่างกันเท่ากับ 1` },
+    Asterisk: { name: 'Asterisk Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน กรอบสี่เหลี่ยม และกลุ่มช่องที่แรเงา (รูปดาว) โดยไม่ให้ตัวเลขซ้ำกัน` },
+    Windoku: { name: 'Windoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน กรอบสี่เหลี่ยม และกรอบสี่เหลี่ยมที่แรเงาทั้ง 4 กรอบ โดยไม่ให้ซ้ำกัน` },
+    ThaiAlphabet: { name: 'Thai Alphabet Sudoku', glyph: 'thai', rule: (N) => `เติมตัวอักษรภาษาไทย ${thaiList(N)} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวอักษรซ้ำกัน` },
+    DiagonalJigsaw: { name: 'Diagonal Jigsaw Sudoku', glyph: 'num', diag: true, rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน กรอบพื้นที่ที่มีรูปร่างต่างกัน และแนวทแยงมุม โดยไม่ให้ตัวเลขซ้ำกัน` },
+    '6Classic': { name: '6×6 Classic Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวเลขซ้ำกัน` },
+    '6Alphabet': { name: '6×6 Alphabet Sudoku', glyph: 'alpha', rule: (N) => `เติมตัวอักษร ${alphaList(N)} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวอักษรซ้ำกัน` },
+    '6Diagonal': { name: '6×6 Diagonal Sudoku', glyph: 'num', diag: true, rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน กรอบสี่เหลี่ยม และแนวทแยงมุม โดยไม่ให้ซ้ำกัน` },
+    '6Jigsaw': { name: '6×6 Jigsaw Sudoku', glyph: 'num', rule: (N) => `เติมเลข 1 – ${N} ในแนวตั้ง แนวนอน และกรอบพื้นที่ที่มีรูปร่างต่างกัน โดยไม่ให้ตัวเลขซ้ำกัน` },
+    '6ThaiAlphabet': { name: '6×6 Thai Alphabet Sudoku', glyph: 'thai', rule: (N) => `เติมตัวอักษรภาษาไทย ${thaiList(N)} ในแนวตั้ง แนวนอน และกรอบสี่เหลี่ยม โดยไม่ให้ตัวอักษรซ้ำกัน` },
+  };
+
+  const LEVELS = {
+    sec: {
+      label: 'มัธยม', title: 'ระดับมัธยมศึกษา',
+      items: ['Classic', 'Alphabet', 'Diagonal', 'Jigsaw', 'Even-Odd', 'Consecutive', 'Asterisk', 'Windoku', 'ThaiAlphabet', 'DiagonalJigsaw'],
+    },
+    pri: {
+      label: 'ประถม', title: 'ระดับประถมศึกษา',
+      items: ['6Classic', '6Alphabet', '6Diagonal', '6Jigsaw', '6ThaiAlphabet', 'Classic', 'Alphabet', 'Diagonal', 'Jigsaw', 'Even-Odd'],
+    },
+  };
+
+  function glyph(v, type) {
+    if (!v) return '';
+    if (type === 'alpha') return String.fromCharCode(64 + v);
+    if (type === 'thai') return THAI[v - 1];
+    return String(v);
+  }
+
+  // วาดตาราง (โจทย์หรือเฉลย)
+  function boardHTML(r, glyphType, opts) {
+    opts = opts || {};
+    const N = r.N;
+    const grid = opts.answer ? r.solution : r.puzzle;
+    const region = r.region;
+    const shadeSet = new Set(r.shade || []);
+    if (r.windoku) r.windoku.forEach((c) => shadeSet.add(c));
+    if (r.asterisk) r.asterisk.forEach((c) => shadeSet.add(c));
+
+    let cells = '';
+    for (let i = 0; i < N * N; i++) {
+      const rr = (i / N) | 0, cc = i % N;
+      const cls = ['cell'];
+      if (cc < N - 1 && region[i] !== region[i + 1]) cls.push('br-thick');
+      if (rr < N - 1 && region[i] !== region[i + N]) cls.push('bb-thick');
+      if (cc === N - 1) cls.push('br-none');
+      if (rr === N - 1) cls.push('bb-none');
+      if (shadeSet.has(i)) cls.push('shade');
+      if (opts.answer && r.puzzle[i]) cls.push('given');
+      cells += `<div class="${cls.join(' ')}">${glyph(grid[i], glyphType)}</div>`;
+    }
+
+    // เส้นทแยง
+    let diag = '';
+    if (r.diag) {
+      diag = `<svg class="diag" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <line x1="0.5" y1="0.5" x2="99.5" y2="99.5"/>
+        <line x1="99.5" y1="0.5" x2="0.5" y2="99.5"/></svg>`;
+    }
+
+    // เครื่องหมาย consecutive
+    let marks = '';
+    if (r.edges) {
+      for (const e of r.edges) {
+        if (!e.consec) continue;
+        const ra = (e.a / N) | 0, ca = e.a % N;
+        const horizontal = (e.b === e.a + 1);
+        if (horizontal) {
+          const x = ((ca + 1) / N) * 100, y = ((ra + 0.5) / N) * 100;
+          marks += `<span class="cmark cmark-v" style="left:${x}%;top:${y}%"></span>`;
+        } else {
+          const x = ((ca + 0.5) / N) * 100, y = ((ra + 1) / N) * 100;
+          marks += `<span class="cmark cmark-h" style="left:${x}%;top:${y}%"></span>`;
+        }
+      }
+    }
+
+    const sizeCls = N === 6 ? 'n6' : 'n9';
+    return `<div class="board ${sizeCls}" style="--n:${N}">${cells}${diag}${marks}</div>`;
+  }
+
+  // ปกข้อสอบ
+  function coverHTML(level, round) {
+    const L = LEVELS[level];
+    let list = '';
+    L.items.forEach((key, idx) => {
+      const m = META[key];
+      list += `<li><span class="qno">${idx + 1}.</span> ${m.name} <span class="qpts">10 คะแนน</span></li>`;
+    });
+    return `<section class="paper cover">
+      <h1 class="cover-title">ข้อสอบจำลองเสมือน Sudoku <span class="brand">By ครูแบงค์</span></h1>
+      <div class="cover-sub">ระดับชั้น${L.label}</div>
+      <div class="cover-meta">
+        <div>ปริศนาซูโดกุ • ${L.title}</div>
+        <div>เวลา 60 นาที • รวม 100 คะแนน</div>
+      </div>
+      <div class="namebar">
+        <span>ชื่อ–สกุล <i class="line"></i></span>
+        <span>ชั้น <i class="line short"></i></span>
+      </div>
+      <div class="namebar"><span>โรงเรียน <i class="line long"></i></span></div>
+      <ol class="qlist">${list}</ol>
+      <table class="scorebox"><tr>
+        <td>เวลาที่ใช้</td><td>เวลาที่เหลือ</td><td>คะแนนโบนัส</td><td>คะแนนที่ได้</td><td>คะแนนรวม</td>
+      </tr><tr><td></td><td></td><td></td><td></td><td></td></tr></table>
+      <div class="foot">พัฒนาโดย นายชิติพัทธ์ นิลวรรณ ตำแหน่ง ครู โรงเรียนบ้านละลม สพป.ศรีสะเกษ เขต 3</div>
+    </section>`;
+  }
+
+  // หน้าข้อสอบ
+  function problemsHTML(level, results) {
+    const L = LEVELS[level];
+    let cards = '';
+    results.forEach((r, idx) => {
+      const m = META[r.key];
+      cards += `<article class="qcard">
+        <div class="qhead"><span class="qbadge">${idx + 1}</span>
+          <div><div class="qname">${m.name}</div>
+          <div class="qrule">${m.rule(r.N)}</div></div>
+          <span class="qpts2">10 คะแนน</span></div>
+        ${boardHTML(r, m.glyph, { answer: false })}
+      </article>`;
+    });
+    return `<section class="paper">
+      <div class="sheet-head"><span>ข้อสอบจำลองเสมือน Sudoku ระดับชั้น${L.label} • By ครูแบงค์</span><span>เวลา 60 นาที</span></div>
+      <div class="qgrid">${cards}</div>
+    </section>`;
+  }
+
+  // หน้าเฉลย
+  function answersHTML(level, results) {
+    const L = LEVELS[level];
+    let cards = '';
+    results.forEach((r, idx) => {
+      const m = META[r.key];
+      cards += `<article class="acard">
+        <div class="ahead"><span class="qbadge sm">${idx + 1}</span><span class="aname">${m.name}</span></div>
+        ${boardHTML(r, m.glyph, { answer: true })}
+      </article>`;
+    });
+    return `<section class="paper">
+      <div class="sheet-head"><span>เฉลย • ข้อสอบจำลองเสมือน Sudoku ระดับชั้น${L.label}</span><span>By ครูแบงค์</span></div>
+      <div class="agrid">${cards}</div>
+    </section>`;
+  }
+
+  let currentLevel = 'sec';
+
+  function generate() {
+    const out = document.getElementById('output');
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    out.innerHTML = '<div class="loading"><div class="spin"></div>กำลังสุ่มสร้างข้อสอบ…</div>';
+    // ปล่อยให้ UI วาด loading ก่อน แล้วค่อยคำนวณ
+    setTimeout(() => {
+      const seed = (Date.now() ^ (Math.random() * 0xffffffff)) >>> 0;
+      const rnd = E.mulberry32(seed);
+      const items = LEVELS[currentLevel].items;
+      const results = [];
+      for (const key of items) {
+        let r = null, tries = 0;
+        while (!r && tries < 3) { r = E.build(key, rnd); tries++; }
+        if (!r) { r = E.build('Classic', rnd); } // สำรอง (แทบไม่เกิด)
+        r.key = key;
+        results.push(r);
+      }
+      out.innerHTML = coverHTML(currentLevel) + problemsHTML(currentLevel, results) + answersHTML(currentLevel, results);
+      btn.disabled = false;
+    }, 30);
+  }
+
+  function setLevel(lv) {
+    currentLevel = lv;
+    document.querySelectorAll('.lvbtn').forEach((b) => b.classList.toggle('active', b.dataset.lv === lv));
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lvbtn').forEach((b) => b.addEventListener('click', () => setLevel(b.dataset.lv)));
+    document.getElementById('genBtn').addEventListener('click', generate);
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    setLevel('sec');
+    generate();
+  });
+})();
+
+</script>
+</body>
+</html>
