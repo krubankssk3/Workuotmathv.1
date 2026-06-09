@@ -135,7 +135,7 @@
       <div class="info" id="shInfo"></div>
       <div id="grids">
         <div class="gcol"><div class="glabel">โจทย์</div><div id="puzzleSvg"></div></div>
-        <div class="gcol hidden" id="answerCol"><div class="glabel">เฉลย</div><div id="answerSvg"></div></div>
+        <div class="gcol hidden" id="answerCol"><div class="glabel" id="ansLabel">เฉลย</div><div id="ansNav" class="noprint" style="margin-bottom:6px"></div><div id="answerSvg"></div></div>
       </div>
       <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
     </div>
@@ -259,8 +259,9 @@ function generate(v){
 }
 
 /* ============ ตัววาดกริด SVG ============ */
-function gridSVG(spec, showSol){
-  const N=spec.N, reg=spec.reg, sol=spec.sol, vals = showSol ? sol : spec.puzzle, sym=spec.symbols;
+function gridSVG(spec, vals){
+  const N=spec.N, reg=spec.reg, sol=spec.sol, sym=spec.symbols;
+  vals = vals || spec.puzzle;
   const C=46, T=N*C, PAD=4, W=T+PAD*2;
   const shade=new Set();
   if(spec.deco==='evenodd'){ for(let i=0;i<N*N;i++) if(sol[i]%2===0) shade.add(i); }
@@ -367,6 +368,68 @@ const LEVELS = {
 };
 
 let curLevel='ป', curIdx=-1, curResult=null, showAnswer=false;
+const ANS_CAP=8; let ansIdx=0;
+
+// สร้างบริบทตัวแก้ที่รวมเงื่อนไขครบ (units + คู่/คี่ + แถบต่อเนื่อง)
+function buildCtx(spec){
+  const N=spec.N;
+  const boxMap=(r,c)=>spec.reg[r*N+c];
+  let extra=[];
+  if(spec.diagonal) extra=extra.concat(diagUnits(N));
+  if(spec.windoku) extra=extra.concat(windokuUnits());
+  if(spec.asterisk) extra=extra.concat(asteriskUnit());
+  const model=buildModel(N, boxMap, extra);
+  let parity=null, bars=null;
+  if(spec.deco==='evenodd'){ parity=new Array(N*N); for(let i=0;i<N*N;i++) parity[i]=spec.sol[i]%2; }
+  if(spec.deco==='consecutive'){ bars={right:new Set(),down:new Set()};
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){ const i=r*N+c;
+      if(c<N-1&&Math.abs(spec.sol[i]-spec.sol[i+1])===1) bars.right.add(i);
+      if(r<N-1&&Math.abs(spec.sol[i]-spec.sol[i+N])===1) bars.down.add(i); } }
+  return { model, parity, bars };
+}
+
+// แจกแจงเฉลยทั้งหมด (สูงสุด limit) ที่ถูกต้องตามเงื่อนไขทั้งหมด
+function enumerate(ctx, given, limit){
+  const model=ctx.model, parity=ctx.parity, bars=ctx.bars;
+  const N=model.N, cells=model.cells, peers=model.peers, FULL=(1<<N)-1;
+  function orth(i){ const r=(i/N)|0,c=i%N,o=[];
+    if(c<N-1)o.push([i+1, bars&&bars.right.has(i)]); if(c>0)o.push([i-1, bars&&bars.right.has(i-1)]);
+    if(r<N-1)o.push([i+N, bars&&bars.down.has(i)]); if(r>0)o.push([i-N, bars&&bars.down.has(i-N)]); return o; }
+  const cand=new Array(cells).fill(FULL), val=new Array(cells).fill(0);
+  if(parity){ for(let i=0;i<cells;i++){ let m=0; for(let v=1;v<=N;v++) if((v%2)===parity[i]) m|=1<<(v-1); cand[i]&=m; } }
+  function assign(i,v){
+    val[i]=v; cand[i]=0; const bit=1<<(v-1);
+    for(const p of peers[i]){ if(!val[p] && (cand[p]&bit)){ cand[p]&=~bit; if(!cand[p]) return false; } }
+    if(bars){ const os=orth(i);
+      for(let t=0;t<os.length;t++){ const j=os[t][0], bar=os[t][1];
+        if(val[j]){ const cons=Math.abs(v-val[j])===1; if(bar!==cons) return false; }
+        else { let nv=0; if(v-1>=1)nv|=1<<(v-2); if(v+1<=N)nv|=1<<(v);
+          if(bar){ cand[j]&=nv; } else { cand[j]&=~nv; } if(!cand[j]) return false; } } }
+    return true;
+  }
+  for(let i=0;i<cells;i++){ if(given[i]){ if(!(cand[i]&(1<<(given[i]-1)))) return []; if(!assign(i,given[i])) return []; } }
+  const sols=[]; let steps=0;
+  function rec(){
+    if(sols.length>=limit || ++steps>400000) return;
+    let best=-1,bc=99; for(let i=0;i<cells;i++){ if(!val[i]){ const pc=popcount(cand[i]); if(pc===0) return; if(pc<bc){bc=pc;best=i;} } }
+    if(best<0){ sols.push(val.slice()); return; }
+    for(let v=1;v<=N;v++){ if(cand[best]&(1<<(v-1))){ const sv=val.slice(),sc=cand.slice(); if(assign(best,v)) rec(); for(let k=0;k<cells;k++){val[k]=sv[k];cand[k]=sc[k];} if(sols.length>=limit) return; } }
+  }
+  rec(); return sols;
+}
+
+function renderAnswer(){
+  const sols=curResult.solutions, n=sols.length, cap=(n>=ANS_CAP);
+  el('answerSvg').innerHTML=gridSVG(curResult, sols[ansIdx]||curResult.sol);
+  el('ansLabel').textContent = n>1 ? ('เฉลย (รูปแบบที่ '+(ansIdx+1)+' จาก '+(cap?(n+'+'):n)+')') : 'เฉลย';
+  if(n>1){
+    el('ansNav').innerHTML='<button class="ghost" onclick="ansStep(-1)">◀ ก่อนหน้า</button> '
+      +'<span style="font-size:12px;color:var(--muted);margin:0 4px">'+(ansIdx+1)+'/'+(cap?(n+'+'):n)+'</span> '
+      +'<button class="ghost" onclick="ansStep(1)">ถัดไป ▶</button>'
+      +(cap?'<div style="font-size:11px;color:var(--muted);margin-top:4px">ปริศนานี้มีเฉลยหลายรูปแบบ (แสดง '+ANS_CAP+' รูปแบบแรก)</div>':'');
+  } else el('ansNav').innerHTML='';
+}
+function ansStep(d){ const n=curResult.solutions.length; ansIdx=(ansIdx+d+n)%n; renderAnswer(); }
 
 function setLevel(lv){
   curLevel=lv; curIdx=-1; curResult=null;
@@ -401,8 +464,14 @@ function genCurrent(){
     curResult=spec;
     el('shTitle').textContent='ซูโดกุ — '+(curLevel==='ป'?'ระดับประถมศึกษา':'ระดับมัธยมศึกษา')+' · '+d.label;
     el('shInfo').textContent=infoText(d);
-    el('puzzleSvg').innerHTML=gridSVG(spec, false);
-    el('answerSvg').innerHTML=gridSVG(spec, true);
+    el('puzzleSvg').innerHTML=gridSVG(spec, spec.puzzle);
+    // แจกแจงเฉลยทั้งหมด (สูงสุด ANS_CAP รูปแบบ) โดยเคารพเงื่อนไขครบ
+    const ctx=buildCtx(spec);
+    let sols=enumerate(ctx, spec.puzzle, ANS_CAP);
+    if(!sols.length) sols=[spec.sol];
+    // ให้เฉลยที่สร้างไว้อยู่อันแรก
+    const k=sols.findIndex(g=>g.join(',')===spec.sol.join(',')); if(k>0){ sols.splice(k,1); sols.unshift(spec.sol); }
+    curResult.solutions=sols; ansIdx=0; renderAnswer();
     el('saveMsg').textContent='';
   }, 30);
 }
