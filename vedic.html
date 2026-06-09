@@ -58,9 +58,9 @@
   #doc .addbox .ans{ margin-top:auto; }
   #doc .sumspace{ height:32px; }
   #doc .vline2{ border-top:4px double #111; }
-  #doc .vrow{ display:flex; justify-content:flex-end; align-items:center; gap:10px; line-height:1.6; }
-  #doc .vrow.opr{ justify-content:space-between; }
-  #doc .vop{ font-weight:700; }
+  #doc .vrow{ display:flex; justify-content:flex-end; align-items:center; line-height:1.6; }
+  #doc .addbox .nums{ position:relative; display:flex; flex-direction:column; }
+  #doc .vopR{ position:absolute; top:50%; right:0; transform:translate(170%,-50%); font-weight:700; font-size:19px; }
   #doc .vline{ border-top:1.4px solid #111; margin-top:4px; }
   /* horizontal + dotgrid */
   #doc .qhead{ font-size:15px; }
@@ -118,16 +118,16 @@
       </div>
     </div>
 
-    <div class="grid gap-4 mb-5" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
-      <div class="card text-center">
-        <p class="m-0 mb-1" style="font-size:13px;color:var(--muted)">ตัวจับเวลา (<span id="tLabel">ฉบับที่ 1 · 25 นาที</span>)</p>
-        <div class="num-font" id="timerDisp" style="font-size:46px;font-weight:700;color:var(--acc);line-height:1.1">25:00</div>
-        <p class="m-0 mb-3" style="font-size:12px;color:var(--muted)">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
-        <div class="flex gap-2 justify-center">
-          <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:90px">เริ่ม</button>
-          <button class="ghost" onclick="tReset()">รีเซ็ต</button>
-        </div>
+    <div class="card mb-4" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--muted)">⏱ จับเวลาทำข้อสอบ</span>
+        <button class="btn" onclick="openTimerFor(0)">บวก-ลบ-ระคน · <span id="tm0">25</span> นาที</button>
+        <button class="btn" onclick="openTimerFor(1)">คูณ-หาร · <span id="tm1">35</span> นาที</button>
       </div>
+      <span id="miniTimer" class="num-font" style="font-size:20px;color:var(--acc)">25:00</span>
+    </div>
+
+    <div class="grid gap-4 mb-5" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
       <div class="card">
         <p class="m-0 mb-3" style="font-size:13px;color:var(--muted)">บันทึกคะแนน (กรอกเองหลังตรวจ · เต็ม 100)</p>
         <input list="studentList" id="rName" class="fld mb-2" placeholder="ชื่อนักเรียน" autocomplete="off" />
@@ -376,12 +376,10 @@ function coverHTML(b){
 const CREDIT = '<div class="foot pagelast">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>';
 function renderProblem(p, num){
   if(p.type === 'add'){
-    const rows = p.nums.map(function(v,idx){
-      const last = idx === p.nums.length-1;
-      const op = last ? '<span class="vop">+</span>' : '';
-      return '<div class="vrow' + (last ? ' opr' : '') + '">' + op + '<span>' + spaced(v) + '</span></div>';
+    const rows = p.nums.map(function(v){
+      return '<div class="vrow"><span>' + spaced(v) + '</span></div>';
     }).join('');
-    return '<div class="qbox addbox"><span class="qn">' + num + ')</span><div class="vstack">' + rows + '<div class="vline"></div><div class="sumspace"></div><div class="vline2"></div></div><div class="ans">ตอบ <span class="ansline"></span></div></div>';
+    return '<div class="qbox addbox"><span class="qn">' + num + ')</span><div class="vstack"><div class="nums">' + rows + '<span class="vopR">+</span></div><div class="vline"></div><div class="sumspace"></div><div class="vline2"></div></div><div class="ans">ตอบ <span class="ansline"></span></div></div>';
   }
   let expr = '';
   if(p.type === 'sub') expr = p.terms.join(' − ');
@@ -418,8 +416,9 @@ function renderKey(){
 }
 function renderActive(){
   if(!current) return;
+  updateTimerButtons();
   if(activeTab === 2){ el('doc').innerHTML = renderKey(); }
-  else { el('doc').innerHTML = renderBook(current.books[activeTab]); setTimer(current.books[activeTab].minutes, activeTab); }
+  else { el('doc').innerHTML = renderBook(current.books[activeTab]); }
 }
 
 /* ===== tabs / level ===== */
@@ -436,12 +435,36 @@ document.querySelectorAll('#tabSeg button').forEach(function(b){ b.onclick = fun
 let tTotal = 1500, tLeft = 1500, tRun = false, tInt = null;
 function pad(n){ return (n<10?'0':'') + n; }
 function mmss(s){ s=Math.max(0,Math.floor(s)); return pad(Math.floor(s/60)) + ':' + pad(s%60); }
-function setTimer(minutes, tab){ tStop(); tTotal = minutes*60; tLeft = tTotal; el('tLabel').textContent = 'ฉบับที่ ' + (tab+1) + ' · ' + minutes + ' นาที'; tDraw(); }
-function tDraw(){ el('timerDisp').textContent = mmss(tLeft); el('usedDisp').textContent = mmss(tTotal - tLeft); }
+function setTimer(minutes, label){
+  tStop(); tTotal = minutes*60; tLeft = tTotal;
+  if(label) el('tLabel2').textContent = label;
+  tDraw();
+}
+// อัปเดตนาทีบนปุ่มทั้งสองชุดให้ตรงตามระดับปัจจุบัน + ตั้ง mini timer เริ่มต้นเป็นชุดบวก-ลบ
+function updateTimerButtons(){
+  if(!current) return;
+  if(current.books[0]) el('tm0').textContent = current.books[0].minutes;
+  if(current.books[1]) el('tm1').textContent = current.books[1].minutes;
+  if(!tRun){ tTotal = (current.books[0] ? current.books[0].minutes : 25)*60; tLeft = tTotal; tDraw(); }
+}
+// เปิดหน้าจับเวลาของชุดที่เลือก (0 = บวก-ลบ-ระคน, 1 = คูณ-หาร) ตั้งเวลาตามเกณฑ์ของชุดนั้น
+function openTimerFor(idx){
+  if(!current || !current.books[idx]) return;
+  const b = current.books[idx];
+  const label = (idx===0 ? 'บวก-ลบ-ระคน' : 'คูณ-หาร') + ' · ' + b.minutes + ' นาที';
+  setTimer(b.minutes, label);
+  openTimer();
+}
+function tDraw(){
+  const d=mmss(tLeft), u=mmss(tTotal-tLeft);
+  el('timerDisp').textContent = d; el('usedDisp').textContent = u; el('miniTimer').textContent = d;
+}
 function tStart(){ if(tRun) return; tRun = true; el('tBtn').textContent = 'หยุด'; tInt = setInterval(function(){ tLeft = Math.max(0, tLeft-1); tDraw(); if(tLeft<=0) tStop(); }, 1000); }
 function tStop(){ tRun = false; clearInterval(tInt); el('tBtn').textContent = 'เริ่ม'; }
 function tToggle(){ tRun ? tStop() : tStart(); }
 function tReset(){ tStop(); tLeft = tTotal; tDraw(); }
+function openTimer(){ el('timerScreen').style.display='flex'; }
+function closeTimer(){ el('timerScreen').style.display='none'; }
 
 /* ===== API + record ===== */
 async function api(action, data, post){
@@ -477,5 +500,16 @@ async function saveScore(){
 generate();
 document.addEventListener('DOMContentLoaded', loadStudents);
 </script>
+<!-- หน้าจับเวลาเต็มจอ -->
+<div id="timerScreen" style="display:none;position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 28%,#1a1d3a,#05080f 72%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">
+  <button onclick="closeTimer()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:none;color:#cbd5e1;padding:10px 18px;border-radius:12px;cursor:pointer;font-family:'Kanit';font-size:15px">✕ ปิด</button>
+  <p style="color:var(--muted);font-size:clamp(15px,3vw,20px);margin:0 0 2px">ตัวจับเวลา · <span id="tLabel2">25 นาที</span></p>
+  <div class="num-font" id="timerDisp" style="font-size:clamp(110px,32vw,300px);font-weight:700;color:var(--acc);line-height:1;text-shadow:0 0 60px rgba(129,140,248,.5)">25:00</div>
+  <p style="color:var(--muted);font-size:clamp(16px,4vw,22px);margin:8px 0 30px">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
+  <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+    <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:160px;font-size:19px;padding:15px 30px">เริ่ม</button>
+    <button class="ghost" onclick="tReset()" style="font-size:19px;padding:15px 30px">รีเซ็ต</button>
+  </div>
+</div>
 </body>
 </html>
