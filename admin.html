@@ -100,6 +100,7 @@
       <button class="tab" id="tabBtnStu" onclick="switchTab('stu')">นักเรียน</button>
       <button class="tab" id="tabBtnRec" onclick="switchTab('rec')">ประวัติการซ้อม</button>
       <button class="tab" id="tabBtnRep" onclick="switchTab('rep')">รายงานรายคน</button>
+      <button class="tab" id="tabBtnCls" onclick="switchTab('cls')">รายงานรายห้อง</button>
       <button class="tab" id="tabBtnDev" onclick="switchTab('dev')">ผู้พัฒนา</button>
     </div>
 
@@ -161,6 +162,18 @@
         </div>
       </div>
 
+      <div class="card mb-4">
+        <p class="m-0 mb-2" style="font-weight:500">นำเข้าหลายคน</p>
+        <p class="m-0 mb-2" style="font-size:12px;color:var(--muted)">วางข้อมูลทีละบรรทัด คั่นด้วยเครื่องหมายจุลภาค (,) หรือแท็บ ตามลำดับ:<br>
+          <b>ชื่อ-สกุล, ระดับชั้น, ห้อง, รหัส/เลขประจำตัว, รหัสเข้าเล่น</b> — มีแค่ชื่อก็พอ ที่เหลือเว้นได้ (รหัสเข้าเล่นถ้าเว้นจะสุ่มให้อัตโนมัติ)</p>
+        <textarea id="bulkText" class="fld" rows="5" placeholder="เด็กชายเอ ใจดี, ป.3, 1&#10;เด็กหญิงบี ตั้งใจ, ป.3, 1, 30001, 4821&#10;เด็กชายซี เก่งกาจ, ป.4, 2"></textarea>
+        <div class="flex items-center gap-2 mt-3 flex-wrap">
+          <button class="ghost" onclick="previewBulk()">ตรวจสอบข้อมูล</button>
+          <button class="btn-primary" id="bulkBtn" onclick="doBulkImport()">นำเข้า</button>
+          <span id="bulkMsg" style="font-size:13px"></span>
+        </div>
+      </div>
+
       <div class="card">
         <div class="flex items-center justify-between mb-3">
           <span style="font-weight:500">รายชื่อนักเรียน</span>
@@ -214,6 +227,24 @@
       </div>
       <div id="repBody"></div>
       <p id="repHint" class="m-0" style="font-size:13px;color:var(--muted);text-align:center;padding:24px">เลือกนักเรียนเพื่อดูรายงานพัฒนาการ</p>
+    </section>
+
+    <!-- CLASS REPORT (รายงานรายห้อง) -->
+    <section id="tabCls" class="hidden">
+      <div class="card mb-4 flex items-center justify-between flex-wrap gap-2">
+        <span style="font-size:14px;color:var(--muted)">ภาพรวมการซ้อมแยกตามระดับชั้น/ห้อง (เฉพาะนักเรียนที่ลงทะเบียน)</span>
+        <div class="flex gap-2">
+          <button class="ghost" onclick="renderClassReport()">↻ รีเฟรช</button>
+          <button class="ghost" onclick="exportClassCSV()">⬇ ส่งออก CSV</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>ระดับชั้น/ห้อง</th><th style="text-align:right">นักเรียน</th><th style="text-align:right">ซ้อมแล้ว</th><th style="text-align:right">ครั้งซ้อม</th><th style="text-align:right">% เฉลี่ย</th><th style="text-align:right">ทอง</th><th style="text-align:right">เงิน</th><th style="text-align:right">ทองแดง</th></tr></thead>
+          <tbody id="clsBody"></tbody>
+        </table></div>
+        <p id="clsEmpty" class="hidden m-0 mt-2" style="font-size:13px;color:var(--muted);text-align:center">ยังไม่มีข้อมูล</p>
+      </div>
     </section>
 
     <!-- DEVELOPER (ผู้พัฒนา) -->
@@ -354,12 +385,13 @@ function togglePw(id, btn){
   btn.innerHTML = show ? EYE_OFF : EYE_ON;
 }
 function switchTab(t){
-  ['dash','stu','rec','rep','dev'].forEach(function(x){
+  ['dash','stu','rec','rep','cls','dev'].forEach(function(x){
     el('tab'+cap(x)).classList.toggle('hidden', x!==t);
     el('tabBtn'+cap(x)).classList.toggle('active', x===t);
   });
   if(t==='rec' && !recLoaded) loadRecords();
   if(t==='rep') fillStudentSelect();
+  if(t==='cls') renderClassReport();
   if(t==='dev' && !devLoaded) loadDeveloper();
 }
 
@@ -446,6 +478,81 @@ function resetForm(keepMsg){
   if(!keepMsg) el('stuMsg').textContent = '';
 }
 function genPin(){ return String(Math.floor(1000 + Math.random()*9000)); }
+
+/* ---------- นำเข้าหลายคน ---------- */
+function parseBulk(){
+  const lines = (el('bulkText').value||'').split('\n');
+  const out=[];
+  lines.forEach(function(ln){ ln=ln.trim(); if(!ln) return;
+    const p = ln.split(/[\t,]/).map(function(x){ return x.trim(); });
+    if(!p[0]) return;
+    out.push({ fullName:p[0], classLevel:p[1]||'', room:p[2]||'', studentCode:p[3]||'', password:(p[4]||genPin()) });
+  });
+  return out;
+}
+function previewBulk(){
+  const list=parseBulk(); const m=el('bulkMsg');
+  if(!list.length){ m.style.color='var(--miss)'; m.textContent='ไม่พบข้อมูลที่อ่านได้'; return; }
+  m.style.color='var(--muted)'; m.textContent='พร้อมนำเข้า '+list.length+' คน (ตัวอย่าง: '+list[0].fullName+(list[0].classLevel?' • '+list[0].classLevel:'')+')';
+}
+async function doBulkImport(){
+  const list=parseBulk(); const m=el('bulkMsg'); const btn=el('bulkBtn');
+  if(!list.length){ m.style.color='var(--miss)'; m.textContent='ไม่พบข้อมูลที่อ่านได้'; return; }
+  if(!confirm('นำเข้านักเรียน '+list.length+' คน?')) return;
+  btn.disabled=true; m.style.color='var(--muted)'; m.textContent='กำลังนำเข้า...';
+  const res=await api('addStudentsBulk', { list: JSON.stringify(list) }, true);
+  btn.disabled=false;
+  if(res && res.ok){ m.style.color='var(--good)'; m.textContent='นำเข้าแล้ว '+res.added+' คน ✓'; el('bulkText').value=''; loadStudents(); }
+  else { m.style.color='var(--miss)'; m.textContent=(res&&res.error)?res.error:'นำเข้าไม่สำเร็จ'; }
+}
+
+/* ---------- รายงานรายห้อง ---------- */
+async function renderClassReport(){
+  if(!recLoaded){ await loadRecords(); }
+  if(!studentsCache.length){ await loadStudents(); }
+  // map ชื่อ -> sessions
+  const byName={}; recCache.forEach(function(r){ (byName[String(r.studentName).trim()]=byName[String(r.studentName).trim()]||[]).push(r); });
+  // จัดกลุ่มนักเรียนตาม ระดับ/ห้อง
+  const groups={};
+  studentsCache.forEach(function(s){
+    const key=(s.classLevel||'ไม่ระบุ')+' / '+(s.room||'-');
+    const g=groups[key]||(groups[key]={ key:key, level:s.classLevel||'', students:0, active:0, sessions:0, pctSum:0, gold:0, silver:0, bronze:0 });
+    g.students++;
+    const ss=byName[String(s.fullName).trim()]||[];
+    if(ss.length) g.active++;
+    ss.forEach(function(r){ g.sessions++; g.pctSum+=Number(r.pct)||0;
+      if(r.medal==='gold')g.gold++; else if(r.medal==='silver')g.silver++; else if(r.medal==='bronze')g.bronze++; });
+  });
+  const arr=Object.keys(groups).map(function(k){ return groups[k]; })
+    .sort(function(a,b){ return String(a.key).localeCompare(String(b.key),'th'); });
+  clsCache=arr;
+  const body=el('clsBody');
+  if(!arr.length){ body.innerHTML=''; el('clsEmpty').classList.remove('hidden'); return; }
+  el('clsEmpty').classList.add('hidden');
+  body.innerHTML=arr.map(function(g){
+    const avg=g.sessions?Math.round(g.pctSum/g.sessions):0;
+    return '<tr><td>'+g.key+'</td>'
+      +'<td class="num-font" style="text-align:right">'+g.students+'</td>'
+      +'<td class="num-font" style="text-align:right">'+g.active+'</td>'
+      +'<td class="num-font" style="text-align:right">'+g.sessions+'</td>'
+      +'<td class="num-font" style="text-align:right">'+(g.sessions?avg+'%':'-')+'</td>'
+      +'<td class="num-font" style="text-align:right;color:#ffc640">'+g.gold+'</td>'
+      +'<td class="num-font" style="text-align:right;color:#cdd4e6">'+g.silver+'</td>'
+      +'<td class="num-font" style="text-align:right;color:#e08a4b">'+g.bronze+'</td></tr>';
+  }).join('');
+}
+let clsCache=[];
+function exportClassCSV(){
+  if(!clsCache.length){ alert('ไม่มีข้อมูลให้ส่งออก'); return; }
+  const head=['ระดับชั้น/ห้อง','นักเรียน','ซ้อมแล้ว','ครั้งซ้อม','เปอร์เซ็นต์เฉลี่ย','ทอง','เงิน','ทองแดง'];
+  function esc(v){ v=(v==null?'':String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }
+  const lines=clsCache.map(function(g){ const avg=g.sessions?Math.round(g.pctSum/g.sessions):0;
+    return [g.key,g.students,g.active,g.sessions,avg,g.gold,g.silver,g.bronze].map(esc).join(','); });
+  const csv='\uFEFF'+head.join(',')+'\n'+lines.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='รายงานรายห้อง_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
 
 async function delStudent(id){
   const s = studentsCache.filter(function(x){ return String(x.id)===String(id); })[0];
