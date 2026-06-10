@@ -416,9 +416,9 @@ function renderKey(){
 }
 function renderActive(){
   if(!current) return;
-  updateTimerButtons();
   if(activeTab === 2){ el('doc').innerHTML = renderKey(); }
   else { el('doc').innerHTML = renderBook(current.books[activeTab]); }
+  updateTimerButtons();
 }
 
 /* ===== tabs / level ===== */
@@ -457,7 +457,8 @@ function openTimerFor(idx){
 }
 function tDraw(){
   const d=mmss(tLeft), u=mmss(tTotal-tLeft);
-  el('timerDisp').textContent = d; el('usedDisp').textContent = u; el('miniTimer').textContent = d;
+  const a=el('timerDisp'), b=el('usedDisp'), c=el('miniTimer');
+  if(a) a.textContent = d; if(b) b.textContent = u; if(c) c.textContent = d;
 }
 function tStart(){ if(tRun) return; tRun = true; el('tBtn').textContent = 'หยุด'; tInt = setInterval(function(){ tLeft = Math.max(0, tLeft-1); tDraw(); if(tLeft<=0) tStop(); }, 1000); }
 function tStop(){ tRun = false; clearInterval(tInt); el('tBtn').textContent = 'เริ่ม'; }
@@ -497,8 +498,7 @@ async function saveScore(){
   else { msg.style.color='var(--miss)'; msg.textContent=(res&&res.error)?res.error:'บันทึกไม่สำเร็จ'; }
 }
 
-generate();
-document.addEventListener('DOMContentLoaded', loadStudents);
+document.addEventListener('DOMContentLoaded', function(){ generate(); loadStudents(); });
 </script>
 <!-- หน้าจับเวลาเต็มจอ -->
 <div id="timerScreen" style="display:none;position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 28%,#1a1d3a,#05080f 72%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">
