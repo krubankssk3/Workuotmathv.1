@@ -303,7 +303,12 @@ function show(id){
 function goStart(){ clearInterval(timer); stopTicks(); locked=true; loadStartData(); show('startView'); }
 
 /* ---------- number generation (ตามกติกา) ---------- */
-function genDigits(n){
+function genDigits(n, unique){
+  if(unique){
+    const pool=[0,1,2,3,4,5,6,7,8,9];
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+    return pool.slice(0,n);
+  }
   while(true){
     const d=[]; for(let i=0;i<n;i++) d.push(Math.floor(Math.random()*10));
     const c={}; d.forEach(function(x){ c[x]=(c[x]||0)+1; });
@@ -345,7 +350,7 @@ function nextQuestion(){
   document.getElementById('reportLabel').textContent = 'กำลังสุ่มโจทย์...';
 
   const n = cfg.round===1 ? 4 : 5;
-  const digits = genDigits(n);
+  const digits = genDigits(n, cfg.round===1);
   const target = genTarget(n);
   const tiles = document.querySelectorAll('.tile');
   const targetEl = document.getElementById('target');
