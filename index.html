@@ -212,6 +212,13 @@
         <div class="usage">เล่นแล้ว <b id="uExam">0</b> ครั้ง</div>
       </a>
 
+      <a class="mode-card" onclick="return gateNav(event,this)" href="math-puzzle.html" style="--acc:#fbbf24;--accGlow:rgba(251,191,36,.5);--accSoft:rgba(251,191,36,.14)">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/><path d="M5.5 12h2M12 5.5v2"/></svg></div>
+        <h3>Math Puzzle game</h3>
+        <p>สมการไขว้ เติมเลขให้ครบทุกแนว · ง่าย/ปานกลาง/ยาก · กระดาษ A4 + เล่นในเว็บ</p>
+        <div class="usage">เล่นแล้ว <b id="uPuzzle">0</b> ครั้ง</div>
+      </a>
+
     </div>
 
     <!-- popularity + leaderboard -->
@@ -303,7 +310,8 @@ const MODES = [
   { key:'เวทคณิต',     label:'เวทคณิต',     c:'#a78bfa' },
   { key:'สูตรคูณเร็ว', label:'สูตรคูณเร็ว', c:'#34d399' },
   { key:'เกม24',       label:'เกม 24',      c:'#ffc640' },
-  { key:'ซูโดกุ',      label:'ซูโดกุ',      c:'#818cf8' }
+  { key:'ซูโดกุ',      label:'ซูโดกุ',      c:'#818cf8' },
+  { key:'ครอสคณิต',    label:'Math Puzzle', c:'#fbbf24' }
 ];
 function modeMeta(k){ return MODES.filter(function(m){ return m.key===k; })[0] || { label:k||'-', c:'#8b93b8' }; }
 
@@ -380,6 +388,7 @@ async function loadViews(){
   setUsage('uMul',   v['สูตรคูณเร็ว']);
   setUsage('u24',    v['เกม24']);
   setUsage('usd',    v['ซูโดกุ']);
+  setUsage('uPuzzle',v['ครอสคณิต']);
   renderPopularity(v);
 }
 
