@@ -74,12 +74,18 @@
   .stat{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:7px 13px; text-align:center; }
   .stat b{ font-family:'Chakra Petch',monospace; font-size:18px; color:var(--acc); display:block; line-height:1.1; }
   .stat span{ font-size:11px; color:var(--muted); }
-  /* fullscreen play area */
-  #playArea:fullscreen{ background:#0f1525; padding:18px; overflow:auto; display:flex; flex-direction:column; }
-  #playArea:fullscreen #gameGrid{ flex:1; }
-  #playArea:-webkit-full-screen{ background:#0f1525; padding:18px; overflow:auto; }
+  /* fullscreen play layout (puzzle centered + bank on the right) */
+  .fsplay{ background:#0f1525; padding:14px 20px 20px; overflow:auto; }
+  .fsplay .playbody{ display:flex; gap:18px; align-items:flex-start; justify-content:center; }
+  .fsplay .gridcard{ flex:0 1 auto; }
+  .fsplay .bankcard{ flex:0 0 240px; width:240px; align-self:stretch; }
+  .fsplay .bankcard .bank{ flex-direction:column; flex-wrap:nowrap; max-height:80vh; overflow:auto; }
+  .fsplay .bankcard .tile{ width:100%; }
   /* timed mode */
   .tbig{ font-family:'Chakra Petch',monospace; font-weight:700; }
+  /* paper pages */
+  .qpage{ }
+  #sheet .pzgrid.solo{ grid-template-columns:1fr; }
 
   .pzbox{ display:inline-block; padding:8px; }
   .pzlabel{ font-size:12px; color:var(--muted); margin:0 0 6px; font-weight:600; }
@@ -108,6 +114,7 @@
   #answerPage.hidden{ display:none; }
   .pagehint{ text-align:center; font-size:12px; color:#999; margin:0 0 10px; }
   #sheet .foot{ text-align:center; color:#888; font-size:12px; margin-top:20px; }
+  #qGrids .qpage + .qpage, #aGrids .qpage + .qpage{ margin-top:26px; border-top:1px dashed #ddd; padding-top:18px; }
 
   /* ===== โหมดพิมพ์ (แนวนอน A4) ===== */
   @media print{
@@ -118,6 +125,9 @@
     @page{ size:A4 landscape; margin:9mm; }
     #answerPage{ page-break-before:always; margin-top:0; border-top:none; padding-top:0; }
     .scorebox{ width:30mm; }
+    #qGrids .qpage, #aGrids .qpage{ page-break-after:always; page-break-inside:avoid; }
+    #qGrids .qpage:last-child, #aGrids .qpage:last-child{ page-break-after:auto; }
+    #qGrids .qpage + .qpage, #aGrids .qpage + .qpage{ margin-top:0; border-top:none; padding-top:0; }
   }
 </style>
 </head>
@@ -183,12 +193,14 @@
       </div>
 
       <div id="playArea">
-        <div class="card" style="margin-bottom:14px;display:flex;justify-content:center;overflow:auto;min-height:120px">
-          <div id="gameGrid" style="padding:6px 2px"></div>
-        </div>
-        <div class="card" style="margin-bottom:16px">
-          <p class="banklabel">แตะตัวเลขด้านล่าง แล้วแตะช่องว่างเพื่อวางคำตอบ (แตะช่องที่วางแล้วเพื่อเอาออก)</p>
-          <div class="bank" id="gameBank"></div>
+        <div class="playbody">
+          <div class="card gridcard" style="margin-bottom:14px;display:flex;justify-content:center;overflow:auto;min-height:120px">
+            <div id="gameGrid" style="padding:6px 2px"></div>
+          </div>
+          <div class="card bankcard" style="margin-bottom:16px">
+            <p class="banklabel">แตะตัวเลขด้านล่าง แล้วแตะช่องว่างเพื่อวางคำตอบ (แตะช่องที่วางแล้วเพื่อเอาออก)</p>
+            <div class="bank" id="gameBank"></div>
+          </div>
         </div>
       </div>
       <p id="gMsg" style="text-align:center;font-size:15px;min-height:24px;margin:0 0 14px"></p>
@@ -241,12 +253,14 @@
           </div>
         </div>
         <div id="playAreaT">
-          <div class="card" style="margin-bottom:14px;display:flex;justify-content:center;overflow:auto;min-height:120px">
-            <div id="tGrid" style="padding:6px 2px"></div>
-          </div>
-          <div class="card" style="margin-bottom:16px">
-            <p class="banklabel">แตะตัวเลขแล้วแตะช่องว่างเพื่อวาง · เติมครบถูกหมดจะขึ้นข้อใหม่ให้อัตโนมัติ</p>
-            <div class="bank" id="tBank"></div>
+          <div class="playbody">
+            <div class="card gridcard" style="margin-bottom:14px;display:flex;justify-content:center;overflow:auto;min-height:120px">
+              <div id="tGrid" style="padding:6px 2px"></div>
+            </div>
+            <div class="card bankcard" style="margin-bottom:16px">
+              <p class="banklabel">แตะตัวเลขแล้วแตะช่องว่างเพื่อวาง · เติมครบถูกหมดจะขึ้นข้อใหม่ให้อัตโนมัติ</p>
+              <div class="bank" id="tBank"></div>
+            </div>
           </div>
         </div>
         <p id="tMsg" style="text-align:center;font-size:15px;min-height:22px;margin:0"></p>
@@ -280,14 +294,12 @@
           <div class="meta">ชื่อ-สกุล ............................................ ชั้น ......... เลขที่ ......</div>
           <div class="info" id="shInfo"></div>
           <div class="pzgrid" id="qGrids"></div>
-          <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
         </div>
         <div id="answerPage">
           <p class="pagehint noprint">— ใบเฉลย (เวลาพิมพ์จะอยู่คนละแผ่นกับโจทย์) —</p>
           <h2>เฉลย — สมการไขว้</h2>
           <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
           <div class="pzgrid" id="aGrids" style="margin-top:14px"></div>
-          <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
         </div>
       </div>
     </div>
@@ -507,11 +519,12 @@ function renderStats(){ var s=(loadStats()[curLevel])||{played:0,solved:0,best:0
 /* =================== PLAY ENGINE (tile bank) =================== */
 var play={ puzzle:null, slots:[], bank:[], sel:null, host:null, bankHost:null, onAutoCheck:null };
 function gameCellSize(p, container){
-  var mW=pzDims(p).w;
-  var avail = (container && container.clientWidth>200) ? container.clientWidth-26 : 900;
-  var fs = (typeof document!=='undefined' && document.fullscreenElement) ? true : false;
-  var cap = fs?120:66, fl=30;
-  var s=Math.floor(avail/mW); if(s>cap)s=cap; if(s<fl)s=fl; return s;
+  var mW=pzDims(p).w, mH=pzDims(p).h;
+  var fs = (typeof document!=='undefined' && document.fullscreenElement) ? true : false, fl=30, s;
+  if(fs){ var aw=((typeof window!=='undefined'&&window.innerWidth)||1200)-300, ah=((typeof window!=='undefined'&&window.innerHeight)||800)-170;
+    s=Math.floor(Math.min(aw/mW, ah/mH)); if(s>140)s=140; }
+  else { var avail=(container && container.clientWidth>200) ? container.clientWidth-26 : 900; s=Math.floor(avail/mW); if(s>66)s=66; }
+  if(s<fl)s=fl; return s;
 }
 function buildPlay(p, host, bankHost){
   play.puzzle=p; play.slots=[]; play.bank=[]; play.sel=null; play.host=host; play.bankHost=bankHost;
@@ -627,12 +640,15 @@ function saveScore(){
 }
 
 /* =================== FULLSCREEN =================== */
-function fsTarget(){ return (curMode==='timed') ? el('playAreaT') : el('playArea'); }
+function fsTarget(){ return (curMode==='timed') ? el('tPlayWrap') : el('gameWrap'); }
 function toggleFs(){ var t=fsTarget(); if(!t) return;
   if(!document.fullscreenElement){ if(t.requestFullscreen) t.requestFullscreen(); else if(t.webkitRequestFullscreen) t.webkitRequestFullscreen(); }
   else { if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
 }
-function onFsChange(){ var on=!!document.fullscreenElement;
+function onFsChange(){ var fe=document.fullscreenElement, on=!!fe;
+  if(el('gameWrap')) el('gameWrap').classList.remove('fsplay');
+  if(el('tPlayWrap')) el('tPlayWrap').classList.remove('fsplay');
+  if(fe && fe.classList) fe.classList.add('fsplay');
   if(el('fsBtn')) el('fsBtn').textContent = on?'⛶ ออกจากเต็มจอ':'⛶ ขยายเต็มจอ';
   if(el('tFsBtn')) el('tFsBtn').textContent = on?'⛶ ออกจากเต็มจอ':'⛶ ขยายเต็มจอ';
   if(play.puzzle) renderPlayGrid();
@@ -690,36 +706,44 @@ function saveTimed(){
 var paperPuzzles=[], showAns=true;
 function setupCountOptions(){
   var sel=el('pCount'); if(!sel) return;
-  var def = curLevel==='easy'?4:(curLevel==='medium'?2:(curLevel==='hard'?2:1));
-  var maxN = curLevel==='easy'?6:(curLevel==='medium'?4:2);
-  sel.innerHTML=''; for(var n=1;n<=maxN;n++){ var o=document.createElement('option'); o.value=n; o.textContent=n+' ข้อ'; if(n===def)o.selected=true; sel.appendChild(o); }
+  var def = 2;
+  var maxN = curLevel==='easy'?12:(curLevel==='medium'?10:(curLevel==='hard'?8:6));
+  sel.innerHTML=''; for(var n=1;n<=maxN;n++){ var o=document.createElement('option'); o.value=n;
+    o.textContent=n+' ข้อ'+(n===2?' (พอดี 1 หน้า)':''); if(n===def)o.selected=true; sel.appendChild(o); }
 }
 function pzDims(p){ var mr=0,mc=0; p.lanes.forEach(function(L){ var cc=laneCells(L);
     [cc.a,cc.b,cc.c].forEach(function(x){ if(x[0]>mr)mr=x[0]; if(x[1]>mc)mc=x[1]; }); });
   return { w:mc+1, h:mr+1 }; }
+function footEl(){ var f=document.createElement('div'); f.className='foot'; f.textContent='ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3'; return f; }
 function genPaper(){
-  var n=Number(el('pCount').value)||4; paperPuzzles=[];
+  var n=Number(el('pCount').value)||2; paperPuzzles=[];
   for(var i=0;i<n;i++){ var p=makePuzzle(curLevel); if(p) paperPuzzles.push(p); }
-  var sb=el('sbTotal'); if(sb) sb.textContent=paperPuzzles.length;
+  var cnt=paperPuzzles.length;
+  var sb=el('sbTotal'); if(sb) sb.textContent=cnt;
   el('shInfo').textContent='ระดับ : '+({easy:'ง่าย',medium:'ปานกลาง',hard:'ยาก',expert:'โหดมาก'})[curLevel]+
-    ' · คำสั่ง : เติมตัวเลขในช่องว่าง ให้สมการทุกแนว (แนวนอน + แนวตั้ง) ถูกต้อง';
+    ' · คำสั่ง : เติมตัวเลขในช่องว่าง ให้สมการทุกแนว (แนวนอน + แนวตั้ง) ถูกต้อง · 2 ข้อต่อ 1 หน้า';
   var q=el('qGrids'), a=el('aGrids'); q.innerHTML=''; a.innerHTML='';
-  /* ---- ขนาดช่องแบบไดนามิก : เต็ม 2 คอลัมน์ และพอดี A4 แนวนอน 1 แผ่นเสมอ (เผื่อหัวกระดาษ/ฟอนต์) ---- */
+  /* ---- ขนาดช่อง : จัด 2 ข้อต่อหน้า ให้ใหญ่สวยพอดี A4 แนวนอน 1 หน้า (ที่เหลือขึ้นหน้าใหม่) ---- */
   var mW=1,mH=1; paperPuzzles.forEach(function(p){ var d=pzDims(p); if(d.w>mW)mW=d.w; if(d.h>mH)mH=d.h; });
-  var rows=Math.max(1,Math.ceil(paperPuzzles.length/2)), MM=3.7795;
-  var areaH=136, colWmm=(279-10)/2;
-  var perRow=(areaH-(rows-1)*6)/rows;
-  var cellMM=Math.min(colWmm/mW,(perRow-8)/mH);
-  var printPx=cellMM*MM, screenPx=((1040-110)/2)/mW;
-  var pcell=Math.floor(Math.min(printPx,screenPx)); if(pcell<14)pcell=14; if(pcell>54)pcell=54;
-  paperPuzzles.forEach(function(p,idx){
-    var qb=document.createElement('div'); qb.className='pzbox';
-    var ql=document.createElement('div'); ql.className='pzlabel'; ql.textContent='ข้อ '+(idx+1); qb.appendChild(ql);
-    qb.appendChild(renderGrid(p,'paperQ',pcell)); q.appendChild(qb);
-    var ab=document.createElement('div'); ab.className='pzbox';
-    var al=document.createElement('div'); al.className='pzlabel'; al.textContent='ข้อ '+(idx+1); ab.appendChild(al);
-    ab.appendChild(renderGrid(p,'paperA',pcell)); a.appendChild(ab);
-  });
+  var MM=3.7795, colWmm=(269-18)/2, areaH=140;            // เผื่อหัวกระดาษหน้าแรก + ฟุตเตอร์
+  var cellMM=Math.min(colWmm/mW,(areaH-8)/mH);
+  var printPx=cellMM*MM, screenPx=((1040-90)/2)/mW;
+  var pcell=Math.floor(Math.min(printPx,screenPx)); if(pcell<16)pcell=16; if(pcell>72)pcell=72;
+  var pages=Math.max(1,Math.ceil(cnt/2));
+  function buildBox(p,idx,mode){ var b=document.createElement('div'); b.className='pzbox';
+    var l=document.createElement('div'); l.className='pzlabel'; l.textContent='ข้อ '+(idx+1); b.appendChild(l);
+    b.appendChild(renderGrid(p,mode,pcell)); return b; }
+  for(var pg=0; pg<pages; pg++){
+    var slice=paperPuzzles.slice(pg*2, pg*2+2), solo=(slice.length===1);
+    var qpage=document.createElement('div'); qpage.className='qpage';
+    var qgrid=document.createElement('div'); qgrid.className='pzgrid'+(solo?' solo':'');
+    var apage=document.createElement('div'); apage.className='qpage';
+    var agrid=document.createElement('div'); agrid.className='pzgrid'+(solo?' solo':'');
+    slice.forEach(function(p,j){ var idx=pg*2+j; qgrid.appendChild(buildBox(p,idx,'paperQ')); agrid.appendChild(buildBox(p,idx,'paperA')); });
+    qpage.appendChild(qgrid); apage.appendChild(agrid);
+    if(pg===pages-1){ qpage.appendChild(footEl()); apage.appendChild(footEl()); }
+    q.appendChild(qpage); a.appendChild(apage);
+  }
 }
 function toggleAnswer(){ showAns=!showAns; el('answerPage').classList.toggle('hidden',!showAns);
   el('ansBtn').textContent = showAns?'ซ่อนใบเฉลย':'แสดงใบเฉลย'; }
