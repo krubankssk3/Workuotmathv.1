@@ -55,6 +55,31 @@
   .pz input.cin:focus{ outline:none; border-color:#16a34a; box-shadow:inset 0 0 0 2px rgba(34,197,94,.35); background:#fff; }
   .pz input.cin.ok{ background:#dcfce7; border-color:#22c55e; color:#15803d; }
   .pz input.cin.bad{ background:#fee2e2; border-color:#ef4444; color:#b91c1c; }
+  /* tap-to-fill slots */
+  .pz .slot{ border:1.5px dashed #b9933a; background:#fffdf3; color:#16351f; cursor:pointer; font-size:calc(var(--cell,40px)*.46); transition:background .12s,border-color .12s; }
+  .pz .slot:hover{ background:#fff6d6; }
+  .pz .slot.filled{ border-style:solid; border-color:#16a34a; background:#eafff1; }
+  .pz .slot.ok{ background:#dcfce7; border-color:#22c55e; color:#15803d; }
+  .pz .slot.bad{ background:#fee2e2; border-color:#ef4444; color:#b91c1c; }
+  /* answer tile bank */
+  .bank{ display:flex; flex-wrap:wrap; gap:9px; justify-content:center; }
+  .bank .tile{ min-width:46px; height:46px; padding:0 12px; border-radius:12px; border:1.5px solid var(--paperline);
+    background:linear-gradient(180deg,#fef9e7,#fdf2cc); color:var(--inkdark); font-family:'Chakra Petch',monospace; font-weight:700; font-size:20px;
+    cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,.18); transition:transform .1s,box-shadow .1s; }
+  .bank .tile:hover{ transform:translateY(-2px); }
+  .bank .tile.sel{ outline:3px solid var(--acc); box-shadow:0 0 16px var(--acc-glow); transform:translateY(-2px) scale(1.05); }
+  .banklabel{ font-size:12px;color:var(--muted);text-align:center;margin:0 0 9px; }
+  /* play stats strip */
+  .statbar{ display:flex; gap:10px; flex-wrap:wrap; }
+  .stat{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:7px 13px; text-align:center; }
+  .stat b{ font-family:'Chakra Petch',monospace; font-size:18px; color:var(--acc); display:block; line-height:1.1; }
+  .stat span{ font-size:11px; color:var(--muted); }
+  /* fullscreen play area */
+  #playArea:fullscreen{ background:#0f1525; padding:18px; overflow:auto; display:flex; flex-direction:column; }
+  #playArea:fullscreen #gameGrid{ flex:1; }
+  #playArea:-webkit-full-screen{ background:#0f1525; padding:18px; overflow:auto; }
+  /* timed mode */
+  .tbig{ font-family:'Chakra Petch',monospace; font-weight:700; }
 
   .pzbox{ display:inline-block; padding:8px; }
   .pzlabel{ font-size:12px; color:var(--muted); margin:0 0 6px; font-weight:600; }
@@ -98,7 +123,7 @@
 </head>
 <body>
   <div class="wrap">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div class="noprint" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
       <span style="font-weight:600">🧩 Math Puzzle game</span>
     </div>
@@ -129,6 +154,7 @@
         <span style="font-size:13px;color:var(--muted)">รูปแบบ</span>
         <div class="seg" id="modeSeg">
           <button data-mode="game" class="active" onclick="setMode('game')">🎮 เล่นในเว็บไซต์</button>
+          <button data-mode="timed" onclick="setMode('timed')">⏱ ท้าเวลา</button>
           <button data-mode="paper" onclick="setMode('paper')">🖨 กระดาษ A4 แนวนอน</button>
         </div>
       </div>
@@ -140,18 +166,30 @@
       <div class="card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
           <span class="num-font" id="gTimer" style="font-size:22px;color:var(--acc)">00:00</span>
-          <span style="font-size:13px;color:var(--muted)">เติมถูกแล้ว <b id="gFilled" class="num-font" style="color:var(--good)">0</b>/<b id="gTotal" class="num-font">0</b></span>
+          <span style="font-size:13px;color:var(--muted)">เติมแล้ว <b id="gFilled" class="num-font" style="color:var(--good)">0</b>/<b id="gTotal" class="num-font">0</b> ช่อง</span>
+        </div>
+        <div class="statbar">
+          <div class="stat"><b id="stPlayed">0</b><span>เล่นแล้ว</span></div>
+          <div class="stat"><b id="stSolved">0</b><span>ทำสำเร็จ</span></div>
+          <div class="stat"><b id="stBest">—</b><span>เวลาดีสุด</span></div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="ghost" onclick="newGame()">↻ ปริศนาใหม่</button>
           <button class="ghost" onclick="hintGame()">💡 ใบ้ 1 ช่อง</button>
           <button class="ghost" onclick="revealGame()">👁 เฉลย</button>
+          <button class="ghost" id="fsBtn" onclick="toggleFs()">⛶ ขยายเต็มจอ</button>
           <button class="btn" onclick="checkGame()">✓ ตรวจคำตอบ</button>
         </div>
       </div>
 
-      <div class="card" style="margin-bottom:16px;display:flex;justify-content:center;overflow:auto">
-        <div id="gameGrid" style="padding:6px 2px"></div>
+      <div id="playArea">
+        <div class="card" style="margin-bottom:14px;display:flex;justify-content:center;overflow:auto;min-height:120px">
+          <div id="gameGrid" style="padding:6px 2px"></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <p class="banklabel">แตะตัวเลขด้านล่าง แล้วแตะช่องว่างเพื่อวางคำตอบ (แตะช่องที่วางแล้วเพื่อเอาออก)</p>
+          <div class="bank" id="gameBank"></div>
+        </div>
       </div>
       <p id="gMsg" style="text-align:center;font-size:15px;min-height:24px;margin:0 0 14px"></p>
 
@@ -163,6 +201,55 @@
         <datalist id="studentList"></datalist>
         <p style="margin:6px 0 12px;font-size:13px">คะแนน : <span id="rTotal" class="num-font" style="font-size:22px;font-weight:700;color:var(--acc)">0</span> <span id="rMedal" style="font-size:13px;color:var(--muted)"></span></p>
         <div style="display:flex;align-items:center;gap:10px"><button class="btn" id="saveBtn" onclick="saveScore()">บันทึกผล</button><span id="saveMsg" style="font-size:13px"></span></div>
+      </div>
+    </div>
+
+    <!-- ===== โหมดท้าเวลา ===== -->
+    <div id="timeWrap" class="noprint" style="display:none">
+      <div id="tStartWrap" class="card" style="margin-bottom:16px;text-align:center">
+        <p style="font-weight:700;font-size:17px;margin:0 0 4px">⏱ โหมดท้าเวลา</p>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 16px">เลือกเวลา แล้วแก้ครอสคณิตให้ได้มากที่สุด · แต่ละข้อที่ถูกครบนับ 1 คะแนน · ระดับเลือกจากด้านบน</p>
+        <div style="display:flex;justify-content:center;margin-bottom:16px">
+          <div class="seg" id="tSeg">
+            <button data-min="10" class="active" onclick="setTimedDur(10)">10 นาที</button>
+            <button data-min="15" onclick="setTimedDur(15)">15 นาที</button>
+            <button data-min="20" onclick="setTimedDur(20)">20 นาที</button>
+            <button data-min="25" onclick="setTimedDur(25)">25 นาที</button>
+            <button data-min="30" onclick="setTimedDur(30)">30 นาที</button>
+          </div>
+        </div>
+        <button class="btn" style="font-size:16px;padding:12px 28px" onclick="startTimed()">▶ เริ่มท้าเวลา</button>
+        <div id="tResult" style="display:none;margin-top:18px">
+          <p id="tResultText" style="font-size:16px;font-weight:700;color:var(--acc);margin:0 0 12px"></p>
+          <div class="card" style="max-width:520px;margin:0 auto">
+            <input id="tName" list="studentList" class="fld" placeholder="ชื่อนักเรียน" autocomplete="off" style="width:100%;margin-bottom:10px" />
+            <div style="display:flex;align-items:center;gap:10px"><button class="btn" id="tSaveBtn" onclick="saveTimed()">บันทึกผล</button><span id="tSaveMsg" style="font-size:13px"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="tPlayWrap" style="display:none">
+        <div class="card" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <span class="tbig" id="tLeft" style="font-size:30px;color:var(--acc)">10:00</span>
+            <span style="font-size:14px;color:var(--muted)">ทำได้ <b id="tSolved" class="tbig" style="color:var(--good);font-size:20px">0</b> ข้อ</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="ghost" onclick="skipTimed()">⏭ ข้ามข้อนี้</button>
+            <button class="ghost" id="tFsBtn" onclick="toggleFs()">⛶ ขยายเต็มจอ</button>
+            <button class="btn" onclick="endTimed()">⏹ จบเกม</button>
+          </div>
+        </div>
+        <div id="playAreaT">
+          <div class="card" style="margin-bottom:14px;display:flex;justify-content:center;overflow:auto;min-height:120px">
+            <div id="tGrid" style="padding:6px 2px"></div>
+          </div>
+          <div class="card" style="margin-bottom:16px">
+            <p class="banklabel">แตะตัวเลขแล้วแตะช่องว่างเพื่อวาง · เติมครบถูกหมดจะขึ้นข้อใหม่ให้อัตโนมัติ</p>
+            <div class="bank" id="tBank"></div>
+          </div>
+        </div>
+        <p id="tMsg" style="text-align:center;font-size:15px;min-height:22px;margin:0"></p>
       </div>
     </div>
 
@@ -365,11 +452,7 @@ function renderGrid(p, mode, cellPx){
     else if(cell.t==='op'){ div.className='cell op'; div.textContent=cell.v; }
     else if(cell.t==='eq'){ div.className='cell eq'; div.textContent='='; }
     else {
-      if(mode==='game' && cell.blank){ var inp=document.createElement('input'); inp.className='cin'; inp.type='text'; inp.inputMode='numeric';
-        inp.maxLength=4; inp.dataset.k=k; inp.dataset.ans=cell.v;
-        inp.addEventListener('input', onCellInput);
-        div.className='cell'; div.appendChild(inp); }
-      else if(mode==='paperQ' && cell.blank){ div.className='cell num blank'; div.textContent=''; }
+      if(mode==='paperQ' && cell.blank){ div.className='cell num blank'; div.textContent=''; }
       else if(mode==='paperA' && cell.blank){ div.className='cell num target'; div.textContent=cell.v; }
       else { div.className='cell num'; div.textContent=cell.v; }
     }
@@ -383,8 +466,9 @@ var curLevel='easy', curMode='game';
 function setLevel(lv){ curLevel=lv;
   Array.prototype.forEach.call(el('lvSeg').children,function(b){ b.classList.toggle('active', b.dataset.lv===lv); });
   el('lvHint').textContent=levelHint(lv);
-  setupCountOptions();
-  if(curMode==='game') newGame(); else genPaper();
+  setupCountOptions(); renderStats();
+  if(curMode==='game') newGame();
+  else if(curMode==='paper') genPaper();
 }
 function levelHint(lv){
   if(lv==='easy') return 'ง่าย : บวก/ลบ เลขไม่เกิน 30 · เหมาะกับ ป.1–3 (ปริศนาเล็ก เติมน้อยช่อง)';
@@ -395,95 +479,219 @@ function levelHint(lv){
 function setMode(m){ curMode=m;
   Array.prototype.forEach.call(el('modeSeg').children,function(b){ b.classList.toggle('active', b.dataset.mode===m); });
   el('gameWrap').style.display = (m==='game')?'':'none';
+  el('timeWrap').style.display = (m==='timed')?'':'none';
   el('paperWrap').style.display = (m==='paper')?'':'none';
-  if(m==='game') newGame(); else genPaper();
+  if(m==='game'){ renderStats(); newGame(); }
+  else if(m==='timed'){ if(tState.active){ stopTimedTimer(); tState.active=false; }
+    el('tPlayWrap').style.display='none'; el('tResult').style.display='none'; el('tStartWrap').style.display=''; renderStats(); }
+  else genPaper();
 }
 
-/* =================== GAME MODE =================== */
+/* =================== TIMER + STATS =================== */
 var gPuzzle=null, gTimerId=null, gSeconds=0, gStarted=false;
 function fmt(s){ var m=Math.floor(s/60), x=s%60; return (m<10?'0':'')+m+':'+(x<10?'0':'')+x; }
 function startTimer(){ stopTimer(); gSeconds=0; gStarted=false; el('gTimer').textContent='00:00';
   gTimerId=setInterval(function(){ if(gStarted){ gSeconds++; el('gTimer').textContent=fmt(gSeconds); } },1000); }
 function stopTimer(){ if(gTimerId){ clearInterval(gTimerId); gTimerId=null; } }
+
+var STATS_KEY='crossmath_stats_v1';
+function loadStats(){ try{ return JSON.parse(localStorage.getItem(STATS_KEY))||{}; }catch(e){ return {}; } }
+function writeStats(s){ try{ localStorage.setItem(STATS_KEY, JSON.stringify(s)); }catch(e){} }
+function bumpStat(lv,field){ var s=loadStats(); s[lv]=s[lv]||{played:0,solved:0,best:0}; s[lv][field]=(s[lv][field]||0)+1; writeStats(s); }
+function recordBest(lv,sec){ var s=loadStats(); s[lv]=s[lv]||{played:0,solved:0,best:0}; if(!s[lv].best||sec<s[lv].best) s[lv].best=sec; writeStats(s); }
+function renderStats(){ var s=(loadStats()[curLevel])||{played:0,solved:0,best:0};
+  if(el('stPlayed')) el('stPlayed').textContent=s.played||0;
+  if(el('stSolved')) el('stSolved').textContent=s.solved||0;
+  if(el('stBest')) el('stBest').textContent=s.best?fmt(s.best):'—'; }
+
+/* =================== PLAY ENGINE (tile bank) =================== */
+var play={ puzzle:null, slots:[], bank:[], sel:null, host:null, bankHost:null, onAutoCheck:null };
+function gameCellSize(p, container){
+  var mW=pzDims(p).w;
+  var avail = (container && container.clientWidth>200) ? container.clientWidth-26 : 900;
+  var fs = (typeof document!=='undefined' && document.fullscreenElement) ? true : false;
+  var cap = fs?120:66, fl=30;
+  var s=Math.floor(avail/mW); if(s>cap)s=cap; if(s<fl)s=fl; return s;
+}
+function buildPlay(p, host, bankHost){
+  play.puzzle=p; play.slots=[]; play.bank=[]; play.sel=null; play.host=host; play.bankHost=bankHost;
+  renderPlayGrid();
+  var vals=p.blanks.map(function(k){ return p.val[k]; }); vals=shuffle(vals.slice());
+  for(var i=0;i<vals.length;i++) play.bank.push({id:i, val:vals[i], used:false});
+  renderBank();
+}
+function renderPlayGrid(){
+  var p=play.puzzle, host=play.host; if(!p||!host) return;
+  var prev={}; play.slots.forEach(function(s){ if(s.val!=null) prev[s.key]={val:s.val,tileId:s.tileId,ok:s.el&&s.el.classList.contains('ok'),bad:s.el&&s.el.classList.contains('bad')}; });
+  host.innerHTML=''; play.slots=[];
+  var d=buildDisplay(p), cell=gameCellSize(p,host.parentNode);
+  var box=document.createElement('div'); box.className='pz';
+  box.style.gridTemplateColumns='repeat('+(d.maxC+1)+', var(--cell))';
+  box.style.setProperty('--cell', cell+'px');
+  for(var r=0;r<=d.maxR;r++){ for(var c=0;c<=d.maxC;c++){
+    var k=key(r,c), cm=d.cells[k], div=document.createElement('div'); div.className='cell';
+    if(!cm){ div.className='cell empty'; }
+    else if(cm.t==='op'){ div.className='cell op'; div.textContent=cm.v; }
+    else if(cm.t==='eq'){ div.className='cell eq'; div.textContent='='; }
+    else if(cm.t==='num' && cm.blank){ div.className='cell slot';
+      var si=play.slots.length; div.onclick=(function(idx){ return function(){ tapSlot(idx); }; })(si);
+      play.slots.push({ key:k, ans:cm.v, val:null, tileId:null, el:div }); }
+    else { div.className='cell num'; div.textContent=cm.v; }
+    box.appendChild(div);
+  } }
+  host.appendChild(box);
+  play.slots.forEach(function(s){ if(prev[s.key]){ s.val=prev[s.key].val; s.tileId=prev[s.key].tileId;
+    if(prev[s.key].ok)s.el.classList.add('ok'); if(prev[s.key].bad)s.el.classList.add('bad'); } });
+  refreshSlots();
+}
+function refreshSlots(){ play.slots.forEach(function(s){ s.el.textContent = (s.val==null?'':s.val); s.el.classList.toggle('filled', s.val!=null); }); }
+function findTile(id){ for(var i=0;i<play.bank.length;i++) if(play.bank[i].id===id) return play.bank[i]; return null; }
+function renderBank(){ var h=play.bankHost; if(!h) return; h.innerHTML=''; var any=false;
+  play.bank.forEach(function(t){ if(t.used) return; any=true;
+    var b=document.createElement('button'); b.className='tile'+(play.sel===t.id?' sel':''); b.textContent=t.val;
+    b.onclick=(function(id){ return function(){ tapTile(id); }; })(t.id); h.appendChild(b); });
+  if(!any){ var sp=document.createElement('span'); sp.style.cssText='color:var(--muted);font-size:13px'; sp.textContent='วางครบทุกตัวแล้ว · กดตรวจคำตอบ'; h.appendChild(sp); }
+}
+function tapTile(id){ play.sel = (play.sel===id?null:id); renderBank(); }
+function tapSlot(i){ var s=play.slots[i]; gStarted=true;
+  s.el.classList.remove('ok','bad');
+  if(s.val!=null){ var t0=findTile(s.tileId); if(t0)t0.used=false; s.val=null; s.tileId=null; refreshSlots(); renderBank(); afterPlace(); return; }
+  if(play.sel==null) return;
+  var t=findTile(play.sel); if(!t) return; s.val=t.val; s.tileId=t.id; t.used=true; play.sel=null;
+  refreshSlots(); renderBank(); afterPlace();
+}
+function afterPlace(){ if(typeof updateFilled==='function') updateFilled(); if(play.onAutoCheck) play.onAutoCheck(); }
+function filledCount(){ var n=0; play.slots.forEach(function(s){ if(s.val!=null)n++; }); return n; }
+function checkPlay(){ var correct=0; play.slots.forEach(function(s){ s.el.classList.remove('ok','bad'); if(s.val==null)return;
+  if(s.val===s.ans){ correct++; s.el.classList.add('ok'); } else { s.el.classList.add('bad'); } }); return correct; }
+
+/* =================== GAME MODE =================== */
 function newGame(){
   gPuzzle=makePuzzle(curLevel);
-  el('gMsg').textContent=''; el('gMsg').style.color='';
-  el('scoreCard').style.display='none'; el('saveMsg').textContent='';
-  var host=el('gameGrid'); host.innerHTML='';
-  if(!gPuzzle){ host.innerHTML='<span style="color:var(--miss)">สร้างปริศนาไม่สำเร็จ ลองกดใหม่อีกครั้ง</span>'; return; }
-  host.appendChild(renderGrid(gPuzzle,'game'));
+  el('gMsg').textContent=''; el('gMsg').style.color=''; el('scoreCard').style.display='none'; el('saveMsg').textContent='';
+  if(!gPuzzle){ el('gameGrid').innerHTML='<span style="color:var(--miss)">สร้างปริศนาไม่สำเร็จ ลองกดใหม่</span>'; return; }
+  bumpStat(curLevel,'played'); renderStats();
+  play.onAutoCheck=null;
+  buildPlay(gPuzzle, el('gameGrid'), el('gameBank'));
   el('gTotal').textContent=gPuzzle.blanks.length; el('gFilled').textContent='0';
   startTimer();
 }
-function onCellInput(e){ gStarted=true; var v=e.target.value.replace(/[^0-9]/g,''); e.target.value=v;
-  e.target.classList.remove('ok','bad');
-  // count filled
-  var inputs=el('gameGrid').querySelectorAll('input.cin'), filled=0;
-  inputs.forEach(function(i){ if(i.value!=='') filled++; });
-  el('gFilled').textContent=filled;
-}
-function hintGame(){ if(!gPuzzle) return; var inputs=el('gameGrid').querySelectorAll('input.cin');
-  var empties=[]; inputs.forEach(function(i){ if(i.value==='' || Number(i.value)!==Number(i.dataset.ans)) empties.push(i); });
-  if(!empties.length){ el('gMsg').style.color='var(--good)'; el('gMsg').textContent='เติมครบถูกหมดแล้ว 🎉'; return; }
-  var pick=empties[Math.floor(Math.random()*empties.length)]; pick.value=pick.dataset.ans; pick.classList.remove('bad'); pick.classList.add('ok'); gStarted=true;
-  onCellInput({target:pick});
+function updateFilled(){ if(el('gFilled')) el('gFilled').textContent=filledCount(); }
+function hintGame(){ if(!gPuzzle) return;
+  var target=null; for(var i=0;i<play.slots.length;i++){ var s=play.slots[i]; if(s.val==null||s.val!==s.ans){ target=s; break; } }
+  if(!target){ el('gMsg').style.color='var(--good)'; el('gMsg').textContent='เติมครบถูกหมดแล้ว 🎉'; return; }
+  if(target.val!=null){ var t0=findTile(target.tileId); if(t0)t0.used=false; target.val=null; target.tileId=null; }
+  var t=null; for(var j=0;j<play.bank.length;j++){ if(!play.bank[j].used && play.bank[j].val===target.ans){ t=play.bank[j]; break; } }
+  if(t){ target.val=t.val; target.tileId=t.id; t.used=true; } gStarted=true;
+  refreshSlots(); renderBank(); updateFilled(); target.el.classList.remove('bad'); target.el.classList.add('ok');
 }
 function revealGame(){ if(!gPuzzle) return; stopTimer();
-  var inputs=el('gameGrid').querySelectorAll('input.cin');
-  inputs.forEach(function(i){ i.value=i.dataset.ans; i.classList.remove('bad'); i.classList.add('ok'); i.readOnly=true; });
-  el('gFilled').textContent=gPuzzle.blanks.length;
+  play.slots.forEach(function(s){ s.val=s.ans; s.tileId=null; }); play.bank.forEach(function(t){ t.used=true; });
+  refreshSlots(); renderBank(); play.slots.forEach(function(s){ s.el.classList.remove('bad'); s.el.classList.add('ok'); });
+  el('gFilled').textContent=play.slots.length;
   el('gMsg').style.color='var(--muted)'; el('gMsg').textContent='นี่คือเฉลย — กด “ปริศนาใหม่” เพื่อเล่นต่อ';
 }
-function checkGame(){ if(!gPuzzle) return; var inputs=el('gameGrid').querySelectorAll('input.cin');
-  var total=inputs.length, correct=0, blank=0;
-  inputs.forEach(function(i){ i.classList.remove('ok','bad');
-    if(i.value===''){ blank++; return; }
-    if(Number(i.value)===Number(i.dataset.ans)){ correct++; i.classList.add('ok'); } else { i.classList.add('bad'); }
-  });
-  if(correct===total){ stopTimer(); el('gMsg').style.color='var(--good)';
-    el('gMsg').textContent='🎉 ถูกต้องทั้งหมด! ใช้เวลา '+fmt(gSeconds);
-    showScore(total,correct); }
-  else { el('gMsg').style.color='var(--miss)';
-    el('gMsg').textContent='ถูก '+correct+'/'+total+' ช่อง'+(blank?(' · ยังว่าง '+blank+' ช่อง'):'')+' — ช่องแดงคือยังไม่ถูก'; }
+function checkGame(){ if(!gPuzzle) return; var total=play.slots.length, correct=checkPlay(), blank=total-filledCount();
+  if(correct===total){ stopTimer(); el('gMsg').style.color='var(--good)'; el('gMsg').textContent='🎉 ถูกต้องทั้งหมด! ใช้เวลา '+fmt(gSeconds);
+    bumpStat(curLevel,'solved'); recordBest(curLevel,gSeconds); renderStats(); showScore(total,correct); }
+  else { el('gMsg').style.color='var(--miss)'; el('gMsg').textContent='ถูก '+correct+'/'+total+' ช่อง'+(blank?(' · ยังว่าง '+blank+' ช่อง'):'')+' — ช่องแดงคือยังไม่ถูก'; }
 }
 function medalOf(p){ if(p>=90)return'🥇 ทอง'; if(p>=75)return'🥈 เงิน'; if(p>=60)return'🥉 ทองแดง'; return'ผ่าน'; }
 var lastScore={total:0,pct:0,medal:''};
 function showScore(total,correct){
-  var base=correct*10;
-  var bonus=Math.max(0, 60 - Math.floor(gSeconds/5)); // เร็วได้โบนัสมาก
+  var base=correct*10, bonus=Math.max(0, 60 - Math.floor(gSeconds/5));
   var lvMul= curLevel==='expert'?2 : (curLevel==='hard'?1.5 : (curLevel==='medium'?1.2:1));
-  var tot=Math.round(base*lvMul)+bonus;
-  var pct=Math.round(correct/total*100);
+  var tot=Math.round(base*lvMul)+bonus, pct=Math.round(correct/total*100);
   lastScore={ total:tot, pct:pct, medal:medalOf(pct) };
   el('rTotal').textContent=tot; el('rMedal').textContent='· '+pct+'% · '+medalOf(pct);
   el('scoreCard').style.display='';
 }
-async function saveScore(){
+function postSession(payload, msgEl, btnEl){
+  if(!API){ msgEl.style.color='var(--miss)'; msgEl.textContent='ยังไม่ได้ตั้งค่า API'; return; }
+  if(btnEl) btnEl.disabled=true; msgEl.style.color='var(--muted)'; msgEl.textContent='กำลังบันทึก...';
+  fetch(API,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(j&&j.ok){ msgEl.style.color='var(--good)'; msgEl.textContent='บันทึกแล้ว ✓'; }
+      else { msgEl.style.color='var(--miss)'; msgEl.textContent=(j&&j.error)?j.error:'บันทึกไม่สำเร็จ'; } })
+    .catch(function(){ msgEl.style.color='var(--miss)'; msgEl.textContent='เชื่อมต่อไม่ได้'; })
+    .then(function(){ if(btnEl) btnEl.disabled=false; });
+}
+function saveScore(){
   var name=el('rName').value.trim(), msg=el('saveMsg');
   if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อก่อนบันทึก'; return; }
-  if(!API){ msg.style.color='var(--miss)'; msg.textContent='ยังไม่ได้ตั้งค่า API'; return; }
-  var btn=el('saveBtn'); btn.disabled=true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
   var lvName = (curLevel==='hard'||curLevel==='expert')?'มัธยม':'ประถม';
-  try{
-    var res=await fetch(API,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({ action:'saveSession', studentName:name,
-        token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'',
-        level:lvName, round:1, mode:'ครอสคณิต',
-        totalQuestions:(gPuzzle?gPuzzle.blanks.length:0), good:(gPuzzle?gPuzzle.blanks.length:0), near:0, miss:0,
-        score:lastScore.total, maxScore:100, pct:lastScore.pct, medal:lastScore.medal, timeSec:gSeconds }) });
-    var j=await res.json();
-    if(j&&j.ok){ msg.style.color='var(--good)'; msg.textContent='บันทึกแล้ว ✓'; }
-    else { msg.style.color='var(--miss)'; msg.textContent=(j&&j.error)?j.error:'บันทึกไม่สำเร็จ'; }
-  }catch(e){ msg.style.color='var(--miss)'; msg.textContent='เชื่อมต่อไม่ได้'; }
-  btn.disabled=false;
+  postSession({ action:'saveSession', studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'',
+    level:lvName, round:1, mode:'ครอสคณิต',
+    totalQuestions:(gPuzzle?gPuzzle.blanks.length:0), good:(gPuzzle?gPuzzle.blanks.length:0), near:0, miss:0,
+    score:lastScore.total, maxScore:100, pct:lastScore.pct, medal:lastScore.medal, timeSec:gSeconds }, msg, el('saveBtn'));
+}
+
+/* =================== FULLSCREEN =================== */
+function fsTarget(){ return (curMode==='timed') ? el('playAreaT') : el('playArea'); }
+function toggleFs(){ var t=fsTarget(); if(!t) return;
+  if(!document.fullscreenElement){ if(t.requestFullscreen) t.requestFullscreen(); else if(t.webkitRequestFullscreen) t.webkitRequestFullscreen(); }
+  else { if(document.exitFullscreen) document.exitFullscreen(); else if(document.webkitExitFullscreen) document.webkitExitFullscreen(); }
+}
+function onFsChange(){ var on=!!document.fullscreenElement;
+  if(el('fsBtn')) el('fsBtn').textContent = on?'⛶ ออกจากเต็มจอ':'⛶ ขยายเต็มจอ';
+  if(el('tFsBtn')) el('tFsBtn').textContent = on?'⛶ ออกจากเต็มจอ':'⛶ ขยายเต็มจอ';
+  if(play.puzzle) renderPlayGrid();
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('fullscreenchange', onFsChange);
+  document.addEventListener('webkitfullscreenchange', onFsChange);
+}
+var _rzTO=null;
+if(typeof window!=='undefined' && window.addEventListener){
+  window.addEventListener('resize', function(){ if(!play.puzzle) return; if(_rzTO) clearTimeout(_rzTO); _rzTO=setTimeout(function(){ renderPlayGrid(); },180); });
+}
+
+/* =================== TIMED MODE =================== */
+var tState={ active:false, dur:600, left:0, solved:0, id:null };
+function setTimedDur(min){ tState.dur=min*60;
+  Array.prototype.forEach.call(el('tSeg').children,function(b){ b.classList.toggle('active', Number(b.dataset.min)===min); }); }
+function startTimed(){ tState.active=true; tState.left=tState.dur; tState.solved=0;
+  el('tResult').style.display='none'; el('tStartWrap').style.display='none'; el('tPlayWrap').style.display='';
+  el('tSolved').textContent='0'; el('tMsg').textContent=''; updateTLeft();
+  play.onAutoCheck=timedAuto; nextTimed();
+  stopTimedTimer(); tState.id=setInterval(function(){ tState.left--; updateTLeft(); if(tState.left<=0) endTimed(); },1000);
+}
+function stopTimedTimer(){ if(tState.id){ clearInterval(tState.id); tState.id=null; } }
+function updateTLeft(){ el('tLeft').textContent=fmt(Math.max(0,tState.left));
+  el('tLeft').style.color = tState.left<=30 ? 'var(--miss)' : 'var(--acc)'; }
+function nextTimed(){ var p=makePuzzle(curLevel); if(!p){ el('tGrid').innerHTML='สร้างปริศนาไม่สำเร็จ'; return; }
+  el('tMsg').textContent=''; buildPlay(p, el('tGrid'), el('tBank')); }
+function skipTimed(){ if(tState.active) nextTimed(); }
+function timedAuto(){ if(filledCount()!==play.slots.length || !play.slots.length) return;
+  var c=checkPlay(); if(c===play.slots.length){ tState.solved++; el('tSolved').textContent=tState.solved;
+    el('tMsg').style.color='var(--good)'; el('tMsg').textContent='ถูกต้อง! +1 · กำลังขึ้นข้อใหม่...';
+    setTimeout(function(){ if(tState.active) nextTimed(); }, 500); }
+  else { el('tMsg').style.color='var(--miss)'; el('tMsg').textContent='ยังไม่ถูกทุกช่อง — ช่องแดงคือผิด'; }
+}
+function endTimed(){ stopTimedTimer(); tState.active=false;
+  play.onAutoCheck=null; if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+  el('tPlayWrap').style.display='none'; el('tStartWrap').style.display='';
+  bumpStat(curLevel,'played'); renderStats();
+  el('tResult').style.display=''; el('tSaveMsg').textContent='';
+  el('tResultText').textContent='⏱ หมดเวลา! ระดับ'+({easy:'ง่าย',medium:'ปานกลาง',hard:'ยาก',expert:'โหดมาก'})[curLevel]+' · ทำได้ '+tState.solved+' ข้อ ใน '+Math.round(tState.dur/60)+' นาที';
+}
+function saveTimed(){
+  var name=el('tName').value.trim(), msg=el('tSaveMsg');
+  if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อก่อนบันทึก'; return; }
+  var lvName=(curLevel==='hard'||curLevel==='expert')?'มัธยม':'ประถม';
+  var solved=tState.solved, sc=solved*10, md=(solved>=15?'🥇 ทอง':(solved>=10?'🥈 เงิน':(solved>=5?'🥉 ทองแดง':'ผ่าน')));
+  postSession({ action:'saveSession', studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'',
+    level:lvName, round:Math.round(tState.dur/60), mode:'ครอสคณิต',
+    totalQuestions:solved, good:solved, near:0, miss:0,
+    score:sc, maxScore:100, pct:(solved>0?100:0), medal:md, timeSec:tState.dur }, msg, el('tSaveBtn'));
 }
 
 /* =================== PAPER MODE =================== */
 var paperPuzzles=[], showAns=true;
 function setupCountOptions(){
   var sel=el('pCount'); if(!sel) return;
-  var def = curLevel==='easy'?6:(curLevel==='medium'?4:(curLevel==='hard'?2:2));
-  var maxN = curLevel==='easy'?8:(curLevel==='medium'?6:(curLevel==='hard'?4:2));
+  var def = curLevel==='easy'?4:(curLevel==='medium'?2:(curLevel==='hard'?2:1));
+  var maxN = curLevel==='easy'?6:(curLevel==='medium'?4:2);
   sel.innerHTML=''; for(var n=1;n<=maxN;n++){ var o=document.createElement('option'); o.value=n; o.textContent=n+' ข้อ'; if(n===def)o.selected=true; sel.appendChild(o); }
 }
 function pzDims(p){ var mr=0,mc=0; p.lanes.forEach(function(L){ var cc=laneCells(L);
@@ -496,13 +704,14 @@ function genPaper(){
   el('shInfo').textContent='ระดับ : '+({easy:'ง่าย',medium:'ปานกลาง',hard:'ยาก',expert:'โหดมาก'})[curLevel]+
     ' · คำสั่ง : เติมตัวเลขในช่องว่าง ให้สมการทุกแนว (แนวนอน + แนวตั้ง) ถูกต้อง';
   var q=el('qGrids'), a=el('aGrids'); q.innerHTML=''; a.innerHTML='';
-  /* ---- ขนาดช่องแบบไดนามิก : เต็ม 2 คอลัมน์ และพอดี A4 แนวนอน 1 แผ่นเสมอ ---- */
+  /* ---- ขนาดช่องแบบไดนามิก : เต็ม 2 คอลัมน์ และพอดี A4 แนวนอน 1 แผ่นเสมอ (เผื่อหัวกระดาษ/ฟอนต์) ---- */
   var mW=1,mH=1; paperPuzzles.forEach(function(p){ var d=pzDims(p); if(d.w>mW)mW=d.w; if(d.h>mH)mH=d.h; });
   var rows=Math.max(1,Math.ceil(paperPuzzles.length/2)), MM=3.7795;
-  var colWmm=(279-8)/2, rowHmm=(150-(rows-1)*6)/rows;
-  var cellMM=Math.min(colWmm/mW,(rowHmm-6)/mH);
-  var printPx=cellMM*MM, screenPx=((1040-100)/2)/mW;
-  var pcell=Math.floor(Math.min(printPx,screenPx)); if(pcell<16)pcell=16; if(pcell>58)pcell=58;
+  var areaH=136, colWmm=(279-10)/2;
+  var perRow=(areaH-(rows-1)*6)/rows;
+  var cellMM=Math.min(colWmm/mW,(perRow-8)/mH);
+  var printPx=cellMM*MM, screenPx=((1040-110)/2)/mW;
+  var pcell=Math.floor(Math.min(printPx,screenPx)); if(pcell<14)pcell=14; if(pcell>54)pcell=54;
   paperPuzzles.forEach(function(p,idx){
     var qb=document.createElement('div'); qb.className='pzbox';
     var ql=document.createElement('div'); ql.className='pzlabel'; ql.textContent='ข้อ '+(idx+1); qb.appendChild(ql);
