@@ -83,6 +83,21 @@
   .fsplay .bankcard .tile{ width:100%; }
   /* timed mode */
   .tbig{ font-family:'Chakra Petch',monospace; font-weight:700; }
+  /* ===== ตัวจับเวลาเต็มจอ (ดิจิทัลเรืองแสง) ===== */
+  #clockScreen{ position:fixed; inset:0; z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 42%, #0c2a1e 0%, #071712 45%, #03100b 100%); }
+  .clk-label{ font-family:'Kanit',sans-serif; font-size:clamp(16px,2.4vw,30px); color:#8fe9c4; letter-spacing:.06em; margin-bottom:8px; opacity:.92; }
+  .clk-time{ font-family:'Chakra Petch',monospace; font-weight:700; line-height:.9; font-size:clamp(90px,23vw,340px);
+    color:#34d399; letter-spacing:.02em; text-shadow:0 0 28px rgba(52,211,153,.75), 0 0 70px rgba(52,211,153,.45), 0 0 120px rgba(52,211,153,.25); }
+  .clk-time.warn{ color:#fbbf24; text-shadow:0 0 28px rgba(251,191,36,.75), 0 0 70px rgba(251,191,36,.45); }
+  .clk-time.done{ color:#f87171; text-shadow:0 0 30px rgba(248,113,113,.8), 0 0 80px rgba(248,113,113,.5); animation:clkflash 1s steps(1) infinite; }
+  @keyframes clkflash{ 50%{ opacity:.25; } }
+  .clk-elapsed{ font-family:'Chakra Petch',monospace; font-size:clamp(18px,3vw,40px); color:#5f8f7c; margin-top:18px; letter-spacing:.04em; }
+  .clk-btns{ display:flex; gap:16px; margin-top:34px; }
+  .clk-btns button{ font-family:'Kanit',sans-serif; font-weight:600; font-size:clamp(16px,2vw,24px); padding:12px 40px; border-radius:14px; cursor:pointer; border:0; }
+  .clk-start{ background:linear-gradient(180deg,#34d399,#10b981); color:#04221a; box-shadow:0 0 26px rgba(52,211,153,.55); }
+  .clk-reset{ background:#16241f; color:#cde9df; border:1px solid #2f5346 !important; }
+  .clk-close{ position:absolute; top:22px; right:26px; background:rgba(255,255,255,.06); color:#cde9df; font-size:20px !important; padding:8px 16px !important; border:1px solid #2f5346 !important; }
   /* paper pages */
   .qpage{ }
   #sheet .pzgrid.solo{ grid-template-columns:1fr; }
@@ -237,7 +252,11 @@
             <button data-min="30" onclick="setTimedDur(30)">30 นาที</button>
           </div>
         </div>
-        <button class="btn" style="font-size:16px;padding:12px 28px" onclick="startTimed()">▶ เริ่มท้าเวลา</button>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn" style="font-size:16px;padding:12px 28px" onclick="startTimed()">▶ เริ่มท้าเวลา</button>
+          <button class="ghost" style="font-size:16px;padding:12px 24px" onclick="clkOpen()">🖥 ตัวจับเวลาเต็มจอ</button>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin:10px 0 0">🖥 = นาฬิกาดิจิทัลเต็มจอสำหรับฉายขึ้นจอ (ใช้เวลาตามที่เลือกด้านบน)</p>
         <div id="tResult" style="display:none;margin-top:18px">
           <p id="tResultText" style="font-size:16px;font-weight:700;color:var(--acc);margin:0 0 12px"></p>
           <div class="card" style="max-width:520px;margin:0 auto">
@@ -311,6 +330,18 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ===== ตัวจับเวลาเต็มจอ ===== -->
+  <div id="clockScreen">
+    <button class="clk-close" onclick="clkClose()">✕ ปิด</button>
+    <div class="clk-label">ตัวจับเวลา · <span id="clkDurLabel">30</span> นาที</div>
+    <div class="clk-time" id="clkTime">30:00</div>
+    <div class="clk-elapsed">ใช้ไป <span id="clkElapsed">00:00</span></div>
+    <div class="clk-btns">
+      <button class="clk-start" id="clkStartBtn" onclick="clkToggle()">เริ่ม</button>
+      <button class="clk-reset" onclick="clkReset()">รีเซ็ต</button>
+    </div>
   </div>
 
 <script src="config.js"></script>
@@ -707,6 +738,34 @@ function saveTimed(){
     level:lvName, round:Math.round(tState.dur/60), mode:'ครอสคณิต',
     totalQuestions:solved, good:solved, near:0, miss:0,
     score:sc, maxScore:100, pct:(solved>0?100:0), medal:md, timeSec:tState.dur }, msg, el('tSaveBtn'));
+}
+
+/* =================== ตัวจับเวลาเต็มจอ =================== */
+var clk={ dur:1800, left:1800, id:null, running:false };
+function clkRender(){ el('clkTime').textContent=fmt(clk.left); el('clkElapsed').textContent=fmt(clk.dur-clk.left);
+  var t=el('clkTime'); t.classList.remove('warn','done');
+  if(clk.left<=0) t.classList.add('done'); else if(clk.left<=30) t.classList.add('warn'); }
+function clkOpen(){ var min=Math.round((tState.dur||1800)/60)||30; clk.dur=min*60; clk.left=clk.dur; clk.running=false;
+  if(clk.id){ clearInterval(clk.id); clk.id=null; }
+  el('clkDurLabel').textContent=min; el('clkStartBtn').textContent='เริ่ม';
+  clkRender(); el('clockScreen').style.display='flex';
+  var c=el('clockScreen'); if(c.requestFullscreen){ try{ c.requestFullscreen(); }catch(e){} } else if(c.webkitRequestFullscreen){ try{ c.webkitRequestFullscreen(); }catch(e){} }
+}
+function clkToggle(){ if(clk.running) clkPause(); else clkStart(); }
+function clkStart(){ if(clk.left<=0) clk.left=clk.dur; clk.running=true; el('clkStartBtn').textContent='⏸ หยุด';
+  if(clk.id) clearInterval(clk.id);
+  clk.id=setInterval(function(){ clk.left--; if(clk.left<=0){ clk.left=0; clkRender(); clkDone(); return; } clkRender(); },1000);
+  clkRender();
+}
+function clkPause(){ clk.running=false; el('clkStartBtn').textContent='▶ เริ่มต่อ'; if(clk.id){ clearInterval(clk.id); clk.id=null; } }
+function clkReset(){ if(clk.id){ clearInterval(clk.id); clk.id=null; } clk.running=false; clk.left=clk.dur; el('clkStartBtn').textContent='เริ่ม'; clkRender(); }
+function clkDone(){ clk.running=false; if(clk.id){ clearInterval(clk.id); clk.id=null; } el('clkStartBtn').textContent='เริ่มใหม่'; }
+function clkClose(){ clkPause(); el('clkStartBtn').textContent='เริ่ม'; el('clockScreen').style.display='none';
+  if(document.fullscreenElement && document.exitFullscreen){ try{ document.exitFullscreen(); }catch(e){} }
+  else if(document.webkitFullscreenElement && document.webkitExitFullscreen){ try{ document.webkitExitFullscreen(); }catch(e){} }
+}
+if(typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && el('clockScreen') && el('clockScreen').style.display==='flex') clkClose(); });
 }
 
 /* =================== PAPER MODE =================== */
