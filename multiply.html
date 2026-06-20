@@ -41,8 +41,12 @@
   #sheet .head{ position:relative; text-align:center; margin-bottom:6px; }
   #sheet h2{ margin:0; font-size:20px; font-weight:600; }
   #sheet .sub{ font-size:13px; color:#555; margin-top:2px; }
-  #sheet .scorebox{ position:absolute; top:-4px; right:0; width:78px; height:54px; border:1.5px solid #111; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  #sheet .scorebox span{ font-size:10px; color:#444; }
+  #sheet .scorebox{ position:absolute; top:0; right:0; width:82px; border:2px solid #111; border-radius:7px; overflow:hidden; background:#fff; display:flex; flex-direction:column; align-items:stretch; }
+  #sheet .scorebox .sb-h{ font-size:10px; font-weight:700; color:#222; text-align:center; padding:3px 0; background:#eef2f7; border-bottom:1.5px solid #111; }
+  #sheet .scorebox .sb-body{ display:flex; flex-direction:column; align-items:center; padding:5px 5px 6px; }
+  #sheet .scorebox .sb-top{ height:15px; }
+  #sheet .scorebox .sb-line{ width:62%; border-top:1.4px solid #111; margin:1px 0; }
+  #sheet .scorebox .sb-bot{ font-size:15px; font-weight:700; color:#111; font-family:'Chakra Petch',monospace; }
   #sheet .info{ font-size:13px; margin:12px 0 16px; display:flex; flex-wrap:wrap; gap:4px 18px; }
   #sheet .grid5{ display:grid; grid-template-columns:repeat(5,1fr); gap:11px 14px; }
   #sheet .q{ font-size:13px; display:flex; align-items:center; gap:5px; white-space:nowrap; }
@@ -63,7 +67,7 @@
     @page{ size:A4 landscape; margin:9mm; }
     /* กรอบคะแนนไม่ให้ล้น/ถูกตัด */
     #sheet .head{ margin-bottom:10px; }
-    #sheet .scorebox{ top:0; right:0; width:86px; height:58px; }
+    #sheet .scorebox{ top:0; right:0; width:23mm; height:auto; }
     /* ขยายให้เต็มหน้ากระดาษแนวนอน */
     #sheet h2{ font-size:25px; }
     #sheet .sub{ font-size:15px; }
@@ -141,7 +145,14 @@
   <!-- ===== กระดาษคำตอบ (ส่วนที่พิมพ์) ===== -->
   <div id="sheet">
     <div class="head">
-      <div class="scorebox"><span>คะแนนที่ได้</span></div>
+      <div class="scorebox">
+        <div class="sb-h">คะแนนที่ได้</div>
+        <div class="sb-body">
+          <div class="sb-top"></div>
+          <div class="sb-line"></div>
+          <div class="sb-bot" id="sbFull">50</div>
+        </div>
+      </div>
       <h2 id="sheetTitle">ซ้อมสูตรคูณเร็ว — ระดับประถมศึกษา</h2>
       <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
     </div>
@@ -210,6 +221,7 @@ function generate(){
   renderSheet();
 }
 function renderSheet(){
+  var sf=el('sbFull'); if(sf) sf.textContent = TOTAL;   /* คะแนนเต็ม = จำนวนข้อทั้งหมด */
   el('qgrid').innerHTML = questions.map(function(q,i){
     const ans = showKey ? '<span class="ans">'+(q.a*q.b)+'</span>' : '<span class="box"></span>';
     return '<div class="q"><span class="n">('+(i+1)+')</span> '+q.a+' × '+q.b+' = '+ans+'</div>';
