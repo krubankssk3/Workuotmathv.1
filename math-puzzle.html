@@ -86,6 +86,9 @@
   /* paper pages */
   .qpage{ }
   #sheet .pzgrid.solo{ grid-template-columns:1fr; }
+  /* ข้อที่ตกไปหน้าใหม่ลำพัง -> จัดกลางหน้ากระดาษ (ทั้งแนวตั้งและแนวนอน) */
+  .qpage.solopage{ display:flex; flex-direction:column; align-items:center; min-height:520px; }
+  .qpage.solopage .pzgrid{ margin-top:auto; margin-bottom:auto; width:100%; }
 
   .pzbox{ display:inline-block; padding:8px; }
   .pzlabel{ font-size:12px; color:var(--muted); margin:0 0 6px; font-weight:600; }
@@ -128,6 +131,7 @@
     #qGrids .qpage, #aGrids .qpage{ page-break-after:always; page-break-inside:avoid; }
     #qGrids .qpage:last-child, #aGrids .qpage:last-child{ page-break-after:auto; }
     #qGrids .qpage + .qpage, #aGrids .qpage + .qpage{ margin-top:0; border-top:none; padding-top:0; }
+    .qpage.solopage{ min-height:180mm; }
   }
 </style>
 </head>
@@ -734,10 +738,10 @@ function genPaper(){
     var l=document.createElement('div'); l.className='pzlabel'; l.textContent='ข้อ '+(idx+1); b.appendChild(l);
     b.appendChild(renderGrid(p,mode,pcell)); return b; }
   for(var pg=0; pg<pages; pg++){
-    var slice=paperPuzzles.slice(pg*2, pg*2+2), solo=(slice.length===1);
-    var qpage=document.createElement('div'); qpage.className='qpage';
+    var slice=paperPuzzles.slice(pg*2, pg*2+2), solo=(slice.length===1), soloPage=(solo && pg>0);
+    var qpage=document.createElement('div'); qpage.className='qpage'+(soloPage?' solopage':'');
     var qgrid=document.createElement('div'); qgrid.className='pzgrid'+(solo?' solo':'');
-    var apage=document.createElement('div'); apage.className='qpage';
+    var apage=document.createElement('div'); apage.className='qpage'+(soloPage?' solopage':'');
     var agrid=document.createElement('div'); agrid.className='pzgrid'+(solo?' solo':'');
     slice.forEach(function(p,j){ var idx=pg*2+j; qgrid.appendChild(buildBox(p,idx,'paperQ')); agrid.appendChild(buildBox(p,idx,'paperA')); });
     qpage.appendChild(qgrid); apage.appendChild(agrid);
