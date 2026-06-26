@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ใบงาน ราก & เลขยกกำลัง</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#121838; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --acc:#e879f9; --acc-glow:rgba(232,121,249,.45); --text:#eaeefb; --muted:#8b93b8; --miss:#fb7185; --good:#34d399;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:radial-gradient(900px 500px at 15% -10%, rgba(232,121,249,.12), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(65,211,240,.08), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .wrap{ position:relative; z-index:1; max-width:880px; margin:0 auto; padding:20px 18px 40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 18px; backdrop-filter:blur(10px); }
+  .btn{ background:linear-gradient(120deg,var(--acc),#f0abfc); color:#3b0a40; font-weight:600; border:none; border-radius:13px;
+    padding:11px 18px; font-family:'Kanit'; font-size:15px; cursor:pointer; transition:transform .12s; }
+  .btn:active{transform:scale(.96);}
+  .ghost{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 14px; cursor:pointer; color:var(--muted); font-family:'Kanit'; font-size:14px; transition:.15s; }
+  .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .seg{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:13px; padding:4px; display:inline-flex; gap:4px; flex-wrap:wrap; }
+  .seg button{ border:none; background:transparent; color:var(--muted); font-family:'Kanit'; font-weight:500; padding:8px 16px; border-radius:9px; cursor:pointer; font-size:14px; }
+  .seg button.active{ background:linear-gradient(120deg,#e879f9,#f0abfc); color:#3b0a40; font-weight:700; box-shadow:0 4px 14px rgba(232,121,249,.28); }
+  .backbtn{ display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; }
+  .backbtn:hover{ color:var(--text); } .backbtn svg{width:16px;height:16px;}
+  .hint{ font-size:12.5px; color:var(--muted); margin-top:8px; }
+  a{text-decoration:none;}
+
+  /* ===== กระดาษ (ขาว) ===== */
+  #sheet{ background:#fff; color:#111; border-radius:10px; padding:26px 30px; max-width:1000px; margin:0 auto;
+    font-family:'Sarabun',sans-serif; box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
+  #sheet .head{ position:relative; text-align:center; margin-bottom:6px; }
+  #sheet h2{ margin:0; font-size:20px; font-weight:600; }
+  #sheet .sub{ font-size:13px; color:#555; margin-top:2px; }
+  #sheet .scorebox{ position:absolute; top:0; right:0; width:82px; border:2px solid #111; border-radius:7px; overflow:hidden; background:#fff; display:flex; flex-direction:column; align-items:stretch; }
+  #sheet .scorebox .sb-h{ font-size:10px; font-weight:700; color:#222; text-align:center; padding:3px 0; background:#fbeefc; border-bottom:1.5px solid #111; }
+  #sheet .scorebox .sb-body{ display:flex; flex-direction:column; align-items:center; padding:5px 5px 6px; }
+  #sheet .scorebox .sb-top{ height:15px; }
+  #sheet .scorebox .sb-line{ width:62%; border-top:1.4px solid #111; margin:1px 0; }
+  #sheet .scorebox .sb-bot{ font-size:15px; font-weight:700; color:#111; font-family:'Chakra Petch',monospace; }
+  #sheet .order{ font-size:13px; font-weight:600; color:#333; margin:10px 0 2px; }
+  #sheet .info{ font-size:13px; margin:8px 0 16px; display:flex; flex-wrap:wrap; gap:4px 18px; }
+  #sheet .grid5{ display:grid; grid-template-columns:repeat(5,1fr); gap:13px 16px; }
+  #sheet .q{ font-size:14px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  #sheet .q .n{ color:#444; min-width:22px; }
+  #sheet .box{ display:inline-block; border:1px solid #333; border-radius:3px; min-width:44px; height:22px; }
+  #sheet .ans{ color:#16a34a; font-weight:700; padding:0 4px; }
+  #sheet .foot{ margin-top:18px; text-align:center; font-size:11px; color:#777; }
+
+  /* ราก: เครื่องหมายกรณฑ์ + ขีดคลุม */
+  .rt{ display:inline-flex; align-items:flex-start; line-height:1; }
+  .rt .idx{ font-size:.62em; line-height:1; align-self:flex-start; transform:translateY(.05em); margin-right:-3px; }
+  .rt .rsym{ font-size:1.18em; line-height:1; }
+  .rt .rad{ border-top:1.7px solid currentColor; padding:0 3px; margin-top:.08em; }
+  /* เลขยกกำลัง */
+  .pw{ font-weight:600; }
+  .pw sup{ font-size:.66em; }
+
+  .hidden{display:none!important;}
+
+  /* ===== โหมดพิมพ์ (แนวนอน A4 เต็มหน้า) ===== */
+  @media print {
+    body{ background:#fff !important; }
+    .noprint{ display:none !important; }
+    .wrap{ padding:0; max-width:none; }
+    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:6mm 4mm 0; }
+    @page{ size:A4 landscape; margin:9mm; }
+    #sheet .head{ margin-bottom:10px; }
+    #sheet .scorebox{ top:0; right:0; width:23mm; height:auto; }
+    #sheet h2{ font-size:25px; }
+    #sheet .sub{ font-size:15px; }
+    #sheet .order{ font-size:17px; margin:14px 0 2px; }
+    #sheet .info{ font-size:16px; margin:8px 0 18px; }
+    #sheet .grid5{ gap:24px 30px; }
+    #sheet .q{ font-size:19px; gap:9px; }
+    #sheet .q .n{ min-width:28px; }
+    #sheet .box{ min-width:68px; height:30px; }
+    #sheet .foot{ margin-top:28px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== แถบควบคุม (ไม่พิมพ์) ===== -->
+  <div class="noprint">
+    <div class="flex items-center justify-between mb-4">
+      <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
+      <span style="font-weight:600">ใบงาน ราก &amp; เลขยกกำลัง</span>
+    </div>
+
+    <div class="card mb-4">
+      <div class="mb-3" style="font-size:13px;color:var(--muted)">ประเภทใบงาน</div>
+      <div class="seg mb-3" id="typeSeg">
+        <button data-type="root" class="active">ราก (ที่สอง &amp; ที่สาม)</button>
+        <button data-type="power">เลขยกกำลัง (≤ 999)</button>
+      </div>
+
+      <div class="mb-1" style="font-size:13px;color:var(--muted)">ระดับความยาก</div>
+      <div class="seg" id="levelSeg">
+        <button data-level="ง่าย" class="active">ง่าย</button>
+        <button data-level="ปานกลาง">ปานกลาง</button>
+        <button data-level="ยาก">ยาก</button>
+      </div>
+      <div class="hint" id="levelHint"></div>
+
+      <div class="mt-3 mb-1" style="font-size:13px;color:var(--muted)">จำนวนข้อ</div>
+      <div class="seg" id="countSeg">
+        <button data-count="20">20</button>
+        <button data-count="30">30</button>
+        <button data-count="40">40</button>
+        <button data-count="50" class="active">50</button>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap mt-4">
+        <button class="ghost" onclick="generate()"><span style="vertical-align:-1px">↻</span> สุ่มชุดใหม่</button>
+        <button class="ghost" onclick="toggleKey()" id="keyBtn">ดูเฉลย</button>
+        <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== กระดาษคำตอบ (ส่วนที่พิมพ์) ===== -->
+  <div id="sheet">
+    <div class="head">
+      <div class="scorebox">
+        <div class="sb-h">คะแนนที่ได้</div>
+        <div class="sb-body">
+          <div class="sb-top"></div>
+          <div class="sb-line"></div>
+          <div class="sb-bot" id="sbFull">50</div>
+        </div>
+      </div>
+      <h2 id="sheetTitle">ใบงานการถอดราก (รากที่สอง และ รากที่สาม)</h2>
+      <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
+    </div>
+    <div class="info">
+      <span>ชื่อ-สกุล ...............................................</span>
+      <span>ชั้น ............</span>
+      <span>เลขที่ ........</span>
+      <span id="sheetMeta">50 ข้อ ข้อละ 1 คะแนน</span>
+    </div>
+    <div class="order" id="sheetOrder">คำสั่ง : จงหาค่าของรากต่อไปนี้</div>
+    <div class="grid5" id="qgrid"></div>
+    <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
+  </div>
+
+</div>
+
+<script>
+var curType = 'root', curLevel = 'ง่าย', curCount = 50, showKey = false, questions = [];
+
+function el(id){ return document.getElementById(id); }
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+  return arr;
+}
+/* สุ่มเลือกจาก pool ให้ครบ n ข้อ (สับไพ่หลายรอบเพื่อให้ซ้ำกระจายตัว ไม่ติดกัน) */
+function sample(pool, n){
+  var out = [];
+  while(out.length < n){
+    var s = shuffle(pool.slice());
+    for(var i=0;i<s.length && out.length<n;i++) out.push(s[i]);
+  }
+  return out;
+}
+
+/* ---------- คลังโจทย์: ราก ---------- */
+function rootPool(level){
+  var sqMax, cbMax;
+  if(level === 'ง่าย'){ sqMax = 15; cbMax = 8; }        /* √4–√225 , ∛8–∛512 */
+  else if(level === 'ปานกลาง'){ sqMax = 25; cbMax = 12; } /* √4–√625 , ∛8–∛1728 */
+  else { sqMax = 40; cbMax = 20; }                        /* √4–√1600 , ∛8–∛8000 */
+  var pool = [];
+  for(var r=2;r<=sqMax;r++) pool.push({ kind:'sq', rad:r*r, ans:r });
+  for(var c=2;c<=cbMax;c++) pool.push({ kind:'cb', rad:c*c*c, ans:c });
+  return pool;
+}
+
+/* ---------- คลังโจทย์: เลขยกกำลัง (ผล ≤ 999) ---------- */
+function powerPool(level){
+  var pool = [], b, e, v;
+  if(level === 'ง่าย'){
+    /* กำลังสองอย่างเดียว ฐาน 2–31 (31² = 961) */
+    for(b=2;b<=31;b++) pool.push({ base:b, exp:2, ans:b*b });
+  } else if(level === 'ปานกลาง'){
+    /* กำลังสอง + กำลังสาม (ผล ≤ 999) */
+    for(b=2;b<=31;b++) pool.push({ base:b, exp:2, ans:b*b });
+    for(b=2;b<=9;b++){ v=b*b*b; if(v<=999) pool.push({ base:b, exp:3, ans:v }); } /* 9³=729 */
+  } else {
+    /* คละทุกกำลัง 2–9 ที่ผลลัพธ์ ≤ 999 */
+    for(b=2;b<=31;b++){
+      for(e=2;e<=9;e++){
+        v = Math.pow(b,e);
+        if(v <= 999) pool.push({ base:b, exp:e, ans:v });
+        else break;
+      }
+    }
+  }
+  return pool;
+}
+
+/* ---------- ข้อความหัวเรื่อง / คำสั่ง / hint ---------- */
+function levelHintText(){
+  if(curType === 'root'){
+    if(curLevel === 'ง่าย') return 'รากที่สอง √4–√225 และ รากที่สาม ∛8–∛512';
+    if(curLevel === 'ปานกลาง') return 'รากที่สอง √4–√625 และ รากที่สาม ∛8–∛1728';
+    return 'รากที่สอง √4–√1600 และ รากที่สาม ∛8–∛8000';
+  } else {
+    if(curLevel === 'ง่าย') return 'เลขยกกำลังสอง ฐาน 2–31 (เช่น 12², 25²)';
+    if(curLevel === 'ปานกลาง') return 'กำลังสองและกำลังสาม ผลลัพธ์ไม่เกิน 999';
+    return 'คละทุกกำลัง (2–9) ผลลัพธ์ไม่เกิน 999 (เช่น 2⁹, 3⁶, 5⁴)';
+  }
+}
+
+/* ---------- สร้าง ---------- */
+function generate(){
+  if(curType === 'root') questions = sample(rootPool(curLevel), curCount);
+  else questions = sample(powerPool(curLevel), curCount);
+
+  el('sbFull').textContent = curCount;
+  el('sheetMeta').textContent = curCount + ' ข้อ ข้อละ 1 คะแนน';
+  el('levelHint').textContent = levelHintText();
+
+  if(curType === 'root'){
+    el('sheetTitle').textContent = 'ใบงานการถอดราก (รากที่สอง และ รากที่สาม)';
+    el('sheetOrder').textContent = 'คำสั่ง : จงหาค่าของรากต่อไปนี้';
+  } else {
+    el('sheetTitle').textContent = 'ใบงานเลขยกกำลัง (ผลลัพธ์ไม่เกิน 999)';
+    el('sheetOrder').textContent = 'คำสั่ง : จงหาค่าของเลขยกกำลังต่อไปนี้';
+  }
+  renderSheet();
+}
+
+function qHTML(q){
+  if(curType === 'root'){
+    var idx = (q.kind === 'cb') ? '<span class="idx">3</span>' : '';
+    return '<span class="rt">' + idx + '<span class="rsym">√</span><span class="rad">' + q.rad + '</span></span>';
+  }
+  return '<span class="pw">' + q.base + '<sup>' + q.exp + '</sup></span>';
+}
+
+function renderSheet(){
+  var html = '';
+  for(var i=0;i<questions.length;i++){
+    var ans = showKey ? '<span class="ans">' + questions[i].ans + '</span>' : '<span class="box"></span>';
+    html += '<div class="q"><span class="n">(' + (i+1) + ')</span> ' + qHTML(questions[i]) + ' = ' + ans + '</div>';
+  }
+  el('qgrid').innerHTML = html;
+}
+
+function toggleKey(){
+  showKey = !showKey;
+  el('keyBtn').textContent = showKey ? 'ซ่อนเฉลย' : 'ดูเฉลย';
+  renderSheet();
+}
+
+/* ---------- ปุ่มเลือก ---------- */
+function bindSeg(segId, attr, onPick){
+  var btns = document.querySelectorAll('#' + segId + ' button');
+  for(var i=0;i<btns.length;i++){
+    btns[i].onclick = (function(btn){
+      return function(){
+        for(var j=0;j<btns.length;j++) btns[j].classList.remove('active');
+        btn.classList.add('active');
+        onPick(btn.getAttribute(attr));
+      };
+    })(btns[i]);
+  }
+}
+bindSeg('typeSeg', 'data-type', function(v){ curType = v; showKey = false; el('keyBtn').textContent='ดูเฉลย'; generate(); });
+bindSeg('levelSeg', 'data-level', function(v){ curLevel = v; generate(); });
+bindSeg('countSeg', 'data-count', function(v){ curCount = parseInt(v,10); generate(); });
+
+generate();
+</script>
+</body>
+</html>
