@@ -126,7 +126,6 @@
         <button class="ghost" onclick="openTimer()">⏱ จับเวลา</button>
         <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
       </div>
-      <div class="hint" id="dupNote" style="display:none;color:#fbbf24;font-weight:500"></div>
     </div>
 
     <!-- ===== หน้าจับเวลาเต็มจอ (สำหรับฉายในห้องเรียน) ===== -->
@@ -185,10 +184,14 @@ function shuffle(arr){
   return arr;
 }
 /* สุ่มแบบไม่ซ้ำ: สับไพ่แล้วตัดเอา n ตัวแรก (ทุกตัวในคลังเป็นโจทย์ที่ไม่ซ้ำกันอยู่แล้ว) */
-function sampleUnique(pool, n){
-  var s = shuffle(pool.slice());
-  if(n < s.length) s = s.slice(0, n);
-  return s;
+/* สุ่มให้ครบ n ข้อเสมอ: ใช้โจทย์ไม่ซ้ำก่อนจนหมดคลัง แล้วจึงวนซ้ำ (สับใหม่ทุกรอบ ให้ซ้ำกระจายไม่ติดกัน) */
+function sample(pool, n){
+  var out = [];
+  while(out.length < n){
+    var s = shuffle(pool.slice());
+    for(var i=0;i<s.length && out.length<n;i++) out.push(s[i]);
+  }
+  return out;
 }
 
 /* ---------- คลังโจทย์: ราก ---------- */
@@ -242,21 +245,11 @@ function levelHintText(){
 /* ---------- สร้าง ---------- */
 function generate(){
   var pool = (curType === 'root') ? rootPool(curLevel) : powerPool(curLevel);
-  var avail = pool.length;
-  var n = Math.min(curCount, avail);           /* ไม่ซ้ำได้สูงสุดเท่าจำนวนโจทย์ในคลัง */
-  questions = sampleUnique(pool, n);
+  questions = sample(pool, curCount);          /* ได้ครบตามจำนวนที่เลือกเสมอ (ซ้ำได้ถ้าคลังไม่พอ) */
 
-  el('sbFull').textContent = n;
-  el('sheetMeta').textContent = n + ' ข้อ ข้อละ 1 คะแนน';
+  el('sbFull').textContent = curCount;
+  el('sheetMeta').textContent = curCount + ' ข้อ ข้อละ 1 คะแนน';
   el('levelHint').textContent = levelHintText();
-
-  var note = el('dupNote');
-  if(n < curCount){
-    note.textContent = '⚠ ระดับนี้สร้างโจทย์ไม่ซ้ำได้สูงสุด ' + avail + ' ข้อ — ปรับจาก ' + curCount + ' เหลือ ' + n + ' ข้อให้อัตโนมัติ';
-    note.style.display = 'block';
-  } else {
-    note.style.display = 'none';
-  }
 
   if(curType === 'root'){
     el('sheetTitle').textContent = 'ใบงานการถอดราก (รากที่สอง และ รากที่สาม)';
