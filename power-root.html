@@ -51,8 +51,8 @@
   #sheet .grid5{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px 18px; }
   #sheet .q{ font-size:14px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #sheet .q .n{ color:#444; min-width:22px; }
-  #sheet .box{ display:inline-block; border:1px solid #333; border-radius:3px; min-width:44px; height:22px; }
-  #sheet .ans{ color:#16a34a; font-weight:700; padding:0 4px; }
+  #sheet .box{ flex:1 1 auto; min-width:40px; max-width:120px; border:1px solid #333; border-radius:3px; height:22px; }
+  #sheet .ans{ flex:0 0 auto; color:#16a34a; font-weight:700; padding:0 4px; }
   #sheet .foot{ margin-top:18px; text-align:center; font-size:11px; color:#777; }
 
   /* ราก: เครื่องหมายกรณฑ์ + ขีดคลุม */
@@ -71,23 +71,25 @@
     body{ background:#fff !important; }
     .noprint{ display:none !important; }
     .wrap{ padding:0; max-width:none; }
-    @page{ size:A4 landscape; margin:8mm; }
-    /* ความสูงพิมพ์ได้ของ A4 แนวนอน = 210 - 8*2 = 194mm : ล็อกความสูง + ซ่อนส่วนเกิน กันหลุดหน้า 2 */
-    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; height:194mm;
+    @page{ size:A4 landscape; margin:9mm; }
+    /* ล็อกความสูงเผื่อระยะขอบ (พิมพ์ได้แม้ตั้ง margin กว้าง) + ซ่อนส่วนเกิน กันหลุดหน้า 2 */
+    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; height:180mm;
       padding:0; display:flex; flex-direction:column; overflow:hidden; }
     #sheet .head{ margin-bottom:6px; flex:0 0 auto; }
     #sheet .scorebox{ top:0; right:0; width:24mm; height:auto; }
-    #sheet h2{ font-size:27px; }
-    #sheet .sub{ font-size:16px; }
-    #sheet .order{ font-size:19px; margin:10px 0 2px; flex:0 0 auto; }
-    #sheet .info{ font-size:18px; margin:8px 0 6px; flex:0 0 auto; }
+    #sheet h2{ font-size:25px; }
+    #sheet .sub{ font-size:15px; }
+    #sheet .order{ font-size:18px; margin:10px 0 2px; flex:0 0 auto; }
+    #sheet .info{ font-size:17px; margin:8px 0 6px; flex:0 0 auto; }
     /* กริด 4 คอลัมน์ × 10 แถว ยืดเต็มพื้นที่ที่เหลือ แบ่งแถวเท่า ๆ กัน */
     #sheet .grid5{ flex:1 1 auto; grid-template-columns:repeat(4,1fr); grid-auto-rows:1fr;
-      align-items:center; gap:0 26px; }
-    #sheet .q{ font-size:26px; gap:11px; }
-    #sheet .q .n{ min-width:44px; font-size:23px; }
-    #sheet .box{ min-width:80px; height:38px; }
-    #sheet .ans{ font-size:26px; }
+      align-items:center; gap:0 20px; }
+    #sheet .q{ font-size:23px; gap:9px; min-width:0; }
+    #sheet .q .n{ flex:0 0 auto; min-width:40px; font-size:20px; }
+    #sheet .q .rt, #sheet .q .pw{ flex:0 0 auto; }
+    /* กล่องคำตอบยืด/ย่อตามที่เหลือในคอลัมน์เอง — กันล้นทุกกรณี */
+    #sheet .box{ flex:1 1 60px; min-width:42px; max-width:120px; height:36px; }
+    #sheet .ans{ font-size:23px; }
     #sheet .foot{ margin-top:6px; font-size:13px; flex:0 0 auto; }
   }
 </style>
