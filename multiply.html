@@ -207,10 +207,19 @@ document.querySelectorAll('#levelSeg button').forEach(function(b){
 function genQuestions(level){
   const baseMin = level==='มัธยม' ? 13 : 2;
   const baseMax = 25;
-  const qs = [];
-  for(let i=0;i<TOTAL;i++){
+  const bMin = 2, bMax = 12;
+  // ห้ามโจทย์ซ้ำ แต่ "สลับเลขได้": 3×7 กับ 7×3 ถือเป็นคนละข้อ (คู่อันดับ)
+  const totalPairs = (baseMax-baseMin+1)*(bMax-bMin+1);
+  const want = Math.min(TOTAL, totalPairs);
+  const seen = {}, qs = [];
+  let guard = 0;
+  while(qs.length < want && guard < 20000){
+    guard++;
     const a = baseMin + Math.floor(Math.random()*(baseMax-baseMin+1)); // แม่
-    const b = 2 + Math.floor(Math.random()*11);                        // 2-12
+    const b = bMin + Math.floor(Math.random()*(bMax-bMin+1));          // 2-12
+    const key = a + 'x' + b;
+    if(seen[key]) continue;   // ซ้ำคู่อันดับเดิม → ข้าม
+    seen[key] = true;
     qs.push({ a:a, b:b });
   }
   return qs;
