@@ -48,7 +48,7 @@
   #sheet .scorebox .sb-bot{ font-size:15px; font-weight:700; color:#111; font-family:'Chakra Petch',monospace; }
   #sheet .order{ font-size:13px; font-weight:600; color:#333; margin:10px 0 2px; }
   #sheet .info{ font-size:13px; margin:8px 0 16px; display:flex; flex-wrap:wrap; gap:4px 18px; }
-  #sheet .grid5{ display:grid; grid-template-columns:repeat(5,1fr); gap:13px 16px; }
+  #sheet .grid5{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px 18px; }
   #sheet .q{ font-size:14px; display:flex; align-items:center; gap:6px; white-space:nowrap; }
   #sheet .q .n{ color:#444; min-width:22px; }
   #sheet .box{ display:inline-block; border:1px solid #333; border-radius:3px; min-width:44px; height:22px; }
@@ -71,19 +71,24 @@
     body{ background:#fff !important; }
     .noprint{ display:none !important; }
     .wrap{ padding:0; max-width:none; }
-    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:6mm 4mm 0; }
-    @page{ size:A4 landscape; margin:9mm; }
-    #sheet .head{ margin-bottom:10px; }
-    #sheet .scorebox{ top:0; right:0; width:23mm; height:auto; }
-    #sheet h2{ font-size:25px; }
-    #sheet .sub{ font-size:15px; }
-    #sheet .order{ font-size:17px; margin:14px 0 2px; }
-    #sheet .info{ font-size:16px; margin:8px 0 18px; }
-    #sheet .grid5{ gap:24px 30px; }
-    #sheet .q{ font-size:19px; gap:9px; }
-    #sheet .q .n{ min-width:28px; }
-    #sheet .box{ min-width:68px; height:30px; }
-    #sheet .foot{ margin-top:28px; font-size:13px; }
+    @page{ size:A4 landscape; margin:8mm; }
+    /* ความสูงพิมพ์ได้ของ A4 แนวนอน = 210 - 8*2 = 194mm : ล็อกความสูง + ซ่อนส่วนเกิน กันหลุดหน้า 2 */
+    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; height:194mm;
+      padding:0; display:flex; flex-direction:column; overflow:hidden; }
+    #sheet .head{ margin-bottom:6px; flex:0 0 auto; }
+    #sheet .scorebox{ top:0; right:0; width:24mm; height:auto; }
+    #sheet h2{ font-size:27px; }
+    #sheet .sub{ font-size:16px; }
+    #sheet .order{ font-size:19px; margin:10px 0 2px; flex:0 0 auto; }
+    #sheet .info{ font-size:18px; margin:8px 0 6px; flex:0 0 auto; }
+    /* กริด 4 คอลัมน์ × 10 แถว ยืดเต็มพื้นที่ที่เหลือ แบ่งแถวเท่า ๆ กัน */
+    #sheet .grid5{ flex:1 1 auto; grid-template-columns:repeat(4,1fr); grid-auto-rows:1fr;
+      align-items:center; gap:0 26px; }
+    #sheet .q{ font-size:26px; gap:11px; }
+    #sheet .q .n{ min-width:44px; font-size:23px; }
+    #sheet .box{ min-width:80px; height:38px; }
+    #sheet .ans{ font-size:26px; }
+    #sheet .foot{ margin-top:6px; font-size:13px; flex:0 0 auto; }
   }
 </style>
 </head>
@@ -111,14 +116,6 @@
         <button data-level="ยาก">ยาก</button>
       </div>
       <div class="hint" id="levelHint"></div>
-
-      <div class="mt-3 mb-1" style="font-size:13px;color:var(--muted)">จำนวนข้อ</div>
-      <div class="seg" id="countSeg">
-        <button data-count="20">20</button>
-        <button data-count="30">30</button>
-        <button data-count="40" class="active">40</button>
-        <button data-count="50">50</button>
-      </div>
 
       <div class="flex items-center gap-3 flex-wrap mt-4">
         <button class="ghost" onclick="generate()"><span style="vertical-align:-1px">↻</span> สุ่มชุดใหม่</button>
@@ -299,7 +296,6 @@ function bindSeg(segId, attr, onPick){
 }
 bindSeg('typeSeg', 'data-type', function(v){ curType = v; showKey = false; el('keyBtn').textContent='ดูเฉลย'; generate(); });
 bindSeg('levelSeg', 'data-level', function(v){ curLevel = v; generate(); });
-bindSeg('countSeg', 'data-count', function(v){ curCount = parseInt(v,10); generate(); });
 
 /* ---------- ตัวจับเวลาเต็มจอ (10 / 15 / 20 นาที) ---------- */
 var FULL_SEC = 15*60, tLeft = FULL_SEC, tRun = false, tInt = null;
