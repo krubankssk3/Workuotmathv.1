@@ -101,7 +101,7 @@
       <div class="mb-3" style="font-size:13px;color:var(--muted)">ประเภทใบงาน</div>
       <div class="seg mb-3" id="typeSeg">
         <button data-type="root" class="active">ราก (ที่สอง &amp; ที่สาม)</button>
-        <button data-type="power">เลขยกกำลัง (≤ 999)</button>
+        <button data-type="power">เลขยกกำลัง (≤ 1100)</button>
       </div>
 
       <div class="mb-1" style="font-size:13px;color:var(--muted)">ระดับความยาก</div>
@@ -116,16 +116,36 @@
       <div class="seg" id="countSeg">
         <button data-count="20">20</button>
         <button data-count="30">30</button>
-        <button data-count="40">40</button>
-        <button data-count="50" class="active">50</button>
+        <button data-count="40" class="active">40</button>
+        <button data-count="50">50</button>
       </div>
 
       <div class="flex items-center gap-3 flex-wrap mt-4">
         <button class="ghost" onclick="generate()"><span style="vertical-align:-1px">↻</span> สุ่มชุดใหม่</button>
         <button class="ghost" onclick="toggleKey()" id="keyBtn">ดูเฉลย</button>
+        <button class="ghost" onclick="openTimer()">⏱ จับเวลา</button>
         <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
       </div>
       <div class="hint" id="dupNote" style="display:none;color:#fbbf24;font-weight:500"></div>
+    </div>
+
+    <!-- ===== หน้าจับเวลาเต็มจอ (สำหรับฉายในห้องเรียน) ===== -->
+    <div id="timerScreen" style="display:none;position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 26%, #3a0d44, #07060f 72%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">
+      <button onclick="closeTimer()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:none;color:#e9d5ff;padding:10px 18px;border-radius:12px;cursor:pointer;font-family:'Kanit';font-size:15px">✕ ปิด</button>
+      <p style="color:#c9a7e8;font-size:clamp(15px,3vw,20px);margin:0 0 2px">ตัวจับเวลา · <span id="timerTotalLabel">15</span> นาที</p>
+      <div class="num-font" id="timerDisp" style="font-size:clamp(110px,32vw,300px);font-weight:700;color:var(--acc);line-height:1;text-shadow:0 0 60px rgba(232,121,249,.5)">15:00</div>
+      <p style="color:#c9a7e8;font-size:clamp(16px,4vw,22px);margin:8px 0 24px">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
+
+      <div class="seg" id="presetSeg" style="margin-bottom:22px">
+        <button data-min="10">10 นาที</button>
+        <button data-min="15" class="active">15 นาที</button>
+        <button data-min="20">20 นาที</button>
+      </div>
+
+      <div class="flex gap-3 justify-center flex-wrap">
+        <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:160px;font-size:19px;padding:15px 30px">เริ่ม</button>
+        <button class="ghost" onclick="tReset()" style="font-size:19px;padding:15px 30px">รีเซ็ต</button>
+      </div>
     </div>
   </div>
 
@@ -137,7 +157,7 @@
         <div class="sb-body">
           <div class="sb-top"></div>
           <div class="sb-line"></div>
-          <div class="sb-bot" id="sbFull">50</div>
+          <div class="sb-bot" id="sbFull">40</div>
         </div>
       </div>
       <h2 id="sheetTitle">ใบงานการถอดราก (รากที่สอง และ รากที่สาม)</h2>
@@ -157,7 +177,7 @@
 </div>
 
 <script>
-var curType = 'root', curLevel = 'ง่าย', curCount = 50, showKey = false, questions = [];
+var curType = "root", curLevel = "ง่าย", curCount = 40, showKey = false, questions = [];
 
 function el(id){ return document.getElementById(id); }
 function shuffle(arr){
@@ -183,22 +203,22 @@ function rootPool(level){
   return pool;
 }
 
-/* ---------- คลังโจทย์: เลขยกกำลัง (ผล ≤ 999) ---------- */
+/* ---------- คลังโจทย์: เลขยกกำลัง (ผล ≤ 1100) ---------- */
 function powerPool(level){
   var pool = [], b, e, v;
   if(level === 'ง่าย'){
-    /* กำลังสองอย่างเดียว ฐาน 2–31 (31² = 961) */
-    for(b=2;b<=31;b++) pool.push({ base:b, exp:2, ans:b*b });
+    /* กำลังสองอย่างเดียว ฐาน 2–33 (33² = 1089) */
+    for(b=2;b<=33;b++) pool.push({ base:b, exp:2, ans:b*b });
   } else if(level === 'ปานกลาง'){
-    /* กำลังสอง + กำลังสาม (ผล ≤ 999) */
-    for(b=2;b<=31;b++) pool.push({ base:b, exp:2, ans:b*b });
-    for(b=2;b<=9;b++){ v=b*b*b; if(v<=999) pool.push({ base:b, exp:3, ans:v }); } /* 9³=729 */
+    /* กำลังสอง + กำลังสาม (ผล ≤ 1100) */
+    for(b=2;b<=33;b++) pool.push({ base:b, exp:2, ans:b*b });
+    for(b=2;b<=10;b++){ v=b*b*b; if(v<=1100) pool.push({ base:b, exp:3, ans:v }); } /* 10³=1000 */
   } else {
-    /* คละทุกกำลัง 2–9 ที่ผลลัพธ์ ≤ 999 */
-    for(b=2;b<=31;b++){
-      for(e=2;e<=9;e++){
+    /* คละทุกกำลัง 2–10 ที่ผลลัพธ์ ≤ 1100 */
+    for(b=2;b<=33;b++){
+      for(e=2;e<=10;e++){
         v = Math.pow(b,e);
-        if(v <= 999) pool.push({ base:b, exp:e, ans:v });
+        if(v <= 1100) pool.push({ base:b, exp:e, ans:v });
         else break;
       }
     }
@@ -213,9 +233,9 @@ function levelHintText(){
     if(curLevel === 'ปานกลาง') return 'รากที่สอง √4–√1369 และ รากที่สาม ∛8–∛4096';
     return 'รากที่สอง √4–√2500 และ รากที่สาม ∛8–∛8000';
   } else {
-    if(curLevel === 'ง่าย') return 'เลขยกกำลังสอง ฐาน 2–31 (เช่น 12², 25²)';
-    if(curLevel === 'ปานกลาง') return 'กำลังสองและกำลังสาม ผลลัพธ์ไม่เกิน 999';
-    return 'คละทุกกำลัง (2–9) ผลลัพธ์ไม่เกิน 999 (เช่น 2⁹, 3⁶, 5⁴)';
+    if(curLevel === 'ง่าย') return 'เลขยกกำลังสอง ฐาน 2–33 (เช่น 12², 33²)';
+    if(curLevel === 'ปานกลาง') return 'กำลังสองและกำลังสาม ผลลัพธ์ไม่เกิน 1100';
+    return 'คละทุกกำลัง (2–10) ผลลัพธ์ไม่เกิน 1100 (เช่น 2¹⁰, 3⁶, 5⁴)';
   }
 }
 
@@ -242,7 +262,7 @@ function generate(){
     el('sheetTitle').textContent = 'ใบงานการถอดราก (รากที่สอง และ รากที่สาม)';
     el('sheetOrder').textContent = 'คำสั่ง : จงหาค่าของรากต่อไปนี้';
   } else {
-    el('sheetTitle').textContent = 'ใบงานเลขยกกำลัง (ผลลัพธ์ไม่เกิน 999)';
+    el('sheetTitle').textContent = 'ใบงานเลขยกกำลัง (ผลลัพธ์ไม่เกิน 1100)';
     el('sheetOrder').textContent = 'คำสั่ง : จงหาค่าของเลขยกกำลังต่อไปนี้';
   }
   renderSheet();
@@ -287,6 +307,29 @@ function bindSeg(segId, attr, onPick){
 bindSeg('typeSeg', 'data-type', function(v){ curType = v; showKey = false; el('keyBtn').textContent='ดูเฉลย'; generate(); });
 bindSeg('levelSeg', 'data-level', function(v){ curLevel = v; generate(); });
 bindSeg('countSeg', 'data-count', function(v){ curCount = parseInt(v,10); generate(); });
+
+/* ---------- ตัวจับเวลาเต็มจอ (10 / 15 / 20 นาที) ---------- */
+var FULL_SEC = 15*60, tLeft = FULL_SEC, tRun = false, tInt = null;
+function pad(n){ return (n<10?'0':'') + n; }
+function mmss(s){ s = Math.max(0, Math.floor(s)); return pad(Math.floor(s/60)) + ':' + pad(s%60); }
+function openTimer(){ el('timerScreen').style.display = 'flex'; tDraw(); }
+function closeTimer(){ el('timerScreen').style.display = 'none'; }
+function tDraw(){
+  el('timerDisp').textContent = mmss(tLeft);
+  el('usedDisp').textContent = mmss(FULL_SEC - tLeft);
+  el('timerDisp').style.color = (tLeft <= 0) ? '#fb7185' : 'var(--acc)';
+}
+function tStart(){
+  if(tRun) return;
+  if(tLeft <= 0) tLeft = FULL_SEC;       /* หมดเวลาแล้วกดเริ่ม = เริ่มใหม่ */
+  tRun = true; el('tBtn').textContent = 'หยุด';
+  tInt = setInterval(function(){ tLeft = Math.max(0, tLeft-1); tDraw(); if(tLeft <= 0){ tStop(); } }, 1000);
+}
+function tStop(){ tRun = false; clearInterval(tInt); el('tBtn').textContent = 'เริ่ม'; }
+function tToggle(){ tRun ? tStop() : tStart(); }
+function tReset(){ tStop(); tLeft = FULL_SEC; tDraw(); }
+function setPreset(min){ FULL_SEC = min*60; tStop(); tLeft = FULL_SEC; el('timerTotalLabel').textContent = min; tDraw(); }
+bindSeg('presetSeg', 'data-min', function(v){ setPreset(parseInt(v,10)); });
 
 generate();
 </script>
