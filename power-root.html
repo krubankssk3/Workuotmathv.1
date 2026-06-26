@@ -125,6 +125,7 @@
         <button class="ghost" onclick="toggleKey()" id="keyBtn">ดูเฉลย</button>
         <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
       </div>
+      <div class="hint" id="dupNote" style="display:none;color:#fbbf24;font-weight:500"></div>
     </div>
   </div>
 
@@ -163,22 +164,19 @@ function shuffle(arr){
   for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
   return arr;
 }
-/* สุ่มเลือกจาก pool ให้ครบ n ข้อ (สับไพ่หลายรอบเพื่อให้ซ้ำกระจายตัว ไม่ติดกัน) */
-function sample(pool, n){
-  var out = [];
-  while(out.length < n){
-    var s = shuffle(pool.slice());
-    for(var i=0;i<s.length && out.length<n;i++) out.push(s[i]);
-  }
-  return out;
+/* สุ่มแบบไม่ซ้ำ: สับไพ่แล้วตัดเอา n ตัวแรก (ทุกตัวในคลังเป็นโจทย์ที่ไม่ซ้ำกันอยู่แล้ว) */
+function sampleUnique(pool, n){
+  var s = shuffle(pool.slice());
+  if(n < s.length) s = s.slice(0, n);
+  return s;
 }
 
 /* ---------- คลังโจทย์: ราก ---------- */
 function rootPool(level){
   var sqMax, cbMax;
-  if(level === 'ง่าย'){ sqMax = 15; cbMax = 8; }        /* √4–√225 , ∛8–∛512 */
-  else if(level === 'ปานกลาง'){ sqMax = 25; cbMax = 12; } /* √4–√625 , ∛8–∛1728 */
-  else { sqMax = 40; cbMax = 20; }                        /* √4–√1600 , ∛8–∛8000 */
+  if(level === 'ง่าย'){ sqMax = 16; cbMax = 9; }         /* √4–√256 , ∛8–∛729   = 23 ข้อ */
+  else if(level === 'ปานกลาง'){ sqMax = 37; cbMax = 16; } /* √4–√1369 , ∛8–∛4096 = 51 ข้อ */
+  else { sqMax = 50; cbMax = 20; }                        /* √4–√2500 , ∛8–∛8000 = 68 ข้อ */
   var pool = [];
   for(var r=2;r<=sqMax;r++) pool.push({ kind:'sq', rad:r*r, ans:r });
   for(var c=2;c<=cbMax;c++) pool.push({ kind:'cb', rad:c*c*c, ans:c });
@@ -211,9 +209,9 @@ function powerPool(level){
 /* ---------- ข้อความหัวเรื่อง / คำสั่ง / hint ---------- */
 function levelHintText(){
   if(curType === 'root'){
-    if(curLevel === 'ง่าย') return 'รากที่สอง √4–√225 และ รากที่สาม ∛8–∛512';
-    if(curLevel === 'ปานกลาง') return 'รากที่สอง √4–√625 และ รากที่สาม ∛8–∛1728';
-    return 'รากที่สอง √4–√1600 และ รากที่สาม ∛8–∛8000';
+    if(curLevel === 'ง่าย') return 'รากที่สอง √4–√256 และ รากที่สาม ∛8–∛729';
+    if(curLevel === 'ปานกลาง') return 'รากที่สอง √4–√1369 และ รากที่สาม ∛8–∛4096';
+    return 'รากที่สอง √4–√2500 และ รากที่สาม ∛8–∛8000';
   } else {
     if(curLevel === 'ง่าย') return 'เลขยกกำลังสอง ฐาน 2–31 (เช่น 12², 25²)';
     if(curLevel === 'ปานกลาง') return 'กำลังสองและกำลังสาม ผลลัพธ์ไม่เกิน 999';
@@ -223,12 +221,22 @@ function levelHintText(){
 
 /* ---------- สร้าง ---------- */
 function generate(){
-  if(curType === 'root') questions = sample(rootPool(curLevel), curCount);
-  else questions = sample(powerPool(curLevel), curCount);
+  var pool = (curType === 'root') ? rootPool(curLevel) : powerPool(curLevel);
+  var avail = pool.length;
+  var n = Math.min(curCount, avail);           /* ไม่ซ้ำได้สูงสุดเท่าจำนวนโจทย์ในคลัง */
+  questions = sampleUnique(pool, n);
 
-  el('sbFull').textContent = curCount;
-  el('sheetMeta').textContent = curCount + ' ข้อ ข้อละ 1 คะแนน';
+  el('sbFull').textContent = n;
+  el('sheetMeta').textContent = n + ' ข้อ ข้อละ 1 คะแนน';
   el('levelHint').textContent = levelHintText();
+
+  var note = el('dupNote');
+  if(n < curCount){
+    note.textContent = '⚠ ระดับนี้สร้างโจทย์ไม่ซ้ำได้สูงสุด ' + avail + ' ข้อ — ปรับจาก ' + curCount + ' เหลือ ' + n + ' ข้อให้อัตโนมัติ';
+    note.style.display = 'block';
+  } else {
+    note.style.display = 'none';
+  }
 
   if(curType === 'root'){
     el('sheetTitle').textContent = 'ใบงานการถอดราก (รากที่สอง และ รากที่สาม)';
