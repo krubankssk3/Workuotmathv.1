@@ -130,11 +130,14 @@
     </div>
 
     <!-- hero -->
-    <div class="text-center mb-8 reveal" style="animation-delay:.1s">
-      <div class="kicker mb-3">MATH PRACTICE SYSTEM</div>
-      <h1 class="title m-0">ระบบจัดซ้อมรายวิชาคณิตศาสตร์</h1>
-      <div class="byline mt-2 mb-3" style="font-size:clamp(18px,3vw,24px);font-weight:600;color:#7fe3f5">By ครูแบงค์</div>
-      <p class="tagline m-0">จัดซ้อมมิติใหม่ ไม่เหมือนใครเพราะเบื่อ GSP</p>
+    <div class="mb-8 reveal" style="animation-delay:.1s;display:flex;align-items:center;justify-content:center;gap:clamp(14px,3vw,36px);flex-wrap:wrap">
+      <img id="siteLogo" alt="โลโก้ระบบ" style="display:none;width:clamp(84px,12vw,130px);height:auto;max-height:134px;object-fit:contain;border-radius:18px;filter:drop-shadow(0 0 18px rgba(65,211,240,.4))" />
+      <div class="text-center">
+        <div class="kicker mb-3">MATH PRACTICE SYSTEM</div>
+        <h1 class="title m-0">ระบบจัดซ้อมรายวิชาคณิตศาสตร์</h1>
+        <div class="byline mt-2 mb-3" style="font-size:clamp(18px,3vw,24px);font-weight:600;color:#7fe3f5">By ครูแบงค์</div>
+        <p class="tagline m-0">จัดซ้อมมิติใหม่ ไม่เหมือนใครเพราะเบื่อ GSP</p>
+      </div>
     </div>
 
     <!-- visitors today + trend -->
@@ -519,7 +522,20 @@ function renderDev(d){
     + (d.reason ? '<div style="margin-top:6px"><div style="font-size:12px;color:var(--muted);margin-bottom:4px">เหตุผลในการพัฒนาระบบ</div><div style="font-size:14px;line-height:1.65;color:var(--text);white-space:pre-wrap">'+d.reason+'</div></div>' : '');
 }
 
-document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); trackVisit(); });
+/* ---------- โลโก้ระบบ (ดึงรูปที่แอดมินอัปไว้) ---------- */
+async function loadSiteLogo(){
+  var url = '';
+  try{ var r = await api('getSiteLogo'); if(r && r.ok && r.logo) url = r.logo; }catch(e){}
+  if(!url && typeof SITE_LOGO_URL !== 'undefined' && SITE_LOGO_URL) url = SITE_LOGO_URL;
+  if(!url) return;
+  var img = el('siteLogo');
+  if(!img) return;
+  img.onload = function(){ img.style.display = 'block'; };
+  img.onerror = function(){ img.style.display = 'none'; };
+  img.src = url;
+}
+
+document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); trackVisit(); loadSiteLogo(); });
 </script>
 </body>
 </html>
