@@ -165,7 +165,7 @@
 
     <!-- stats -->
     <div class="grid gap-3 mb-9 reveal" style="grid-template-columns:repeat(3,1fr);animation-delay:.2s">
-      <div class="stat"><div class="num-font v" id="statSessions" style="color:#41d3f0">0</div><div style="font-size:12px;color:var(--muted)">รอบที่ซ้อม</div></div>
+      <div class="stat"><div class="num-font v" id="statSystems" style="color:#41d3f0">0</div><div style="font-size:12px;color:var(--muted)">ระบบซ้อมทั้งหมด</div></div>
       <div class="stat"><div class="num-font v" id="statPlayers" style="color:#a78bfa">0</div><div style="font-size:12px;color:var(--muted)">นักเรียนที่ร่วม</div></div>
       <div class="stat"><div class="num-font v" id="statAcc" style="color:#ffc640">0%</div><div style="font-size:12px;color:var(--muted)">ความแม่นยำเฉลี่ย</div></div>
     </div>
@@ -328,6 +328,7 @@ const MODES = [
   { key:'สูตรคูณเร็ว', label:'สูตรคูณเร็ว', c:'#34d399' },
   { key:'เกม24',       label:'เกม 24',      c:'#ffc640' },
   { key:'ซูโดกุ',      label:'ซูโดกุ',      c:'#818cf8' },
+  { key:'ซูโดกุข้อสอบ', label:'Sudoku ข้อสอบ', c:'#fb7185' },
   { key:'ครอสคณิต',    label:'Math Puzzle', c:'#fbbf24' },
   { key:'รากและกำลัง', label:'ราก & ยกกำลัง', c:'#e879f9' },
   { key:'เอแม็ท',      label:'A-Math',      c:'#2dd4bf' }
@@ -388,11 +389,16 @@ async function loadLeaderboard(){
   renderBoard(el('lbPublic'), el('lbPubEmpty'), (lb && lb.ok) ? lb.publicBoard : []);
 }
 
+/* นับจำนวนระบบซ้อมจริงจากการ์ดบนหน้า (อัปเดตอัตโนมัติเมื่อเพิ่ม/ลดระบบ) */
+function loadSystemCount(){
+  const n = document.querySelectorAll('.mode-card').length;
+  countUp(el('statSystems'), n);
+}
+
 async function loadStats(){
   if(!API) return;
   const s = await api('getStats');
   if(s && s.ok){
-    countUp(el('statSessions'), s.totalSessions);
     countUp(el('statPlayers'), s.players);
     countUp(el('statAcc'), s.avgPct, '%');
   }
@@ -407,6 +413,7 @@ async function loadViews(){
   setUsage('uMul',   v['สูตรคูณเร็ว']);
   setUsage('u24',    v['เกม24']);
   setUsage('usd',    v['ซูโดกุ']);
+  setUsage('uExam',  v['ซูโดกุข้อสอบ']);
   setUsage('uPuzzle',v['ครอสคณิต']);
   setUsage('uRoot',  v['รากและกำลัง']);
   setUsage('uAmath', v['เอแม็ท']);
@@ -539,7 +546,7 @@ async function loadSiteLogo(){
   img.src = url;
 }
 
-document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadStats(); loadViews(); loadLeaderboard(); trackVisit(); loadSiteLogo(); });
+document.addEventListener('DOMContentLoaded', function(){ renderAuth(); renderPopularity({}); loadSystemCount(); loadStats(); loadViews(); loadLeaderboard(); trackVisit(); loadSiteLogo(); });
 </script>
 </body>
 </html>
