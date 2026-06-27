@@ -745,5 +745,21 @@
 })();
 
 </script>
+<script src="config.js"></script>
+<script>
+/* นับผู้เข้าชม (1 ครั้ง/เครื่อง/วัน) ส่งเข้าระบบความนิยมหน้าแรก */
+(function(){
+  try{
+    var API = (typeof API_URL!=='undefined' && API_URL && API_URL.indexOf('วาง')===-1) ? API_URL : '';
+    if(!API) return;
+    var MODE = 'ซูโดกุข้อสอบ';
+    var k = 'viewed:' + MODE + ':' + new Date().toISOString().slice(0,10);
+    if(localStorage.getItem(k)) return;
+    localStorage.setItem(k, '1');
+    fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'bumpView', mode:MODE }) });
+  }catch(e){}
+})();
+</script>
 </body>
 </html>
