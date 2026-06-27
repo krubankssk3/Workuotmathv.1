@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แบบฝึก A-Math ต่อสมการ</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#102a26; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --acc:#2dd4bf; --acc-glow:rgba(45,212,191,.45); --text:#eaeefb; --muted:#8b93b8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:radial-gradient(900px 500px at 15% -10%, rgba(45,212,191,.12), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(65,211,240,.08), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .wrap{ position:relative; z-index:1; max-width:900px; margin:0 auto; padding:20px 18px 40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 18px; backdrop-filter:blur(10px); }
+  .btn{ background:linear-gradient(120deg,var(--acc),#5eead4); color:#04261f; font-weight:600; border:none; border-radius:13px;
+    padding:11px 18px; font-family:'Kanit'; font-size:15px; cursor:pointer; transition:transform .12s; }
+  .btn:active{transform:scale(.96);}
+  .ghost{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 14px; cursor:pointer; color:var(--muted); font-family:'Kanit'; font-size:14px; transition:.15s; }
+  .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .seg{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:13px; padding:4px; display:inline-flex; gap:4px; flex-wrap:wrap; }
+  .seg button{ border:none; background:transparent; color:var(--muted); font-family:'Kanit'; font-weight:500; padding:8px 16px; border-radius:9px; cursor:pointer; font-size:14px; }
+  .seg button.active{ background:linear-gradient(120deg,#2dd4bf,#5eead4); color:#04261f; font-weight:700; box-shadow:0 4px 14px rgba(45,212,191,.28); }
+  .backbtn{ display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; }
+  .backbtn:hover{ color:var(--text); } .backbtn svg{width:16px;height:16px;}
+  a{text-decoration:none;}
+
+  /* ===== กระดาษ A4 แนวตั้ง ===== */
+  #pages{ display:flex; flex-direction:column; align-items:center; gap:22px; }
+  .sheetpage{ background:#fff; color:#111; font-family:'Sarabun',sans-serif; width:794px; min-height:1123px;
+    padding:14mm 12mm; border-radius:8px; box-shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    display:flex; flex-direction:column; --tile:36px; }
+  .pg-head{ position:relative; flex:0 0 auto; margin-bottom:6px; }
+  .pg-head h2{ margin:0; text-align:center; font-size:21px; font-weight:700; letter-spacing:.5px; }
+  .pg-head .sub{ text-align:center; font-size:13px; color:#555; margin-top:1px; }
+  .pg-head .order{ font-size:13px; font-weight:600; color:#333; margin:8px 0 2px; }
+  .pg-head .info{ font-size:13px; display:flex; flex-wrap:wrap; gap:3px 16px; margin-top:6px; }
+  .pg-head .scorebox{ position:absolute; top:0; right:0; width:74px; border:2px solid #111; border-radius:6px; overflow:hidden; background:#fff; }
+  .pg-head .scorebox .sb-h{ font-size:10px; font-weight:700; text-align:center; padding:2px 0; background:#e6fffb; border-bottom:1.4px solid #111; }
+  .pg-head .scorebox .sb-b{ display:flex; flex-direction:column; align-items:center; padding:4px 4px 5px; }
+  .pg-head .scorebox .sb-top{ height:13px; }
+  .pg-head .scorebox .sb-line{ width:60%; border-top:1.3px solid #111; margin:1px 0; }
+  .pg-head .scorebox .sb-full{ font-size:14px; font-weight:700; font-family:'Chakra Petch',monospace; }
+  .pg-foot{ flex:0 0 auto; text-align:center; font-size:11px; color:#777; padding-top:6px; }
+
+  /* กริดโจทย์ 2 คอลัมน์ เติมความสูงที่เหลือ (column-major: ไล่ลงคอลัมน์ซ้ายก่อน) */
+  .pgrid{ flex:1 1 auto; display:grid; grid-template-columns:1fr 1fr; column-gap:18px;
+    grid-auto-flow:column; align-content:stretch; }
+  .prob{ display:flex; align-items:flex-start; gap:7px; }
+  .prob .lbl{ font-size:13px; font-weight:600; color:#333; min-width:22px; padding-top:calc(var(--tile)*.28); white-space:nowrap; }
+  .prob .rows{ display:flex; flex-direction:column; gap:5px; }
+  .trow{ display:flex; gap:3px; }
+  .cell{ flex:0 0 auto; width:var(--tile); height:var(--tile); border:1.4px solid #444; border-radius:4px;
+    display:flex; align-items:center; justify-content:center; font-family:'Chakra Petch',monospace;
+    font-size:calc(var(--tile)*.46); font-weight:600; line-height:1; }
+  .cell.ans{ color:#0d9488; }
+
+  .hidden{display:none!important;}
+
+  /* ===== โหมดพิมพ์ ===== */
+  @media print {
+    body{ background:#fff !important; }
+    .noprint{ display:none !important; }
+    .wrap{ padding:0; max-width:none; }
+    @page{ size:A4 portrait; margin:10mm; }
+    #pages{ gap:0; display:block; }
+    .sheetpage{ box-shadow:none; border-radius:0; width:100%; min-height:0; height:277mm;
+      padding:0; overflow:hidden; }
+    .sheetpage + .sheetpage{ break-before:page; page-break-before:always; }
+    .pg-head h2{ font-size:22px; }
+    .pg-head .scorebox{ width:21mm; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== แถบควบคุม (ไม่พิมพ์) ===== -->
+  <div class="noprint">
+    <div class="flex items-center justify-between mb-4">
+      <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
+      <span style="font-weight:600">แบบฝึก A-Math · ต่อสมการ</span>
+    </div>
+
+    <div class="card mb-4">
+      <div class="mb-1" style="font-size:13px;color:var(--muted)">ระดับชั้น (กำหนดค่าเลขตามเกณฑ์ A-Math)</div>
+      <div class="seg mb-3" id="levelSeg">
+        <button data-level="ประถม" class="active">ประถม</button>
+        <button data-level="มัธยม">มัธยม</button>
+      </div>
+
+      <div class="mb-1" style="font-size:13px;color:var(--muted)">จำนวนข้อ</div>
+      <div class="seg" id="countSeg">
+        <button data-count="10">10 ข้อ</button>
+        <button data-count="20" class="active">20 ข้อ</button>
+        <button data-count="30">30 ข้อ</button>
+        <button data-count="40">40 ข้อ</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:8px">วางเรียง 2 คอลัมน์ เต็มหน้า A4 แนวตั้ง · 20 ข้อ/หน้า · คะแนนเต็ม = จำนวนข้อ</div>
+
+      <div class="flex items-center gap-3 flex-wrap mt-4">
+        <button class="ghost" onclick="generate()"><span style="vertical-align:-1px">↻</span> สุ่มชุดใหม่</button>
+        <button class="ghost" onclick="toggleKey()" id="keyBtn">ดูเฉลย</button>
+        <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== กระดาษ (ส่วนที่พิมพ์) ===== -->
+  <div id="pages"></div>
+
+</div>
+
+<script>
+var count = 20, level = 'ประถม', showKey = false, setNo = 1, problems = [];
+
+function el(id){ return document.getElementById(id); }
+function rand(lo,hi){ return lo + Math.floor(Math.random()*(hi-lo+1)); }
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* ---------- ค่าเลขตัวเดี่ยว 10-20 ที่อนุญาตของแต่ละระดับ (ไม่สนจำนวนเบี้ย) ---------- */
+var TILE_PX = 34;                                  /* ทุกข้อ 8 เบี้ยเท่ากันหมด */
+var SINGLE = {
+  'ประถม': [10,11,12,13,14,15,16,20],              /* ตามเกณฑ์ประถม: ไม่มี 17,18,19 */
+  'มัธยม': [10,11,12,13,14,15,16,17,18,19,20]       /* ตามเกณฑ์มัธยม: ครบ 10-20 */
+};
+function dg(n){ return String(n).split(''); }       /* แยกเป็นเบี้ยหลักเดี่ยว */
+
+/* ---------- สร้างโจทย์ 1 ข้อ: สมการถูกต้อง รวม 8 เบี้ยเป๊ะ แล้วสับเบี้ย ----------
+   2 แนว: (ก) เบี้ยหลักเดี่ยวล้วน  (ข) มีเบี้ยเลข 10-20 ตัวเดี่ยว 1 ตัว (ตามชุดของระดับ) */
+function genProblem(){
+  var singles = SINGLE[level];
+  for(var att=0; att<800; att++){
+    var useSingle = (rand(0,1) === 1), seq = null, sym, a, b, c, text;
+
+    if(!useSingle){
+      var op = ['+','-','*','/'][rand(0,3)];
+      if(op==='+'){ sym='+'; a=rand(10,49); b=rand(10,49); c=a+b; if(c>99) continue; }
+      else if(op==='-'){ sym='−'; a=rand(21,99); b=rand(10,a-10); c=a-b; }
+      else if(op==='*'){ sym='×'; a=rand(2,9); b=rand(11,40); c=a*b; if(c<100||c>999) continue; }
+      else { sym='÷'; c=rand(2,9); b=rand(11,40); a=b*c; if(a<100||a>999) continue; }
+      seq = (rand(0,1)===0) ? dg(a).concat([sym], dg(b), ['='], dg(c))
+                            : dg(c).concat(['='], dg(a), [sym], dg(b));
+      text = a + ' ' + sym + ' ' + b + ' = ' + c;
+    } else {
+      var s = singles[rand(0, singles.length-1)], op2 = ['*','/','+'][rand(0,2)];
+      if(op2==='*'){ sym='×'; b=rand(11,49); c=s*b; if(c<100||c>999) continue;
+        seq = (rand(0,1)===0) ? [String(s)].concat([sym], dg(b), ['='], dg(c))
+                              : dg(c).concat(['='], [String(s)], [sym], dg(b));
+        text = s + ' × ' + b + ' = ' + c; }
+      else if(op2==='/'){ sym='÷'; c=rand(11,49); a=s*c; if(a<100||a>999) continue;
+        seq = (rand(0,1)===0) ? dg(a).concat([sym], [String(s)], ['='], dg(c))
+                              : dg(c).concat(['='], dg(a), [sym], [String(s)]);
+        text = a + ' ÷ ' + s + ' = ' + c; }
+      else { sym='+'; b=rand(81,99); c=s+b; if(c<100) continue;
+        seq = (rand(0,1)===0) ? [String(s)].concat([sym], dg(b), ['='], dg(c))
+                              : dg(c).concat(['='], [String(s)], [sym], dg(b));
+        text = s + ' + ' + b + ' = ' + c; }
+    }
+
+    if(seq.length !== 8) continue;
+    var given = shuffle(seq.slice());
+    if(given.join(',') === seq.join(',')) given = shuffle(seq.slice());
+    return { given:given, sol:seq, text:text };
+  }
+  return { given:['6','×','3','6','=','2','1','6'], sol:['6','×','3','6','=','2','1','6'], text:'6 × 36 = 216' };
+}
+
+/* ---------- การกระจายข้อลงแต่ละหน้า (≤20/หน้า, เกลี่ยให้เต็ม) ---------- */
+function distribute(n){
+  var pages = Math.ceil(n/20), base = Math.floor(n/pages), rem = n%pages, arr = [];
+  for(var i=0;i<pages;i++) arr.push(base + (i<rem?1:0));
+  return arr;
+}
+
+/* ---------- เรนเดอร์ ---------- */
+function tilesRow(arr, n, isAns){
+  var s = '<div class="trow">';
+  for(var i=0;i<n;i++){
+    var v = arr ? arr[i] : '';
+    s += '<div class="cell' + (isAns?' ans':'') + '">' + (v || '') + '</div>';
+  }
+  return s + '</div>';
+}
+function probHTML(num, p){
+  var n = p.given.length;
+  return '<div class="prob"><div class="lbl">' + num + ')</div><div class="rows">'
+       + tilesRow(p.given, n, false)
+       + tilesRow(showKey ? p.sol : null, n, true)
+       + '</div></div>';
+}
+function headHTML(pageIndex, totalPages){
+  var pageTag = (totalPages > 1) ? ' <span style="font-weight:400;color:#666">(หน้า ' + (pageIndex+1) + '/' + totalPages + ')</span>' : '';
+  var h = '<div class="pg-head">';
+  if(pageIndex === 0){
+    h += '<div class="scorebox"><div class="sb-h">คะแนนที่ได้</div><div class="sb-b"><div class="sb-top"></div><div class="sb-line"></div><div class="sb-full">' + count + '</div></div></div>';
+  }
+  h += '<h2>A-MATH (' + level + ') · ชุดที่ ' + setNo + pageTag + '</h2>';
+  h += '<div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>';
+  if(pageIndex === 0){
+    h += '<div class="info"><span>ชื่อ-สกุล .............................................</span><span>ชั้น ..........</span><span>เลขที่ ......</span><span>' + count + ' ข้อ ข้อละ 1 คะแนน</span></div>';
+  }
+  h += '<div class="order">คำสั่ง : นำเบี้ยแถวบนมาเรียงลงช่องว่างแถวล่าง ให้เป็นสมการที่ถูกต้อง</div>';
+  return h + '</div>';
+}
+
+function buildPages(){
+  var dist = distribute(count), idx = 0, html = '';
+  for(var p=0;p<dist.length;p++){
+    var n = dist[p], rows = Math.ceil(n/2), cells = '';
+    for(var k=0;k<n;k++){ cells += probHTML(idx+1, problems[idx]); idx++; }
+    html += '<div class="sheetpage" style="--tile:' + TILE_PX + 'px">'
+          + headHTML(p, dist.length)
+          + '<div class="pgrid" style="grid-template-rows:repeat(' + rows + ',1fr)">' + cells + '</div>'
+          + '<div class="pg-foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>'
+          + '</div>';
+  }
+  el('pages').innerHTML = html;
+}
+
+function generate(){
+  problems = [];
+  for(var i=0;i<count;i++) problems.push(genProblem());
+  setNo = rand(1,99);
+  buildPages();
+}
+function rerender(){ buildPages(); }
+function toggleKey(){ showKey = !showKey; el('keyBtn').textContent = showKey ? 'ซ่อนเฉลย' : 'ดูเฉลย'; rerender(); }
+
+/* ---------- ปุ่มเลือก ---------- */
+function bindSeg(id, attr, onPick){
+  var btns = document.querySelectorAll('#' + id + ' button');
+  for(var i=0;i<btns.length;i++){
+    btns[i].onclick = (function(btn){
+      return function(){
+        var all = document.querySelectorAll('#' + id + ' button');
+        for(var j=0;j<all.length;j++) all[j].classList.remove('active');
+        btn.classList.add('active');
+        onPick(btn.getAttribute(attr));
+      };
+    })(btns[i]);
+  }
+}
+bindSeg('levelSeg', 'data-level', function(v){ level = v; generate(); });
+bindSeg('countSeg', 'data-count', function(v){ count = parseInt(v,10); generate(); });
+
+generate();
+</script>
+</body>
+</html>
