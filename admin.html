@@ -249,6 +249,25 @@
 
     <!-- DEVELOPER (ผู้พัฒนา) -->
     <section id="tabDev" class="hidden">
+      <div class="card mb-4" style="max-width:560px">
+        <p class="m-0 mb-1" style="font-weight:600;font-size:17px">โลโก้ระบบ (แสดงหน้าแรก)</p>
+        <p class="m-0 mb-4" style="font-size:13px;color:var(--muted)">รูปนี้จะแสดงด้านซ้ายของชื่อระบบที่หน้าแรก · แนะนำไฟล์ PNG พื้นหลังโปร่งใส</p>
+        <div class="flex items-center gap-4 mb-3">
+          <img id="logoPreview" src="" alt="" style="display:none;width:84px;height:84px;border-radius:16px;object-fit:contain;border:2px solid var(--line);background:rgba(255,255,255,.04)" />
+          <div id="logoEmpty" style="width:84px;height:84px;border-radius:16px;background:rgba(255,255,255,.05);border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;text-align:center">ไม่มีโลโก้</div>
+          <div>
+            <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="onLogoFile(event)" />
+            <button class="ghost" type="button" onclick="el('logoFile').click()">เลือกโลโก้</button>
+            <button class="ghost" type="button" onclick="clearLogo()" style="color:var(--miss)">ลบโลโก้</button>
+            <p class="m-0 mt-1" style="font-size:11px;color:var(--muted)">รูปจะถูกย่อขนาดอัตโนมัติ</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-primary" id="logoSaveBtn" onclick="saveSiteLogo()">บันทึกโลโก้</button>
+          <span id="logoMsg" style="font-size:13px"></span>
+        </div>
+      </div>
+
       <div class="card" style="max-width:560px">
         <p class="m-0 mb-1" style="font-weight:600;font-size:17px">ประวัติผู้พัฒนา</p>
         <p class="m-0 mb-4" style="font-size:13px;color:var(--muted)">ข้อมูลนี้จะแสดงในปุ่ม "ประวัติผู้พัฒนา" ที่หน้าแรก</p>
@@ -787,6 +806,46 @@ function exportReportPDF(){
   window.print();
 }
 
+/* ---------- โลโก้ระบบ (แสดงหน้าแรก) ---------- */
+let siteLogo = '';
+function setLogo(dataUrl){
+  siteLogo = dataUrl || '';
+  if(siteLogo){ el('logoPreview').src = siteLogo; el('logoPreview').style.display='block'; el('logoEmpty').style.display='none'; }
+  else { el('logoPreview').src=''; el('logoPreview').style.display='none'; el('logoEmpty').style.display='flex'; }
+}
+function clearLogo(){ setLogo(''); el('logoFile').value=''; }
+// ย่อรูปเป็น PNG (คงพื้นหลังโปร่งใส) กว้าง/สูงไม่เกิน 320px และไม่ให้ใหญ่เกินเซลล์ชีต
+function onLogoFile(e){
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const img = new Image();
+    img.onload = function(){
+      const MAX = 320; let w = img.width, h = img.height;
+      if(w > h && w > MAX){ h = Math.round(h*MAX/w); w = MAX; }
+      else if(h >= w && h > MAX){ w = Math.round(w*MAX/h); h = MAX; }
+      function render(W,H){ const cv=document.createElement('canvas'); cv.width=W; cv.height=H; cv.getContext('2d').drawImage(img,0,0,W,H); return cv.toDataURL('image/png'); }
+      let out = render(w,h);
+      while(out.length > 46000 && w > 120){ w = Math.round(w*0.85); h = Math.round(h*0.85); out = render(w,h); }
+      setLogo(out);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(f);
+}
+async function loadSiteLogo(){
+  const r = await api('getSiteLogo');
+  setLogo((r && r.ok && r.logo) ? r.logo : '');
+}
+async function saveSiteLogo(){
+  const btn = el('logoSaveBtn'); btn.disabled = true;
+  el('logoMsg').style.color='var(--muted)'; el('logoMsg').textContent='กำลังบันทึก...';
+  const res = await api('saveSiteLogo', { logo: siteLogo }, true);
+  btn.disabled = false;
+  if(res && res.ok){ el('logoMsg').style.color='var(--good)'; el('logoMsg').textContent='บันทึกแล้ว ✓'; }
+  else { el('logoMsg').style.color='var(--miss)'; el('logoMsg').textContent='บันทึกไม่สำเร็จ'; }
+}
+
 /* ---------- developer profile (ผู้พัฒนา) ---------- */
 let devLoaded = false, devPhoto = '';
 
@@ -829,6 +888,7 @@ async function loadDeveloper(){
   el('devReason').value = d.reason || '';
   setDevPhoto(d.photo || '');
   devLoaded = true;
+  loadSiteLogo();
 }
 
 async function saveDeveloper(){
