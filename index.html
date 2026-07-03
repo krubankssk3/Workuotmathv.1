@@ -187,6 +187,13 @@
         <div class="usage">เล่นแล้ว <b id="uVedic">0</b> ครั้ง</div>
       </a>
 
+      <a class="mode-card" onclick="return gateNav(event,this)" href="vedic-exam.html" style="--acc:#f472b6;--accGlow:rgba(244,114,182,.5);--accSoft:rgba(244,114,182,.14)">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3h8l3 3v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></div>
+        <h3>เวทคณิต ประถม ประโคนชัย</h3>
+        <p>สุ่มข้อสอบเกณฑ์ประโคนชัย ยกระดับการซ้อมเวทคณิต</p>
+        <div class="usage">เปิดแล้ว <b id="uVedicExam">0</b> ครั้ง</div>
+      </a>
+
       <a class="mode-card" onclick="return gateNav(event,this)" href="multiply.html" style="--acc:#34d399;--accGlow:rgba(52,211,153,.5);--accSoft:rgba(52,211,153,.14)">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
         <h3>สูตรคูณเร็ว</h3>
@@ -325,6 +332,7 @@ function setUsage(id, n){ const e = el(id); if(e) e.textContent = Number(n || 0)
 const MODES = [
   { key:'คิดเลขเร็ว',  label:'คิดเลขเร็ว',  c:'#41d3f0' },
   { key:'เวทคณิต',     label:'เวทคณิต',     c:'#a78bfa' },
+  { key:'เวทคณิตประโคนชัย', label:'เวทคณิต ประโคนชัย', c:'#f472b6' },
   { key:'สูตรคูณเร็ว', label:'สูตรคูณเร็ว', c:'#34d399' },
   { key:'เกม24',       label:'เกม 24',      c:'#ffc640' },
   { key:'ซูโดกุ',      label:'ซูโดกุ',      c:'#818cf8' },
@@ -410,6 +418,7 @@ async function loadViews(){
   const v = (r && r.ok && r.views) ? r.views : {};
   setUsage('uQuick', v['คิดเลขเร็ว']);
   setUsage('uVedic', v['เวทคณิต']);
+  setUsage('uVedicExam', v['เวทคณิตประโคนชัย']);
   setUsage('uMul',   v['สูตรคูณเร็ว']);
   setUsage('u24',    v['เกม24']);
   setUsage('usd',    v['ซูโดกุ']);
