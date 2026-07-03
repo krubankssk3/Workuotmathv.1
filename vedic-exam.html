@@ -40,6 +40,25 @@
   .rec th,.rec td{ border:1.4px solid #111; font-size:14.5px; padding:5px 16px; text-align:center; }
   .rec th{ background:#efefef; }
   .signs{ font-size:14.5px; line-height:2.4; margin-top:8px; }
+
+  /* ============ COVER (ปกหน้า แบบทางการ เต็มหน้า A4) ============ */
+  .cover{ display:flex; flex-direction:column; min-height:248mm; }
+  .cov-head{ position:relative; text-align:center; min-height:120px; margin-bottom:4px; }
+  .cov-logo{ width:120px; height:120px; object-fit:contain; }
+  .cov-timer{ position:absolute; right:0; top:0; width:210px; height:92px; border:1.4px solid #111; padding:8px 10px; font-size:13.5px; }
+  .cov-title{ text-align:center; margin:2px 0 6px; }
+  .cov-title h2{ font-size:23px; font-weight:700; margin:0 0 8px; }
+  .cov-title p{ font-size:17px; font-weight:600; margin:4px 0; }
+  .cov-fields{ font-size:15.5px; margin:26px 0 10px; }
+  .cov-fields .row{ display:flex; align-items:flex-end; gap:6px; margin:20px 0; }
+  .cov-fields .lbl{ white-space:nowrap; }
+  .cov-fields .ln{ flex:1; border-bottom:1.5px dotted #111; height:1.15em; }
+  .cov-fields .ln.sm{ flex:0 0 95px; }
+  .cov-rectitle{ text-align:center; font-size:19px; font-weight:700; margin:20px 0 12px; }
+  .cover .rec th,.cover .rec td{ padding:9px 18px; font-size:15px; }
+  .cover .signs{ font-size:15px; line-height:1; margin-top:26px; }
+  .cover .signs div{ margin:22px 0; }
+  .cov-foot{ text-align:center; font-size:13px; color:#333; margin-top:auto; padding-top:18px; }
   .qgrid2{ display:grid; grid-template-columns:1fr 1fr; gap:30px 46px; }
   .qitem{ page-break-inside:avoid; }
   .qlab{ font-size:15.5px; font-weight:600; margin-bottom:6px; }
@@ -90,11 +109,12 @@
     #sheet{ box-shadow:none; border-radius:0; padding:0; }
     @page{ size:A4 portrait; margin:12mm 13mm; }
     /* ปก = 1 หน้าเต็ม, ทุกตอนขึ้นหน้าใหม่ (ล้นได้เอง) */
-    .cover{ padding-top:8mm; }
-    .cover .head h2{ font-size:25px; }
-    .cover .scorewrap{ margin-top:26px; }
+    .cover{ min-height:252mm; }
+    .cov-logo{ width:118px; height:118px; }
     .section{ page-break-before:always; }
     .section .sectbl{ margin-top:2px; }
+    .secbreak{ page-break-before:always; }
+    .s8 .qitem{ margin-bottom:40px; }
     .anspage{ page-break-before:always; border-top:none; padding-top:0; margin-top:0; }
     .foot{ page-break-before:avoid; }
   }
@@ -116,39 +136,54 @@
 
   <div id="sheet">
     <div class="cover">
-    <div class="head">
-      <h2>แบบทดสอบเวทคณิต ระดับประถมศึกษา</h2>
-      <div class="sub">สุ่มโจทย์เกณฑ์โรงเรียนประโคนชัยพิทยาคม · ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
-    </div>
-    <div class="meta">ชื่อ-สกุล ............................................... ชั้น ............ เลขที่ ........ &nbsp; โรงเรียน ......................................................</div>
-    <div class="info">เวลา 90 นาที · คะแนนเต็ม 100 คะแนน · เขียนคำตอบลงในกรอบที่กำหนดให้เท่านั้น</div>
+      <div class="cov-head">
+        <img id="examLogo" class="cov-logo" alt="" />
+        <div class="cov-timer">สำหรับกรรมการบันทึกเวลา</div>
+      </div>
 
-    <div class="scorewrap">
-      <table class="rec">
-        <tr><th>ตอนที่</th><th>คะแนนเต็ม</th><th>คะแนนที่ได้</th></tr>
-        <tr><td>1</td><td>3</td><td style="width:80px"></td></tr>
-        <tr><td>2</td><td>9</td><td></td></tr>
-        <tr><td>3</td><td>16</td><td></td></tr>
-        <tr><td>4</td><td>12</td><td></td></tr>
-        <tr><td>5</td><td>6</td><td></td></tr>
-        <tr><td>6</td><td>14</td><td></td></tr>
-        <tr><td>7</td><td>20</td><td></td></tr>
-        <tr><td>8</td><td>20</td><td></td></tr>
-        <tr><td><b>รวม</b></td><td><b>100</b></td><td></td></tr>
-      </table>
-      <div>
+      <div class="cov-title">
+        <h2>ข้อสอบเวทคณิต ระดับประถมศึกษา</h2>
+        <p>การแข่งขันคิดเลขเร็ว เอแม็ทและซูโดกุบุรีรัมย์ ครั้งที่ 10 ปีการศึกษา 2568</p>
+        <p>ชิงถ้วยรัฐมนตรีว่าการกระทรวงศึกษาธิการ</p>
+        <p>วันที่ 13 กันยายน 2568 ณ โรงเรียนประโคนชัยพิทยาคม จังหวัดบุรีรัมย์</p>
+      </div>
+
+      <div class="cov-fields">
+        <div class="row"><span class="lbl">ชื่อ-สกุล</span><span class="ln"></span><span class="lbl">เลขที่นั่งสอบ</span><span class="ln sm"></span><span class="lbl">เบอร์โต๊ะ</span><span class="ln sm"></span></div>
+        <div class="row"><span class="lbl">โรงเรียน</span><span class="ln"></span><span class="lbl">จังหวัด</span><span class="ln"></span></div>
+      </div>
+
+      <div class="cov-rectitle">แบบบันทึกคะแนน (สำหรับกรรมการ)</div>
+
+      <div class="scorewrap">
         <table class="rec">
-          <tr><th colspan="2">สรุปคะแนน (สำหรับกรรมการ)</th></tr>
-          <tr><td>คะแนนโบนัสเวลา</td><td style="width:110px"></td></tr>
-          <tr><td>คะแนนรวม</td><td></td></tr>
-          <tr><td>คะแนนรวมทั้งหมด</td><td></td></tr>
+          <tr><th>ตอนที่</th><th>คะแนนเต็ม</th><th>คะแนนที่ได้</th></tr>
+          <tr><td>1</td><td>3</td><td style="width:80px"></td></tr>
+          <tr><td>2</td><td>9</td><td></td></tr>
+          <tr><td>3</td><td>16</td><td></td></tr>
+          <tr><td>4</td><td>12</td><td></td></tr>
+          <tr><td>5</td><td>6</td><td></td></tr>
+          <tr><td>6</td><td>14</td><td></td></tr>
+          <tr><td>7</td><td>20</td><td></td></tr>
+          <tr><td>8</td><td>20</td><td></td></tr>
+          <tr><td><b>รวม</b></td><td><b>100</b></td><td></td></tr>
         </table>
-        <div class="signs">
-          ลงชื่อ..............................................ผู้ตรวจ<br>
-          ลงชื่อ..............................................ผู้ตรวจทาน
+        <div>
+          <table class="rec">
+            <tr><th colspan="2">สรุปคะแนน</th></tr>
+            <tr><td>คะแนนโบนัสเวลา</td><td style="width:120px"></td></tr>
+            <tr><td>คะแนนรวม</td><td></td></tr>
+            <tr><td>คะแนนรวมทั้งหมด</td><td></td></tr>
+          </table>
+          <div class="signs">
+            <div>ลงชื่อ..............................................ผู้ตรวจ</div>
+            <div>ลงชื่อ..............................................ผู้ตรวจทาน</div>
+            <div>ลงชื่อ..............................................ผู้ตรวจทาน</div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <div class="cov-foot">การแข่งขันคิดเลขเร็ว เอแม็ทและซูโดกุบุรีรัมย์ ครั้งที่ 10 ประจำปีการศึกษา 2568 ชิงถ้วยรัฐมนตรีว่าการกระทรวงศึกษาธิการ</div>
     </div><!-- /cover -->
 
     <div id="paper"></div>
@@ -449,10 +484,13 @@ function render(){
   var h='';
   for(var s=0;s<EXAM.length;s++){
     var sec=EXAM[s];
-    h+='<div class="section">';
+    h+='<div class="section'+(sec.no===8?' s8':'')+'">';
     h+=critTable(sec.title, sec.rows);
     if(sec.raw){
-      for(var i=0;i<sec.items.length;i++) h+=sec.items[i].raw.replace('{N}', String(i+1));
+      for(var i=0;i<sec.items.length;i++){
+        if(sec.no===8 && i===6) h+='<div class="secbreak"></div>';  /* ตอน 8: ข้อ 1-6 หน้าแรก, 7-10 หน้าถัดไป */
+        h+=sec.items[i].raw.replace('{N}', String(i+1));
+      }
     } else if(sec.hz){
       for(var i2=0;i2<sec.items.length;i2++) h+='<div class="qitem"><div class="qlab" style="display:inline-block;margin-right:10px">ข้อ '+(i2+1)+')</div>'+sec.items[i2].q+'</div>';
     } else {
@@ -523,6 +561,24 @@ if(typeof document!=='undefined' && document.addEventListener){
     fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'bumpView', mode:MODE }) });
   }catch(e){}
+})();
+
+/* โหลดโลโก้ระบบมาแสดงบนปก (ที่แอดมินอัปไว้) · สำรอง = โลโก้โรงเรียน */
+(function(){
+  var img = document.getElementById('examLogo'); if(!img) return;
+  var FALLBACK = 'https://img2.pic.in.th/pic/Logo-7aecb8e321ff2955.png';
+  function show(url){
+    if(!url){ img.style.display='none'; return; }
+    img.onerror = function(){ if(img.src !== FALLBACK){ img.src = FALLBACK; } else { img.style.display='none'; } };
+    img.src = url;
+  }
+  var API = (typeof API_URL!=='undefined' && API_URL && API_URL.indexOf('วาง')===-1) ? API_URL : '';
+  var CFG = (typeof SITE_LOGO_URL!=='undefined' && SITE_LOGO_URL) ? SITE_LOGO_URL : '';
+  if(!API){ show(CFG || FALLBACK); return; }
+  fetch(API + '?action=getSiteLogo')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ show((d && d.ok && d.logo) ? d.logo : (CFG || FALLBACK)); })
+    .catch(function(){ show(CFG || FALLBACK); });
 })();
 </script>
 </body>
