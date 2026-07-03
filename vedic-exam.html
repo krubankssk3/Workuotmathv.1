@@ -89,7 +89,14 @@
     .wrap{ max-width:none; padding:0; }
     #sheet{ box-shadow:none; border-radius:0; padding:0; }
     @page{ size:A4 portrait; margin:12mm 13mm; }
+    /* ปก = 1 หน้าเต็ม, ทุกตอนขึ้นหน้าใหม่ (ล้นได้เอง) */
+    .cover{ padding-top:8mm; }
+    .cover .head h2{ font-size:25px; }
+    .cover .scorewrap{ margin-top:26px; }
+    .section{ page-break-before:always; }
+    .section .sectbl{ margin-top:2px; }
     .anspage{ page-break-before:always; border-top:none; padding-top:0; margin-top:0; }
+    .foot{ page-break-before:avoid; }
   }
 </style>
 </head>
@@ -108,6 +115,7 @@
   <p class="hint noprint">สุ่มโจทย์ตามเกณฑ์การแข่งขันคิดเลขเร็ว เอแม็ทและซูโดกุบุรีรัมย์ (โรงเรียนประโคนชัยพิทยาคม) · 8 ตอน 70 ข้อ คะแนนเต็ม 100 · เวลา 90 นาที · เปิด "ดูเฉลย" ก่อนพิมพ์หากต้องการแนบใบเฉลย</p>
 
   <div id="sheet">
+    <div class="cover">
     <div class="head">
       <h2>แบบทดสอบเวทคณิต ระดับประถมศึกษา</h2>
       <div class="sub">สุ่มโจทย์เกณฑ์โรงเรียนประโคนชัยพิทยาคม · ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
@@ -141,6 +149,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /cover -->
 
     <div id="paper"></div>
 
@@ -440,6 +449,7 @@ function render(){
   var h='';
   for(var s=0;s<EXAM.length;s++){
     var sec=EXAM[s];
+    h+='<div class="section">';
     h+=critTable(sec.title, sec.rows);
     if(sec.raw){
       for(var i=0;i<sec.items.length;i++) h+=sec.items[i].raw.replace('{N}', String(i+1));
@@ -450,6 +460,7 @@ function render(){
       for(var i3=0;i3<sec.items.length;i3++) h+=qBlock(String(i3+1), sec.items[i3].q);
       h+='</div>';
     }
+    h+='</div>';
   }
   el('paper').innerHTML=h;
   var ah='';
@@ -497,6 +508,22 @@ if(typeof document!=='undefined' && document.addEventListener){
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && el('clockScreen') && el('clockScreen').style.display==='flex') clkClose(); });
   document.addEventListener('DOMContentLoaded', function(){ newExam(); });
 }
+</script>
+<script src="config.js"></script>
+<script>
+/* นับผู้เข้าชม (1 ครั้ง/เครื่อง/วัน) ส่งเข้าระบบความนิยมหน้าแรก */
+(function(){
+  try{
+    var API = (typeof API_URL!=='undefined' && API_URL && API_URL.indexOf('วาง')===-1) ? API_URL : '';
+    if(!API) return;
+    var MODE = 'เวทคณิตประโคนชัย';
+    var k = 'viewed:' + MODE + ':' + new Date().toISOString().slice(0,10);
+    if(localStorage.getItem(k)) return;
+    localStorage.setItem(k, '1');
+    fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'bumpView', mode:MODE }) });
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
