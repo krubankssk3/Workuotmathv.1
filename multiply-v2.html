@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ซ้อมสูตรคูณเร็ว Ver.2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1f; --bg2:#121838; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.10);
+    --acc:#34d399; --acc-glow:rgba(52,211,153,.45); --text:#eaeefb; --muted:#8b93b8; --miss:#fb7185; --good:#34d399;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{ margin:0; min-height:100vh; color:var(--text); font-family:'Kanit',sans-serif;
+    background:radial-gradient(900px 500px at 15% -10%, rgba(52,211,153,.12), transparent 60%),
+      radial-gradient(800px 520px at 90% 110%, rgba(65,211,240,.08), transparent 55%),
+      linear-gradient(160deg,var(--bg),var(--bg2)); background-attachment:fixed; }
+  .num-font{font-family:'Chakra Petch',monospace;}
+  .wrap{ position:relative; z-index:1; max-width:880px; margin:0 auto; padding:20px 18px 40px; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px 18px; backdrop-filter:blur(10px); }
+  .btn{ background:linear-gradient(120deg,var(--acc),#6ee7b7); color:#04261a; font-weight:600; border:none; border-radius:13px;
+    padding:11px 18px; font-family:'Kanit'; font-size:15px; cursor:pointer; transition:transform .12s; }
+  .btn:active{transform:scale(.96);}
+  .ghost{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:9px 14px; cursor:pointer; color:var(--muted); font-family:'Kanit'; font-size:14px; transition:.15s; }
+  .ghost:hover{ color:var(--text); background:rgba(255,255,255,.09); }
+  .fld{ width:100%; padding:10px 12px; border-radius:11px; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text); font-family:'Kanit'; font-size:14px; }
+  .fld:focus{ outline:none; border-color:var(--acc); box-shadow:0 0 0 2px var(--acc-glow); }
+  .seg{ background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:13px; padding:4px; display:inline-flex; gap:4px; }
+  .seg button{ border:none; background:transparent; color:var(--muted); font-family:'Kanit'; font-weight:500; padding:8px 16px; border-radius:9px; cursor:pointer; font-size:14px; }
+  .seg button.active{ background:linear-gradient(120deg,#34d399,#6ee7b7); color:#06231a; font-weight:700; box-shadow:0 4px 14px rgba(52,211,153,.28); }
+  .backbtn{ display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:12px; padding:8px 13px; cursor:pointer; }
+  .backbtn:hover{ color:var(--text); } .backbtn svg{width:16px;height:16px;}
+  a{text-decoration:none;}
+
+  /* ===== กระดาษ (ขาว) ===== */
+  #sheet{ background:#fff; color:#111; border-radius:10px; padding:26px 30px; max-width:1000px; margin:0 auto;
+    font-family:'Sarabun',sans-serif; box-shadow:0 20px 50px -20px rgba(0,0,0,.6); }
+  #sheet .head{ position:relative; text-align:center; margin-bottom:6px; }
+  #sheet h2{ margin:0; font-size:20px; font-weight:600; }
+  #sheet .sub{ font-size:13px; color:#555; margin-top:2px; }
+  #sheet .scorebox{ position:absolute; top:0; right:0; width:82px; border:2px solid #111; border-radius:7px; overflow:hidden; background:#fff; display:flex; flex-direction:column; align-items:stretch; }
+  #sheet .scorebox .sb-h{ font-size:10px; font-weight:700; color:#222; text-align:center; padding:3px 0; background:#eef2f7; border-bottom:1.5px solid #111; }
+  #sheet .scorebox .sb-body{ display:flex; flex-direction:column; align-items:center; padding:5px 5px 6px; }
+  #sheet .scorebox .sb-top{ height:15px; }
+  #sheet .scorebox .sb-line{ width:62%; border-top:1.4px solid #111; margin:1px 0; }
+  #sheet .scorebox .sb-bot{ font-size:15px; font-weight:700; color:#111; font-family:'Chakra Petch',monospace; }
+  #sheet .info{ font-size:13px; margin:12px 0 16px; display:flex; flex-wrap:wrap; gap:4px 18px; }
+  #sheet .grid5{ display:grid; grid-template-columns:repeat(5,1fr); gap:11px 14px; }
+  #sheet .q{ font-size:13px; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+  #sheet .q .n{ color:#444; min-width:20px; }
+  #sheet .box{ display:inline-block; border:1px solid #333; border-radius:3px; min-width:42px; height:21px; }
+  #sheet .ans{ color:#16a34a; font-weight:600; padding:0 4px; }
+  #sheet .foot{ margin-top:18px; text-align:center; font-size:11px; color:#777; }
+
+  .hidden{display:none!important;}
+
+  /* ===== โหมดพิมพ์ (แนวนอน A4 เต็มหน้า) ===== */
+  @media print {
+    body{ background:#fff !important; }
+    .noprint{ display:none !important; }
+    .wrap{ padding:0; max-width:none; }
+    /* เว้นขอบในเล็กน้อย + เผื่อด้านบน เพื่อไม่ให้กรอบคะแนนถูกตัด */
+    #sheet{ box-shadow:none; border-radius:0; max-width:none; width:100%; padding:6mm 4mm 0; }
+    @page{ size:A4 landscape; margin:9mm; }
+    /* กรอบคะแนนไม่ให้ล้น/ถูกตัด */
+    #sheet .head{ margin-bottom:10px; }
+    #sheet .scorebox{ top:0; right:0; width:23mm; height:auto; }
+    /* ขยายให้เต็มหน้ากระดาษแนวนอน */
+    #sheet h2{ font-size:25px; }
+    #sheet .sub{ font-size:15px; }
+    #sheet .info{ font-size:16px; margin:16px 0 22px; }
+    #sheet .grid5{ gap:24px 30px; }
+    #sheet .q{ font-size:18px; gap:8px; }
+    #sheet .q .n{ min-width:26px; }
+    #sheet .box{ min-width:66px; height:30px; }
+    #sheet .foot{ margin-top:30px; font-size:13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== แถบควบคุม (ไม่พิมพ์) ===== -->
+  <div class="noprint">
+    <div class="flex items-center justify-between mb-4">
+      <a class="backbtn" href="index.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5l-7 7 7 7"/></svg>หน้าแรก</a>
+      <span style="font-weight:600">ซ้อมสูตรคูณเร็ว Ver.2</span>
+    </div>
+
+    <div class="card mb-4">
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2">
+          <label for="mulSel" style="font-size:14px;color:var(--muted)">เลือกแม่สูตรคูณ</label>
+          <select id="mulSel" class="fld" style="width:auto;padding:9px 14px;font-size:15px"></select>
+        </div>
+        <button class="ghost" onclick="generate()"><span style="vertical-align:-1px">↻</span> สุ่มชุดใหม่</button>
+        <button class="ghost" onclick="toggleKey()" id="keyBtn">ดูเฉลย</button>
+        <button class="ghost" onclick="openTimer()">⏱ จับเวลา</button>
+        <button class="btn" onclick="window.print()">🖨 พิมพ์ / บันทึก PDF</button>
+      </div>
+    </div>
+
+    <!-- ===== หน้าจับเวลาเต็มจอ ===== -->
+    <div id="timerScreen" style="display:none;position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 28%, #103027, #05080f 72%);flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px">
+      <button onclick="closeTimer()" style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.08);border:none;color:#cbd5e1;padding:10px 18px;border-radius:12px;cursor:pointer;font-family:'Kanit';font-size:15px">✕ ปิด</button>
+      <p style="color:var(--muted);font-size:clamp(15px,3vw,20px);margin:0 0 2px">ตัวจับเวลา · 30 นาที</p>
+      <div class="num-font" id="timerDisp" style="font-size:clamp(110px,32vw,300px);font-weight:700;color:var(--acc);line-height:1;text-shadow:0 0 60px rgba(52,211,153,.45)">30:00</div>
+      <p style="color:var(--muted);font-size:clamp(16px,4vw,22px);margin:8px 0 30px">ใช้ไป <span class="num-font" id="usedDisp">00:00</span></p>
+      <div class="flex gap-3 justify-center flex-wrap">
+        <button class="btn" id="tBtn" onclick="tToggle()" style="min-width:160px;font-size:19px;padding:15px 30px">เริ่ม</button>
+        <button class="ghost" onclick="tReset()" style="font-size:19px;padding:15px 30px">รีเซ็ต</button>
+      </div>
+    </div>
+
+    <!-- บันทึกคะแนน -->
+    <div class="mb-5" style="max-width:560px;margin:0 auto">
+
+      <div class="card">
+        <p class="m-0 mb-3" style="font-size:13px;color:var(--muted)">บันทึกคะแนน (กรอกเองหลังตรวจกระดาษ)</p>
+        <input list="studentList" id="rName" class="fld mb-2" placeholder="ชื่อนักเรียน" autocomplete="off" />
+        <datalist id="studentList"></datalist>
+        <div class="grid grid-cols-2 gap-2 mb-2">
+          <input id="rCorrect" class="fld" type="number" min="0" max="50" placeholder="ข้อถูก (0-50)" oninput="recompute()" />
+          <div class="flex gap-1">
+            <input id="rMin" class="fld" type="number" min="0" max="30" placeholder="นาที" oninput="recompute()" />
+            <input id="rSec" class="fld" type="number" min="0" max="59" placeholder="วิ" oninput="recompute()" />
+          </div>
+        </div>
+        <button class="ghost mb-2" style="font-size:12px;padding:6px 10px" onclick="pullTime()">ดึงเวลาจากตัวจับเวลา</button>
+        <div class="flex items-center gap-2 mb-2">
+          <span style="font-size:13px;color:var(--muted)">คะแนนรวม</span>
+          <input id="rFinal" class="fld" type="number" style="width:90px" />
+        </div>
+        <p id="breakdown" class="m-0 mb-3" style="font-size:12px;color:var(--muted);min-height:16px"></p>
+        <button class="btn w-full" id="saveBtn" onclick="saveScore()">บันทึกผล</button>
+        <p id="saveMsg" class="text-center m-0 mt-2" style="font-size:13px;min-height:18px"></p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== กระดาษคำตอบ (ส่วนที่พิมพ์) ===== -->
+  <div id="sheet">
+    <div class="head">
+      <div class="scorebox">
+        <div class="sb-h">คะแนนที่ได้</div>
+        <div class="sb-body">
+          <div class="sb-top"></div>
+          <div class="sb-line"></div>
+          <div class="sb-bot" id="sbFull">50</div>
+        </div>
+      </div>
+      <h2 id="sheetTitle">ซ้อมสูตรคูณเร็ว แม่ 2</h2>
+      <div class="sub">ระบบจัดซ้อมรายวิชาคณิตศาสตร์ By ครูแบงค์</div>
+    </div>
+    <div class="info">
+      <span>ชื่อ-สกุล ...............................................</span>
+      <span>ชั้น ............</span>
+      <span>เลขที่ ........</span>
+      <span>เวลา 30 นาที (50 ข้อ ข้อละ 1 คะแนน)</span>
+    </div>
+    <div class="grid5" id="qgrid"></div>
+    <div class="foot">ผู้พัฒนา : นายชิติพัทธ์ นิลวรรณ ครู สพป.ศรีสะเกษ เขต 3</div>
+  </div>
+
+</div>
+
+<script src="config.js"></script>
+<script>window.PRACTICE_MODE="สูตรคูณเร็ว2";</script>
+<script src="student.js"></script>
+<script>
+const API = (typeof API_URL !== 'undefined' && API_URL && API_URL.indexOf('วาง') === -1) ? API_URL : '';
+const TOTAL = 50, FULL_SEC = 1800, MAX_SCORE = 80; // 50 ข้อ + โบนัสเวลาสูงสุด 30
+let curMul = 2, questions = [], showKey = false;
+
+function el(id){ return document.getElementById(id); }
+function pad(n){ return (n<10?'0':'') + n; }
+function mmss(s){ s=Math.max(0,Math.floor(s)); return pad(Math.floor(s/60)) + ':' + pad(s%60); }
+
+async function api(action, data, post){
+  if(!API) return null;
+  try{
+    if(post){ const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action},data||{}))}); return await res.json(); }
+    let url=API+'?action='+encodeURIComponent(action);
+    if(data) Object.keys(data).forEach(function(k){ url+='&'+encodeURIComponent(k)+'='+encodeURIComponent(data[k]); });
+    const res=await fetch(url); return await res.json();
+  }catch(e){ console.warn('api error:',e); return null; }
+}
+async function loadStudents(){
+  if(!API) return;
+  const st=await api('listStudents');
+  if(st && st.ok && st.students){ el('studentList').innerHTML = st.students.map(function(s){ return '<option value="'+s.fullName+'">'; }).join(''); }
+}
+
+/* ---------- เลือกแม่สูตรคูณ (2–25) ---------- */
+(function(){
+  var sel = el('mulSel');
+  for(var m=2; m<=25; m++){ var o=document.createElement('option'); o.value=m; o.textContent='แม่ '+m; sel.appendChild(o); }
+  sel.value = '2';
+  sel.onchange = function(){ curMul = parseInt(sel.value,10); generate(); };
+})();
+
+/* ---------- สร้างโจทย์ (แยกทีละแม่ · สลับ M×N / N×M) ---------- */
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function sameQ(x,y){ return x.a===y.a && x.b===y.b; }
+/* หยิบจาก pool ให้ครบ n ข้อ: ใช้ครบทุกแบบก่อนแล้วค่อยวน ซ้ำได้แต่ไม่ติดกัน */
+function sampleQ(pool, n){
+  var out=[], bag=[];
+  while(out.length < n){
+    if(bag.length===0) bag = shuffle(pool.slice());
+    var cand = bag.pop();
+    if(out.length && sameQ(out[out.length-1], cand) && bag.length){ bag.unshift(cand); cand = bag.pop(); }
+    out.push(cand);
+  }
+  return out;
+}
+function genQuestions(){
+  var M = curMul, pool = [];
+  for(var n=1; n<=12; n++){ pool.push({a:M, b:n}); pool.push({a:n, b:M}); } /* สลับสองทาง */
+  return sampleQ(pool, TOTAL);
+}
+function generate(){
+  questions = genQuestions();
+  el('sheetTitle').textContent = 'ซ้อมสูตรคูณเร็ว แม่ ' + curMul;
+  renderSheet();
+}
+function renderSheet(){
+  var sf=el('sbFull'); if(sf) sf.textContent = TOTAL;   /* คะแนนเต็ม = จำนวนข้อทั้งหมด */
+  el('qgrid').innerHTML = questions.map(function(q,i){
+    const ans = showKey ? '<span class="ans">'+(q.a*q.b)+'</span>' : '<span class="box"></span>';
+    return '<div class="q"><span class="n">('+(i+1)+')</span> '+q.a+' × '+q.b+' = '+ans+'</div>';
+  }).join('');
+}
+function toggleKey(){ showKey = !showKey; el('keyBtn').textContent = showKey ? 'ซ่อนเฉลย' : 'ดูเฉลย'; renderSheet(); }
+
+/* ---------- ตัวจับเวลา 30 นาที ---------- */
+let tLeft = FULL_SEC, tRun = false, tInt = null;
+function openTimer(){ el('timerScreen').style.display = 'flex'; }
+function closeTimer(){ el('timerScreen').style.display = 'none'; }
+function tDraw(){ el('timerDisp').textContent = mmss(tLeft); el('usedDisp').textContent = mmss(FULL_SEC - tLeft); }
+function tStart(){ if(tRun) return; tRun = true; el('tBtn').textContent = 'หยุด';
+  tInt = setInterval(function(){ tLeft = Math.max(0, tLeft-1); tDraw(); if(tLeft<=0){ tStop(); } }, 1000); }
+function tStop(){ tRun = false; clearInterval(tInt); el('tBtn').textContent = 'เริ่ม'; }
+function tToggle(){ tRun ? tStop() : tStart(); }
+function tReset(){ tStop(); tLeft = FULL_SEC; tDraw(); }
+
+/* ---------- บันทึกคะแนน ---------- */
+function pullTime(){
+  const used = FULL_SEC - tLeft;
+  el('rMin').value = Math.floor(used/60);
+  el('rSec').value = used % 60;
+  recompute();
+}
+function usedSec(){ return (parseInt(el('rMin').value,10)||0)*60 + (parseInt(el('rSec').value,10)||0); }
+function recompute(){
+  let correct = parseInt(el('rCorrect').value,10) || 0;
+  correct = Math.max(0, Math.min(TOTAL, correct));
+  const used = Math.min(FULL_SEC, usedSec());
+  const remain = Math.max(0, FULL_SEC - used);
+  const bonus = Math.floor(remain/60); // โบนัส = นาทีที่เหลือ
+  el('rFinal').value = correct + bonus;
+  el('breakdown').textContent = 'คะแนนรวม = ข้อถูก ' + correct + ' + โบนัสเวลา ' + bonus + ' (เหลือ ' + mmss(remain) + ')';
+}
+
+async function saveScore(){
+  const name = el('rName').value.trim();
+  const msg = el('saveMsg');
+  if(!name){ msg.style.color='var(--miss)'; msg.textContent='กรุณากรอกชื่อนักเรียน'; return; }
+  if(!API){ msg.style.color='var(--miss)'; msg.textContent='ยังไม่ได้ตั้งค่า API ใน config.js'; return; }
+  let correct = Math.max(0, Math.min(TOTAL, parseInt(el('rCorrect').value,10)||0));
+  const used = Math.min(FULL_SEC, usedSec());
+  const final = parseInt(el('rFinal').value,10) || 0;
+  const btn = el('saveBtn'); btn.disabled = true; msg.style.color='var(--muted)'; msg.textContent='กำลังบันทึก...';
+  const res = await api('saveSession', {
+    studentName:name, token:(window.MATH_STUDENT&&window.MATH_STUDENT.token)||'', level:('แม่ '+curMul), round:1, mode:'สูตรคูณเร็ว2',
+    totalQuestions:TOTAL, good:correct, near:0, miss:TOTAL-correct,
+    score:final, maxScore:MAX_SCORE, timeSec:used
+  }, true);
+  btn.disabled = false;
+  if(res && res.ok){ msg.style.color='var(--good)'; msg.textContent='บันทึกแล้ว ✓ คะแนนรวม '+final+' ('+res.pct+'%)'; }
+  else { msg.style.color='var(--miss)'; msg.textContent = (res && res.error) ? res.error : 'บันทึกไม่สำเร็จ'; }
+}
+
+generate();
+recompute();
+document.addEventListener('DOMContentLoaded', loadStudents);
+
+/* นับผู้เข้าชม (1 ครั้ง/เครื่อง/วัน) ส่งเข้าระบบความนิยมหน้าแรก */
+(function(){
+  try{
+    if(!API) return;
+    var MODE = 'สูตรคูณเร็ว2';
+    var k = 'viewed:' + MODE + ':' + new Date().toISOString().slice(0,10);
+    if(localStorage.getItem(k)) return;
+    localStorage.setItem(k, '1');
+    fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'bumpView', mode:MODE }) });
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
